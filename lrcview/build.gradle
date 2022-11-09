@@ -54,7 +54,6 @@ afterEvaluate {
         publications {
             // Creates a Maven publication called "release".
             release(MavenPublication) {
-                artifact sourceJar
                 from components.release
                 groupId = 'com.github.AgoraIO-Community'
                 artifactId = 'LyricsView'
@@ -64,7 +63,3 @@ afterEvaluate {
     }
 }
 
-task sourceJar(type :Jar){
-    from android.sourceSets.main.java.srcDirs
-    archiveClassifier.set("sources")
-}
