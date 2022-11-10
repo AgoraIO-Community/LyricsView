@@ -44,20 +44,20 @@ dependencies {
 ## xml 中使用
 ```
 <io.agora.lyrics_view.LrcView
- android:id="@+id/lrc_view"
- android:layout_width="match_parent"
- android:layout_height="match_parent"
- android:paddingStart="10dp"
- android:paddingTop="20dp"
- android:paddingEnd="10dp"
- android:paddingBottom="20dp"
- app:lrcCurrentTextColor="@color/ktv_lrc_highlight"
- app:lrcDividerHeight="20dp"
- app:lrcLabel=" "
- app:lrcNormalTextColor="@color/ktv_lrc_normal"
- app:lrcNormalTextSize="16sp"
- app:lrcTextGravity="center"
- app:lrcTextSize="26sp" />
+    android:id="@+id/lrc_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="10dp"
+    android:paddingTop="20dp"
+    android:paddingEnd="10dp"
+    android:paddingBottom="20dp"
+    app:lrcCurrentTextColor="@color/ktv_lrc_highlight"
+    app:lrcDividerHeight="20dp"
+    app:lrcLabel=" "
+    app:lrcNormalTextColor="@color/ktv_lrc_normal"
+    app:lrcNormalTextSize="16sp"
+    app:lrcTextGravity="center"
+    app:lrcTextSize="26sp" />
 ```
 
 | xml 参数              |说明|代码|
