@@ -49,7 +49,7 @@ public class PitchView extends View {
 
     private float movedPixelsPerMs = 0.2F; // 1ms 对应像素 px
 
-    private int pitchStickHeight; // 每一项高度 px
+    private float pitchStickHeight; // 每一项高度 px
     private int pitchStickSpace = 4; // 间距 px
 
     private int pitchMax = 0; // 最大值
@@ -136,6 +136,8 @@ public class PitchView extends View {
         mOriginPitchStickColor = getResources().getColor(R.color.lrc_normal_text_color);
         mHighlightPitchStickColor = ta.getColor(R.styleable.PitchView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
 
+        pitchStickHeight = ta.getDimension(R.styleable.PitchView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));
+
         ta.recycle();
 
         int startColor = getResources().getColor(R.color.pitch_start);
@@ -143,8 +145,6 @@ public class PitchView extends View {
         linearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
 
         mTailAnimationLinearGradient = new LinearGradient(dotPointX, 0, dotPointX - 12, 0, startColor, Color.YELLOW, Shader.TileMode.CLAMP);
-
-        pitchStickHeight = dip2px(getContext(), ta.getFloat(R.styleable.PitchView_pitchStickHeight, 6));
     }
 
     /**

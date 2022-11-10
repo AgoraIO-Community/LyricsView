@@ -3,4 +3,5 @@
     <dimen name="lrc_text_size">16sp</dimen>
     <dimen name="lrc_divider_height">16dp</dimen>
     <dimen name="lrc_margin_top">0dp</dimen>
+    <dimen name="pitch_stick_height">6dp</dimen>
 </resources>
