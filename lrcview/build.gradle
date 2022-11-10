@@ -8,7 +8,7 @@ android {
         minSdkVersion 17
         targetSdkVersion 31
         versionCode 8
-        versionName "1.0.8"
+        versionName "1.0.9"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -43,7 +43,7 @@ android {
 dependencies {
     implementation 'androidx.annotation:annotation:1.5.0'
     implementation 'com.squareup.okhttp3:okhttp:4.9.2'
-    implementation project(path: ':LeonidsLib')
+    implementation 'com.github.guohai:Leonids:a454159ed7'
 }
 
 afterEvaluate {
@@ -57,7 +57,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.github.AgoraIO-Community'
                 artifactId = 'LyricsView'
-                version = '1.0.8'
+                version = android.defaultConfig.versionName
             }
         }
     }

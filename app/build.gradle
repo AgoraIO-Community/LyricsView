@@ -28,8 +28,9 @@ android {
 }
 
 dependencies {
-    api project(':lrcview')
-//  implementation 'com.github.AgoraIO-Community:LrcView-Android:1.0.5'
+    implementation project(':lrcview')
+//  implementation 'com.github.AgoraIO-Community:LyricsView:1.0.9'
+//  implementation 'com.github.guohai:Leonids:a454159ed7'
 
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.6.1'

@@ -8,8 +8,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.LrcViewDemo">
-        <activity android:name="io.agora.examples.lyrics_view.MainActivity" android:exported="true">
+        android:theme="@style/Theme.LyricsViewExample">
+        <activity
+            android:name="io.agora.examples.lyrics_view.MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

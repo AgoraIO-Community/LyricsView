@@ -1,4 +1,3 @@
 rootProject.name = "LyricsViewExample"
 include ':app'
-include ':LeonidsLib'
 include ':lrcview'

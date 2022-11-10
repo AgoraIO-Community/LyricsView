@@ -34,20 +34,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.clear_cache).setOnClickListener(this);
-        lrcView = findViewById(R.id.lrcView);
+        lrcView = findViewById(R.id.lrc_view);
         lrcView.setSeekListener(this);
         loadLrcFromUrl(LRC_SAMPLE_1);
     }
 
     private void loadLrcFromUrl(String lrcSample) {
         lrcView.reset();
-        DownloadManager.getInstance().download(this, lrcSample
-                , file -> {
-                    file = extractFromZipFileIfPossible(file);
-                    LrcData lrcData = LrcLoadUtils.parse(file);
-                    lrcView.setLrcData(lrcData);
-                }
-                , Throwable::printStackTrace);
+        DownloadManager.getInstance().download(this, lrcSample, file -> {
+            file = extractFromZipFileIfPossible(file);
+            LrcData lrcData = LrcLoadUtils.parse(file);
+            lrcView.setLrcData(lrcData);
+        }, Throwable::printStackTrace);
     }
 
     private static File extractFromZipFileIfPossible(File file) {
