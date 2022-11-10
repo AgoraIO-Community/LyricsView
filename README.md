@@ -2,15 +2,19 @@
 Parsing and displaying lyrics dynamically
 
 # 简介
-Agora 歌词控件（LyricsView）支持在歌曲播放的同时同步显示 LRC 或 XML 格式的歌词。本文介绍如何在项目中集成并使用 Agora 歌词控件。
+Agora 歌词控件(LyricsView)支持在歌曲播放的同时同步显示 LRC 或 XML 格式的歌词。本文介绍如何在项目中集成并使用 Agora 歌词控件。
 
-功能描述
+`功能描述`
 
 歌曲播放时，根据当前播放进度显示对应的歌词
+
 手势拖动到指定时间的歌词，歌曲进度随之改变
+
 自定义歌词界面布局
+
 自定义更换歌词背景
-实现方法
+
+`实现方法`
 
 ## 引入 LyricsView 控件
 
@@ -18,16 +22,21 @@ Agora 歌词控件（LyricsView）支持在歌曲播放的同时同步显示 LRC
 
 参考如下步骤，在主播端和观众端添加 LyricsView 控件：
 
-将该项目下的 lrcview 文件夹拷贝至你的项目文件夹下。
-在你的项目中引入 lrcview 控件。
-打开项目的 settings.gradle 文件，添加如下代码：
+将该项目下的 `lrcview` 文件夹拷贝至你的项目文件夹下。
 
+在你的项目中引入 `lrcview` 控件。
+
+打开项目的 `settings.gradle` 文件，添加如下代码：
+```
 include ':lrcview'
-在你的项目中添加 lrcview 控件的依赖项。打开项目的 app/build.gradle 文件，添加如下代码：
+```
+在你的项目中添加 `lrcview` 控件的依赖项。打开项目的 `app/build.gradle` 文件，添加如下代码：
+```
 dependencies {
-......
-implementation project(':lrcview')
+    ...
+    implementation project(':lrcview')
 }
+```
 
 ### JitPack 方式
 
@@ -42,7 +51,8 @@ allprojects {
 
 ```
 dependencies {
-    implementation 'com.github.AgoraIO-Community:LyricsView:1.0.9'
+    ...
+    implementation 'com.github.AgoraIO-Community:LyricsView:1.0.10'
 }
 ```
 

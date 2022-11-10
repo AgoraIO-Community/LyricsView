@@ -56,7 +56,6 @@ public class PitchView extends View {
     private int pitchMin = 100; // 最小值
     private int totalPitch = 0;
 
-    // 完成 PitchView.OnActionListener#onOriginalPitch 的需求
     // 当前 Pitch 所在的字的开始时间
     private long currentPitchStartTime = -1;
     // 当前 Pitch 所在的字的结束时间
@@ -133,10 +132,11 @@ public class PitchView extends View {
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.PitchView);
         mLocalPitchIndicatorColor = ta.getColor(R.styleable.PitchView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
         mInitialScore = ta.getFloat(R.styleable.PitchView_pitchInitialScore, 50f);
-        ta.recycle();
 
         mOriginPitchStickColor = getResources().getColor(R.color.lrc_normal_text_color);
-        mHighlightPitchStickColor = getResources().getColor(R.color.pitch_stick_highlight_color);
+        mHighlightPitchStickColor = ta.getColor(R.styleable.PitchView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
+
+        ta.recycle();
 
         int startColor = getResources().getColor(R.color.pitch_start);
         int endColor = getResources().getColor(R.color.pitch_end);
@@ -144,7 +144,7 @@ public class PitchView extends View {
 
         mTailAnimationLinearGradient = new LinearGradient(dotPointX, 0, dotPointX - 12, 0, startColor, Color.YELLOW, Shader.TileMode.CLAMP);
 
-        pitchStickHeight = dip2px(getContext(), 6);
+        pitchStickHeight = dip2px(getContext(), ta.getFloat(R.styleable.PitchView_pitchStickHeight, 6));
     }
 
     /**

@@ -1,4 +1,4 @@
-# 歌词 LyricsView
+# 歌词控件 LyricsView
 主要负责歌词的显示，支持上下拖动调整进度。
 
 ## 引入 LyricsView 控件
@@ -7,16 +7,21 @@
 
 参考如下步骤，在主播端和观众端添加 LyricsView 控件：
 
-将该模块整体目录 lrcview 文件夹拷贝至你的项目文件夹下。
-在你的项目中引入 lrcview 控件。
-打开项目的 settings.gradle 文件，添加如下代码：
+将该模块整体目录 `lrcview` 文件夹拷贝至你的项目文件夹下。
 
+在你的项目中引入 `lrcview` 控件。
+
+打开项目的 `settings.gradle` 文件，添加如下代码：
+```
 include ':lrcview'
-在你的项目中添加 lrcview 控件的依赖项。打开项目的 app/build.gradle 文件，添加如下代码：
+```
+在你的项目中添加 `lrcview` 控件的依赖项。打开项目的 `app/build.gradle` 文件，添加如下代码：
+```
 dependencies {
-......
-implementation project(':lrcview')
+    ...
+    implementation project(':lrcview')
 }
+```
 
 ### JitPack 方式
 
@@ -31,7 +36,8 @@ allprojects {
 
 ```
 dependencies {
-    implementation 'com.github.AgoraIO-Community:LyricsView:1.0.9'
+    ...
+    implementation 'com.github.AgoraIO-Community:LyricsView:1.0.10'
 }
 ```
 
