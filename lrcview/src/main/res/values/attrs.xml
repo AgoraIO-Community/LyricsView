@@ -21,7 +21,7 @@
     <declare-styleable name="PitchView">
         <attr name="pitchIndicatorColor" format="reference|color" />
         <attr name="pitchStickHighlightColor" format="reference|color" />
-        <attr name="pitchStickHeight" format="float" />
+        <attr name="pitchStickHeight" format="dimension" />
         <attr name="pitchDoneTextColor" format="reference|color" />
         <attr name="pitchInitialScore" format="float" />
     </declare-styleable>
