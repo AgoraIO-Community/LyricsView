@@ -608,16 +608,9 @@ public class LrcView extends View {
     }
 
     public void setLrcData(LrcData data) {
-        lrcData = data;
+        resetInternal();
 
-        if (mTotalDuration != null) {
-            if (lrcData != null && lrcData.entrys != null && !lrcData.entrys.isEmpty()) {
-                List<LrcEntryData.Tone> tone = lrcData.entrys.get(lrcData.entrys.size() - 1).tones;
-                if (tone != null && !tone.isEmpty()) {
-                    tone.get(tone.size() - 1).end = mTotalDuration;
-                }
-            }
-        }
+        lrcData = data;
 
         invalidate();
     }
@@ -626,6 +619,12 @@ public class LrcView extends View {
      * 重置内部状态，清空已经加载的歌词
      */
     public void reset() {
+        resetInternal();
+
+        invalidate();
+    }
+
+    private void resetInternal() {
         lrcData = null;
         mCurrentLine = 0;
         mNewLine = true;
@@ -633,8 +632,6 @@ public class LrcView extends View {
         mOffset = 0;
         targetIndex = 0;
         mTotalDuration = null;
-
-        invalidate();
     }
 
     /**

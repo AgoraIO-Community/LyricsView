@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.AndroidRuntimeException;
-import android.util.Log;
 import android.view.View;
 
 import java.io.ByteArrayOutputStream;
@@ -16,6 +15,7 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import io.agora.examples.utils.ResourceHelper;
 import io.agora.lyrics_view.DownloadManager;
 import io.agora.lyrics_view.LrcLoadUtils;
 import io.agora.lyrics_view.LrcView;
@@ -23,11 +23,8 @@ import io.agora.lyrics_view.bean.LrcData;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, LrcView.OnLyricsSeekListener {
 
-    private static final String LRC_SAMPLE_1 = "https://webdemo.agora.io/ktv/chocolateice.xml";
-    private static final String LRC_SAMPLE_2 = "https://webdemo.agora.io/ktv/001.xml";
-
     private LrcView lrcView;
-    private boolean switched = false;
+    private int mCurrentIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,16 +33,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.clear_cache).setOnClickListener(this);
         lrcView = findViewById(R.id.lrc_view);
         lrcView.setSeekListener(this);
-        loadLrcFromUrl(LRC_SAMPLE_1);
+
+        loadLrc(LyricsResourcePool.LRC_SAMPLE_1);
     }
 
-    private void loadLrcFromUrl(String lrcSample) {
+    private void loadLrc(String lrcSample) {
         lrcView.reset();
-        DownloadManager.getInstance().download(this, lrcSample, file -> {
+        if (lrcSample.startsWith("https://") || lrcSample.startsWith("http://")) {
+            DownloadManager.getInstance().download(this, lrcSample, file -> {
+                file = extractFromZipFileIfPossible(file);
+                LrcData lrcData = LrcLoadUtils.parse(file);
+                lrcView.setLrcData(lrcData);
+            }, Throwable::printStackTrace);
+        } else {
+            File file = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcSample);
             file = extractFromZipFileIfPossible(file);
             LrcData lrcData = LrcLoadUtils.parse(file);
             lrcView.setLrcData(lrcData);
-        }, Throwable::printStackTrace);
+        }
     }
 
     private static File extractFromZipFileIfPossible(File file) {
@@ -105,12 +110,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         DownloadManager.getInstance().clearCache(this);
-        if (switched) {
-            loadLrcFromUrl(LRC_SAMPLE_1);
-        } else {
-            loadLrcFromUrl(LRC_SAMPLE_2);
+
+        loadLrc(LyricsResourcePool.asList().get(mCurrentIndex));
+
+        mCurrentIndex++;
+        if (mCurrentIndex >= LyricsResourcePool.asList().size()) {
+            mCurrentIndex = 0;
         }
-        switched = !switched;
     }
 
     @Override
