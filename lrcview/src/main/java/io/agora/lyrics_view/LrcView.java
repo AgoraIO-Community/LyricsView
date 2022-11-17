@@ -12,7 +12,6 @@ import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -208,13 +207,22 @@ public class LrcView extends View {
 
             tone = lrcData.entrys.get(0).tones;
             if (tone != null && !tone.isEmpty()) {
-                mTimestampForFirstNote = tone.get(0).begin; // find the first note timestamp
-                mTimestampForFirstNote = (Math.round((mTimestampForFirstNote / 1000.f)) * 1000); // to make first note indicator animation more smooth
+                mTimestampForFirstTone = tone.get(0).begin; // find the first tone timestamp
             }
         }
     }
 
-    private long mTimestampForFirstNote = -1;
+    private long mTimestampForFirstTone = -1;
+
+    /**
+     * setLrcData(LrcData data) 以及 setTotalDuration(long duration) 调用完毕之后可以通过该方法查询
+     *
+     * @return mTimestampForFirstTone <= 0 通常表示歌词设置失败或者歌词内容不正确没有解析出来
+     *         mTimestampForFirstTone > 0 表示歌曲第一句开始时间
+     */
+    public double getFirstToneBeginPosition() {
+        return mTimestampForFirstTone;
+    }
 
     /**
      * 设置非当前行歌词字体颜色
@@ -486,7 +494,7 @@ public class LrcView extends View {
     }
 
     private void drawFirstNoteIndicator(Canvas canvas) {
-        int countDown = Math.round((mTimestampForFirstNote - mCurrentTime) / 1000);
+        int countDown = Math.round((mTimestampForFirstTone - mCurrentTime) / 1000); // to make first tone indicator animation more smooth
         if (countDown <= 0) {
             return;
         }

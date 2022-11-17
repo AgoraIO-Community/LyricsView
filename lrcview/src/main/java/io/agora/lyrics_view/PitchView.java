@@ -417,7 +417,7 @@ public class PitchView extends View {
         cumulatedScore = mInitialScore;
         totalScore = 0;
 
-        mTimestampForFirstNote = -1;
+        mTimestampForFirstTone = -1;
         mInHighlightStatus = false;
         mLocalPitch = 0;
         if (mParticleSystem != null) {
@@ -438,15 +438,14 @@ public class PitchView extends View {
 
             List<LrcEntryData.Tone> tone = lrcData.entrys.get(0).tones;
             if (tone != null && !tone.isEmpty()) {
-                mTimestampForFirstNote = tone.get(0).begin; // find the first note timestamp
-                mTimestampForFirstNote = (Math.round((mTimestampForFirstNote / 1000.f)) * 1000); // to make first note indicator animation more smooth
+                mTimestampForFirstTone = tone.get(0).begin; // find the first tone timestamp
             }
         }
 
         invalidate();
     }
 
-    private long mTimestampForFirstNote = -1;
+    private long mTimestampForFirstTone = -1;
 
     private long mCurrentTime = 0;
     private volatile float mLocalPitch = 0.0F;
@@ -579,7 +578,7 @@ public class PitchView extends View {
      * @param time 当前歌曲播放时间 毫秒
      */
     private void updateScore(long time) {
-        if (time < mTimestampForFirstNote) { // Not started
+        if (time < mTimestampForFirstTone) { // Not started
             return;
         }
 
