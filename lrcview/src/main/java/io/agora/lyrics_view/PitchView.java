@@ -80,7 +80,7 @@ public class PitchView extends View {
     // 歌曲总分数
     public float totalScore;
     // 分数阈值 大于此值计分 小于不计分
-    public final float scoreCountLine = 0.4f;
+    public float minimumScorePerTone;
 
     private final Paint mLocalPitchIndicatorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int mLocalPitchIndicatorColor;
@@ -133,10 +133,20 @@ public class PitchView extends View {
         mLocalPitchIndicatorColor = ta.getColor(R.styleable.PitchView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
         mInitialScore = ta.getFloat(R.styleable.PitchView_pitchInitialScore, 50f);
 
+        if (mInitialScore < 0) {
+            throw new IllegalArgumentException("Invalid value for pitchInitialScore, must >= 0");
+        }
+
         mOriginPitchStickColor = getResources().getColor(R.color.lrc_normal_text_color);
         mHighlightPitchStickColor = ta.getColor(R.styleable.PitchView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
 
         pitchStickHeight = ta.getDimension(R.styleable.PitchView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));
+
+        minimumScorePerTone = ta.getFloat(R.styleable.PitchView_minimumScore, 40f) / 100;
+
+        if (minimumScorePerTone < 0 || minimumScorePerTone > 1.0f) {
+            throw new IllegalArgumentException("Invalid value for minimumScore, must between 0 and 100");
+        }
 
         ta.recycle();
 
@@ -488,6 +498,7 @@ public class PitchView extends View {
         } else {
             // 进入此行代码条件 ： 所唱歌词句开始时间 <= 当前时间 >= 所唱歌词句结束时间
             // 强行加上一个　0 分 ，标识此为可打分句
+            // 相当于歌词当中预期有 pitch，所以需要做好占位
             everyPitchList.put(time, 0d);
         }
         mCurrentPitch = targetPitch;
@@ -529,7 +540,7 @@ public class PitchView extends View {
         double scoreAfterNormalization; // [0, 1]
         double score = 1 - Math.abs(desiredTone - singerTone) / desiredTone;
         // 得分线以下的分数归零
-        score = score >= scoreCountLine ? score : 0f;
+        score = score >= minimumScorePerTone ? score : 0f;
         scoreAfterNormalization = score;
         // 百分制分数 * 每句固定分数
         score *= scorePerSentence;
@@ -607,17 +618,17 @@ public class PitchView extends View {
                         }
                         iterator.remove();
                         everyPitchList.remove(duration);
-                        if (tempScore != null) {
+                        if (tempScore != null && tempScore.floatValue() > 0) {
                             tempTotalScore += tempScore.floatValue();
                             scoreCount++;
                         }
                     }
                 }
 
-                // 获取歌词 pitch 时为了标记可打分句给每句加了 1 个 0 分
-                scoreCount = Math.max(1, scoreCount - 1);
+                scoreCount = Math.max(1, scoreCount);
 
                 double scoreThisTime = tempTotalScore / scoreCount;
+
                 // 统计到累计分数
                 cumulatedScore += scoreThisTime;
                 // 回调到上层

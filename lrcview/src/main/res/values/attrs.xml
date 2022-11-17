@@ -24,5 +24,6 @@
         <attr name="pitchStickHeight" format="dimension" />
         <attr name="pitchDoneTextColor" format="reference|color" />
         <attr name="pitchInitialScore" format="float" />
+        <attr name="minimumScore" format="float" />
     </declare-styleable>
 </resources>
