@@ -283,7 +283,7 @@ public class PitchView extends View {
 
         float y;
         float widthOfPitchStick;
-        float mItemHeightPerPitchLevel = getHeight() / (realPitchMax - realPitchMin);
+        float mItemHeightPerPitchLevel = (getHeight() - pitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);
 
         long preEntryEndTime = 0; // Not used so far
 
@@ -526,7 +526,7 @@ public class PitchView extends View {
         double scoreAfterNormalization = calculateScore(mCurrentTime, pitchToTone(pitch), pitchToTone(currentOriginalPitch));
 
         if (System.currentTimeMillis() - lastCurrentTs > 200) {
-            ObjectAnimator.ofFloat(this, "mLocalPitch", this.mLocalPitch, pitch).setDuration(20).start();
+            ObjectAnimator.ofFloat(this, "mLocalPitch", this.mLocalPitch, pitch).setDuration(80).start();
             lastCurrentTs = System.currentTimeMillis();
 
             assureAnimationForPitchPivot(scoreAfterNormalization);
