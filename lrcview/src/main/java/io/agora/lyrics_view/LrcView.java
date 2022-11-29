@@ -49,6 +49,10 @@ public class LrcView extends View {
     private float mMarginTop;
     private String mDefaultLabel;
     private int mCurrentLine = 0;
+
+    private float mFirstToneStartIndicatorPaddingTop;
+    private float mFirstToneStartIndicatorRadius;
+
     /**
      * 歌词显示位置，靠左/居中/靠右
      */
@@ -126,6 +130,9 @@ public class LrcView extends View {
         int lrcTextGravity = ta.getInteger(R.styleable.LrcView_lrcTextGravity, 0);
         mTextGravity = LrcEntry.Gravity.parse(lrcTextGravity);
         enableDrag = ta.getBoolean(R.styleable.LrcView_lrcEnableDrag, true);
+
+        mFirstToneStartIndicatorPaddingTop = ta.getDimension(R.styleable.LrcView_firstToneStartIndicatorPaddingTop, getResources().getDimension(R.dimen.first_tone_start_indicator_padding_top));
+        mFirstToneStartIndicatorRadius = ta.getDimension(R.styleable.LrcView_firstToneStartIndicatorRadius, getResources().getDimension(R.dimen.first_tone_start_indicator_radius));
 
         ta.recycle();
 
@@ -490,24 +497,27 @@ public class LrcView extends View {
             canvas.drawBitmap(mBitmapFG, mRectSrc, mRectDst, null);
         }
 
-        drawFirstNoteIndicator(canvas);
+        drawFirstToneIndicator(canvas);
     }
 
-    private void drawFirstNoteIndicator(Canvas canvas) {
-        int countDown = Math.round((mTimestampForFirstTone - mCurrentTime) / 1000); // to make first tone indicator animation more smooth
+    private void drawFirstToneIndicator(Canvas canvas) {
+        double countDown = Math.ceil((mTimestampForFirstTone - mCurrentTime) / 1000.f); // to make first tone indicator animation more smooth
         if (countDown <= 0) {
             return;
         }
 
-        canvas.drawCircle(getWidth() / 2 - 42 - 14, 48, 14, mPaintBG); // Point 1
+        float sY = mFirstToneStartIndicatorPaddingTop + mFirstToneStartIndicatorRadius; // central of circle
+        float sX = getWidth() / 2.f; // central of circle
+
+        canvas.drawCircle(sX - mFirstToneStartIndicatorRadius * 3, sY, mFirstToneStartIndicatorRadius, mPaintBG); // Indicator 1
 
         if ((countDown >= 2 & countDown < 3)) {
-            canvas.drawCircle(getWidth() / 2 - 14, 48, 14, mPaintBG); // Point 2
+            canvas.drawCircle(sX, sY, mFirstToneStartIndicatorRadius, mPaintBG); // Indicator 2
         } else if ((countDown >= 3)) {
-            canvas.drawCircle(getWidth() / 2 - 14, 48, 14, mPaintBG); // Point 2
+            canvas.drawCircle(sX, sY, mFirstToneStartIndicatorRadius, mPaintBG); // Indicator 2
 
-            if (((mCurrentTime / 1000) % 2 == 1) || mCurrentTime < 2000L) { // After shown for a little time, then begin to blink
-                canvas.drawCircle(getWidth() / 2 + 42 - 14, 48, 14, mPaintBG); // Point 3
+            if ((countDown % 2 == 1) || mCurrentTime < 2000L) { // After shown for a little time, then begin to blink
+                canvas.drawCircle(sX + 3 * mFirstToneStartIndicatorRadius, sY, mFirstToneStartIndicatorRadius, mPaintBG); // Indicator 3
             }
         }
     }

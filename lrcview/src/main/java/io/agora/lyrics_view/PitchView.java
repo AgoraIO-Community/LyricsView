@@ -53,7 +53,7 @@ public class PitchView extends View {
     private int pitchStickSpace = 4; // 间距 px
 
     private int pitchMax = 0; // 最大值
-    private int pitchMin = 100; // 最小值
+    private int pitchMin = 100; // 最小值 // FIXME(Hai_Guo Should not be zero, song 夏天)
     private int totalPitch = 0;
 
     // 当前 Pitch 所在的字的开始时间
@@ -65,10 +65,10 @@ public class PitchView extends View {
     // 当前在打分的所在句的结束时间
     private long lrcEndTime = 0;
     // 当前 时间的 Pitch，不断变化
-    private float mCurrentPitch = 0f;
+    private float mCurrentOriginalPitch = 0f;
 
     // 音调指示器的半径
-    private int mLocalPitchIndicatorRadius;
+    private float mLocalPitchIndicatorRadius;
     // 每句最高分
     private int scorePerSentence = 100;
     // 初始分数
@@ -100,6 +100,8 @@ public class PitchView extends View {
 
     private ParticleSystem mParticleSystem;
 
+    private VoicePitchChanger mVoicePitchChanger;
+
     // 音调及分数回调
     private OnSingScoreListener onSingScoreListener;
 
@@ -124,14 +126,14 @@ public class PitchView extends View {
     }
 
     private void init(@Nullable AttributeSet attrs) {
-        mLocalPitchIndicatorRadius = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
         if (attrs == null) {
             return;
         }
         this.mHandler = new Handler(Looper.myLooper());
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.PitchView);
+        mLocalPitchIndicatorRadius = ta.getDimension(R.styleable.PitchView_pitchIndicatorRadius, getResources().getDimension(R.dimen.local_pitch_indicator_radius));
         mLocalPitchIndicatorColor = ta.getColor(R.styleable.PitchView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
-        mInitialScore = ta.getFloat(R.styleable.PitchView_pitchInitialScore, 50f);
+        mInitialScore = ta.getFloat(R.styleable.PitchView_pitchInitialScore, 0f);
 
         if (mInitialScore < 0) {
             throw new IllegalArgumentException("Invalid value for pitchInitialScore, must >= 0");
@@ -189,7 +191,7 @@ public class PitchView extends View {
 
             mHandler.postDelayed(() -> {
                 // Create a particle system and start emiting
-                mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), 8, getResources().getDrawable(R.drawable.pitch_indicator), 400);
+                mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), 4, getResources().getDrawable(R.drawable.pitch_indicator), 200);
 
                 // It works with an emision range
                 int[] location = new int[2];
@@ -347,7 +349,10 @@ public class PitchView extends View {
 
                 y = (realPitchMax - tone.pitch) * mItemHeightPerPitchLevel;
 
-                tone.highlight = mInHighlightStatus; // Mark this as highlight forever
+                if (Math.abs(x - dotPointX) <= 2 * mLocalPitchIndicatorRadius || Math.abs(endX - dotPointX) <= 2 * mLocalPitchIndicatorRadius) { // Only mark item around local pitch pivot
+                    tone.highlight = tone.highlight || mInHighlightStatus; // Mark this as highlight forever
+                }
+
                 if (!DEBUG && tone.highlight) { // If DEBUG enabled, will not show highlight animation
                     if (x >= dotPointX) {
                         RectF rNormal = new RectF(x, y, endX, y + pitchStickHeight);
@@ -422,6 +427,12 @@ public class PitchView extends View {
         mLocalPitch = 0;
         if (mParticleSystem != null) {
             mParticleSystem.stopEmitting();
+        }
+
+        if (mVoicePitchChanger != null) {
+            mVoicePitchChanger.reset();
+        } else {
+            mVoicePitchChanger = new VoicePitchChanger();
         }
 
         if (lrcData != null && lrcData.entrys != null && !lrcData.entrys.isEmpty()) {
@@ -500,9 +511,17 @@ public class PitchView extends View {
             // 相当于歌词当中预期有 pitch，所以需要做好占位
             everyPitchList.put(time, 0d);
         }
-        mCurrentPitch = targetPitch;
+        mCurrentOriginalPitch = targetPitch;
         return targetPitch;
     }
+
+    private final Runnable mRemoveAnimationCallback = new Runnable() {
+        @Override
+        public void run() {
+            assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
+            ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
+        }
+    };
 
     /**
      * 更新音调，更新分数，执行圆点动画
@@ -513,14 +532,21 @@ public class PitchView extends View {
         if (lrcData == null) {
             return;
         }
-        float currentOriginalPitch = mCurrentPitch;
+        float currentOriginalPitch = mCurrentOriginalPitch;
 
         if (currentOriginalPitch == 0) {
             return;
         }
 
-        if (pitch < pitchMin || pitch > pitchMax) {
+        if (pitch == 0 || pitch < pitchMin || pitch > pitchMax) {
+            mHandler.postDelayed(mRemoveAnimationCallback, 1000);
             return;
+        }
+
+        mHandler.removeCallbacks(mRemoveAnimationCallback);
+
+        if (mVoicePitchChanger != null) {
+            pitch = (float) mVoicePitchChanger.handlePitch(currentOriginalPitch, pitch, pitchMax);
         }
 
         double scoreAfterNormalization = calculateScore(mCurrentTime, pitchToTone(pitch), pitchToTone(currentOriginalPitch));
@@ -548,8 +574,9 @@ public class PitchView extends View {
     }
 
     private void assureAnimationForPitchPivot(double scoreAfterNormalization) {
+        Log.d("AGORA-KTV", "assureAnimationForPitchPivot: " + scoreAfterNormalization);
         // Animation for particle
-        if (scoreAfterNormalization >= 0.9) {
+        if (scoreAfterNormalization >= 0.7) {
             if (mParticleSystem != null) {
                 float value = getYForPitchPivot();
                 // It works with an emision range
@@ -557,7 +584,7 @@ public class PitchView extends View {
                 this.getLocationInWindow(location);
                 if (!emittingEnabled) {
                     emittingEnabled = true;
-                    mParticleSystem.emit((int) (location[0] + dotPointX), location[1] + (int) (value), 12);
+                    mParticleSystem.emit((int) (location[0] + dotPointX), location[1] + (int) (value), 6);
                 } else {
                     mParticleSystem.updateEmitPoint((int) (location[0] + dotPointX), location[1] + (int) (value));
                 }
