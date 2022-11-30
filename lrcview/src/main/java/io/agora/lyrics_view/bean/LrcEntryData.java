@@ -23,6 +23,9 @@ public class LrcEntryData {
         public int pitch = 0;
         public boolean highlight;
 
+        public float highlightOffset = -1;
+        public float highlightWidth = -1;
+
         public long getDuration() {
             return end - begin;
         }

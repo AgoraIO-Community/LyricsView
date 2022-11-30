@@ -15,7 +15,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -47,7 +46,7 @@ public class PitchView extends View {
     private static volatile LrcData lrcData;
     private Handler mHandler;
 
-    private float movedPixelsPerMs = 0.2F; // 1ms 对应像素 px
+    private float movedPixelsPerMs = 0.4F; // 1ms 对应像素 px
 
     private float pitchStickHeight; // 每一项高度 px
     private int pitchStickSpace = 4; // 间距 px
@@ -217,6 +216,7 @@ public class PitchView extends View {
     private void drawLocalPitchStick(Canvas canvas) {
         mLocalPitchIndicatorPaint.setShader(null);
         mLocalPitchIndicatorPaint.setColor(mLocalPitchIndicatorColor);
+        mLocalPitchIndicatorPaint.setAntiAlias(true);
 
         canvas.drawLine(dotPointX, 0, dotPointX, getHeight(), mLocalPitchIndicatorPaint);
 
@@ -264,15 +264,22 @@ public class PitchView extends View {
     private void drawStartLine(Canvas canvas) {
         mLinearGradientPaint.setShader(null);
         mLinearGradientPaint.setShader(linearGradient);
+        mLinearGradientPaint.setAntiAlias(true);
         canvas.drawRect(0, 0, dotPointX, getHeight(), mLinearGradientPaint);
+
+        if (DEBUG) {
+            canvas.drawText("" + mCurrentTime + " " + pitchMin + " " + pitchMax + ", y: " + (int) (getYForPitchPivot()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mHighlightPitchStickLinearGradientPaint);
+        }
     }
 
     private void drawPitchSticks(Canvas canvas) {
         mPitchStickLinearGradientPaint.setShader(null);
         mPitchStickLinearGradientPaint.setColor(mOriginPitchStickColor);
+        mPitchStickLinearGradientPaint.setAntiAlias(true);
 
         mHighlightPitchStickLinearGradientPaint.setShader(null);
         mHighlightPitchStickLinearGradientPaint.setColor(mHighlightPitchStickColor);
+        mHighlightPitchStickLinearGradientPaint.setAntiAlias(true);
 
         if (lrcData == null || lrcData.entrys == null || lrcData.entrys.isEmpty()) {
             return;
@@ -333,7 +340,9 @@ public class PitchView extends View {
                 continue;
             }
 
-            for (LrcEntryData.Tone tone : tones) {
+            for (int toneIndex = 0; toneIndex < tones.size(); toneIndex++) {
+                LrcEntryData.Tone tone = tones.get(toneIndex);
+
                 pixelsAwayFromPilot = (tone.begin - this.mCurrentTime) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
                 x = dotPointX + pixelsAwayFromPilot;
                 widthOfPitchStick = movedPixelsPerMs * tone.getDuration();
@@ -350,21 +359,76 @@ public class PitchView extends View {
                 y = (realPitchMax - tone.pitch) * mItemHeightPerPitchLevel;
 
                 if (Math.abs(x - dotPointX) <= 2 * mLocalPitchIndicatorRadius || Math.abs(endX - dotPointX) <= 2 * mLocalPitchIndicatorRadius) { // Only mark item around local pitch pivot
+                    boolean isJustHighlightTriggered = (!tone.highlight) && mInHighlightStatus;
+                    if (isJustHighlightTriggered && Math.abs(x - dotPointX) <= 400 * movedPixelsPerMs) {
+                        tone.highlightOffset = Math.abs(dotPointX - x);
+                        if (tone.highlightOffset >= widthOfPitchStick) {
+                            tone.highlightOffset = 0.5f * widthOfPitchStick;
+                        }
+                    }
+                    boolean isJustDeHighlightTriggered = (tone.highlight) && !mInHighlightStatus;
+                    if (isJustDeHighlightTriggered && tone.highlightWidth < 0) {
+                        tone.highlightWidth = Math.abs(dotPointX - x - tone.highlightOffset);
+                        if (tone.highlightWidth >= widthOfPitchStick) {
+                            tone.highlightWidth = 0.5f * widthOfPitchStick;
+                        }
+                    }
+
                     tone.highlight = tone.highlight || mInHighlightStatus; // Mark this as highlight forever
                 }
 
-                if (!DEBUG && tone.highlight) { // If DEBUG enabled, will not show highlight animation
+                if (tone.highlight) {
+                    if (toneIndex == 1 && !tones.get(0).highlight) { // Workaround, always mark first tone highlighted if the second is highlighte
+                        tones.get(0).highlight = true;
+                    }
+
                     if (x >= dotPointX) {
                         RectF rNormal = new RectF(x, y, endX, y + pitchStickHeight);
                         canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
                     } else if (x < dotPointX && endX > dotPointX) {
-                        RectF rNormalHalf = new RectF(dotPointX, y, endX, y + pitchStickHeight);
-                        canvas.drawRoundRect(rNormalHalf, 8, 8, mPitchStickLinearGradientPaint);
-                        RectF rHighlightHalf = new RectF(x, y, dotPointX, y + pitchStickHeight);
-                        canvas.drawRoundRect(rHighlightHalf, 8, 8, mHighlightPitchStickLinearGradientPaint);
-                    } else if (endX < dotPointX) {
-                        RectF rHighlight = new RectF(x, y, endX, y + pitchStickHeight);
-                        canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
+                        RectF rNormalRightHalf = new RectF(dotPointX, y, endX, y + pitchStickHeight);
+                        canvas.drawRoundRect(rNormalRightHalf, 8, 8, mPitchStickLinearGradientPaint);
+
+                        RectF rNormalLeftHalf = new RectF(x, y, dotPointX, y + pitchStickHeight);
+                        canvas.drawRoundRect(rNormalLeftHalf, 8, 8, mPitchStickLinearGradientPaint);
+
+                        if (tone.highlightOffset >= 0) { // Partially draw
+                            float highlightStartX = x + tone.highlightOffset;
+                            float highlightEndX = dotPointX;
+                            if (tone.highlightWidth >= 0) {
+                                highlightEndX = x + tone.highlightOffset + tone.highlightWidth;
+                                if (highlightEndX > dotPointX) {
+                                    highlightEndX = dotPointX;
+                                }
+                            }
+
+                            RectF rHighlight = new RectF(highlightStartX, y, highlightEndX, y + pitchStickHeight);
+                            if (tone.highlightOffset <= 0 || highlightEndX == dotPointX) {
+                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
+                            } else {
+                                // Should be drawRect
+                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
+                            }
+                        }
+                    } else if (endX <= dotPointX) {
+                        RectF rNormal = new RectF(x, y, endX, y + pitchStickHeight);
+                        canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
+
+                        if (tone.highlightOffset >= 0) { // Partially draw
+                            float highlightStartX = x + tone.highlightOffset;
+                            float highlightEndX = endX;
+                            if (tone.highlightWidth >= 0) {
+                                highlightEndX = x + tone.highlightOffset + tone.highlightWidth;
+                            }
+
+                            RectF rHighlight = new RectF(highlightStartX, y, highlightEndX, y + pitchStickHeight);
+                            if (tone.highlightOffset <= 0 && tone.highlightWidth <= 0 || highlightEndX == endX) {
+                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
+                            } else {
+                                // Should be drawRect
+                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
+                            }
+                        }
                     }
                     fineTuneTheHighlightAnimation(endX);
                 } else {
@@ -377,6 +441,8 @@ public class PitchView extends View {
                         canvas.drawText((int) (endX) + "", x, 90, mHighlightPitchStickLinearGradientPaint);
                     }
                 }
+
+
             }
         }
     }
@@ -519,7 +585,7 @@ public class PitchView extends View {
         @Override
         public void run() {
             assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
-            ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
+            ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(400).start(); // Decrease the local pitch pivot
         }
     };
 
@@ -532,14 +598,15 @@ public class PitchView extends View {
         if (lrcData == null) {
             return;
         }
-        float currentOriginalPitch = mCurrentOriginalPitch;
 
-        if (currentOriginalPitch == 0) {
+        if (pitch == 0 || pitch < pitchMin || pitch > pitchMax) {
+            mHandler.postDelayed(mRemoveAnimationCallback, 400);
             return;
         }
 
-        if (pitch == 0 || pitch < pitchMin || pitch > pitchMax) {
-            mHandler.postDelayed(mRemoveAnimationCallback, 1000);
+        float currentOriginalPitch = mCurrentOriginalPitch;
+
+        if (currentOriginalPitch == 0) {
             return;
         }
 
@@ -574,7 +641,6 @@ public class PitchView extends View {
     }
 
     private void assureAnimationForPitchPivot(double scoreAfterNormalization) {
-        Log.d("AGORA-KTV", "assureAnimationForPitchPivot: " + scoreAfterNormalization);
         // Animation for particle
         if (scoreAfterNormalization >= 0.7) {
             if (mParticleSystem != null) {
