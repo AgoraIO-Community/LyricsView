@@ -101,6 +101,8 @@ public class PitchView extends View {
 
     private VoicePitchChanger mVoicePitchChanger;
 
+    private float mThresholdOfHitScore;
+
     // 音调及分数回调
     private OnSingScoreListener onSingScoreListener;
 
@@ -135,7 +137,7 @@ public class PitchView extends View {
         mInitialScore = ta.getFloat(R.styleable.PitchView_pitchInitialScore, 0f);
 
         if (mInitialScore < 0) {
-            throw new IllegalArgumentException("Invalid value for pitchInitialScore, must >= 0");
+            throw new IllegalArgumentException("Invalid value for pitchInitialScore, must >= 0, current is " + mInitialScore);
         }
 
         mOriginPitchStickColor = getResources().getColor(R.color.lrc_normal_text_color);
@@ -146,7 +148,13 @@ public class PitchView extends View {
         minimumScorePerTone = ta.getFloat(R.styleable.PitchView_minimumScore, 40f) / 100;
 
         if (minimumScorePerTone < 0 || minimumScorePerTone > 1.0f) {
-            throw new IllegalArgumentException("Invalid value for minimumScore, must between 0 and 100");
+            throw new IllegalArgumentException("Invalid value for minimumScore, must between 0 and 100, current is " + minimumScorePerTone);
+        }
+
+        mThresholdOfHitScore = ta.getFloat(R.styleable.PitchView_hitScoreThreshold, 70f) / 100;
+
+        if (mThresholdOfHitScore <= 0 || mThresholdOfHitScore > 1.0f) {
+            throw new IllegalArgumentException("Invalid value for hitScoreThreshold, must > 0 and <= 100, current is " + mThresholdOfHitScore);
         }
 
         ta.recycle();
@@ -642,7 +650,7 @@ public class PitchView extends View {
 
     private void assureAnimationForPitchPivot(double scoreAfterNormalization) {
         // Animation for particle
-        if (scoreAfterNormalization >= 0.7) {
+        if (scoreAfterNormalization >= mThresholdOfHitScore) {
             if (mParticleSystem != null) {
                 float value = getYForPitchPivot();
                 // It works with an emision range

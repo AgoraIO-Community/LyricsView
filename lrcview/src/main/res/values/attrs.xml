@@ -28,5 +28,6 @@
         <attr name="pitchDoneTextColor" format="reference|color" />
         <attr name="pitchInitialScore" format="float" />
         <attr name="minimumScore" format="float" />
+        <attr name="hitScoreThreshold" format="float" />
     </declare-styleable>
 </resources>
