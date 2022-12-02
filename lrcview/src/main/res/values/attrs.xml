@@ -29,5 +29,6 @@
         <attr name="pitchInitialScore" format="float" />
         <attr name="minimumScore" format="float" />
         <attr name="hitScoreThreshold" format="float" />
+        <attr name="offPitchTimeThreshold" format="integer" />
     </declare-styleable>
 </resources>

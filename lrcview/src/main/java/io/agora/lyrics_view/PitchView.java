@@ -103,6 +103,8 @@ public class PitchView extends View {
 
     private float mThresholdOfHitScore;
 
+    private long mThresholdOfOffPitchTime;
+
     // 音调及分数回调
     private OnSingScoreListener onSingScoreListener;
 
@@ -155,6 +157,12 @@ public class PitchView extends View {
 
         if (mThresholdOfHitScore <= 0 || mThresholdOfHitScore > 1.0f) {
             throw new IllegalArgumentException("Invalid value for hitScoreThreshold, must > 0 and <= 100, current is " + mThresholdOfHitScore);
+        }
+
+        mThresholdOfOffPitchTime = ta.getInt(R.styleable.PitchView_offPitchTimeThreshold, 1000);
+
+        if (mThresholdOfOffPitchTime <= 0 || mThresholdOfOffPitchTime > 5000f) {
+            throw new IllegalArgumentException("Invalid value for offPitchTimeThreshold(time of off pitch), must > 0 and <= 5000, current is " + mThresholdOfOffPitchTime);
         }
 
         ta.recycle();
@@ -593,7 +601,7 @@ public class PitchView extends View {
         @Override
         public void run() {
             assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
-            ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(400).start(); // Decrease the local pitch pivot
+            ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
         }
     };
 
@@ -608,7 +616,7 @@ public class PitchView extends View {
         }
 
         if (pitch == 0 || pitch < pitchMin || pitch > pitchMax) {
-            mHandler.postDelayed(mRemoveAnimationCallback, 400);
+            mHandler.postDelayed(mRemoveAnimationCallback, mThresholdOfOffPitchTime);
             return;
         }
 
