@@ -1,7 +1,5 @@
 package io.agora.lyrics_view;
 
-import android.util.Log;
-
 public class VoicePitchChanger {
 
     double offset = 0.0F;
@@ -31,7 +29,7 @@ public class VoicePitchChanger {
             offset = Math.min(offset, wordMaxPitch * 0.4);
         }
 
-        return voicePitch + offset;
+        return Math.min(voicePitch + offset, wordMaxPitch);
     }
 
     void reset() {

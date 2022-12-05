@@ -26,6 +26,12 @@ public class LrcEntryData {
         public float highlightOffset = -1;
         public float highlightWidth = -1;
 
+        public void resetHighlight() {
+            this.highlight = false;
+            this.highlightOffset = -1;
+            this.highlightWidth = -1;
+        }
+
         public long getDuration() {
             return end - begin;
         }

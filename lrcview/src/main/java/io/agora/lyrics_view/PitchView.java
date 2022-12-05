@@ -365,6 +365,7 @@ public class PitchView extends View {
                 float endX = x + widthOfPitchStick;
 
                 if (endX <= 0) {
+                    tone.resetHighlight();
                     continue;
                 }
 
@@ -635,7 +636,8 @@ public class PitchView extends View {
         double scoreAfterNormalization = calculateScore(mCurrentTime, pitchToTone(pitch), pitchToTone(currentOriginalPitch));
 
         if (System.currentTimeMillis() - lastCurrentTs > 200) {
-            ObjectAnimator.ofFloat(this, "mLocalPitch", this.mLocalPitch, pitch).setDuration(80).start();
+            int duration = (this.mLocalPitch == 0 && pitch > 0) ? 20 : 80;
+            ObjectAnimator.ofFloat(this, "mLocalPitch", this.mLocalPitch, pitch).setDuration(duration).start();
             lastCurrentTs = System.currentTimeMillis();
 
             assureAnimationForPitchPivot(scoreAfterNormalization);
@@ -773,6 +775,16 @@ public class PitchView extends View {
     public void updateTime(long time) {
         if (lrcData == null) {
             return;
+        }
+
+        if (this.mCurrentTime != 0 && Math.abs(time - this.mCurrentTime) >= 500) { // Workaround(We assume this as dragging happened)
+            for (int lineIndex = 0; lineIndex < lrcData.entrys.size(); lineIndex++) {
+                LrcEntryData line = lrcData.entrys.get(lineIndex);
+                for (int toneIndex = 0; toneIndex < line.tones.size(); toneIndex++) {
+                    LrcEntryData.Tone tone = line.tones.get(toneIndex);
+                    tone.resetHighlight();
+                }
+            }
         }
 
         this.mCurrentTime = time;
