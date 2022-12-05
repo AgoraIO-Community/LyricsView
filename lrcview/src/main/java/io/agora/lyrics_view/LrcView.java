@@ -207,14 +207,11 @@ public class LrcView extends View {
         mTotalDuration = duration;
 
         if (lrcData != null && lrcData.entrys != null && !lrcData.entrys.isEmpty()) {
-            List<LrcEntryData.Tone> tone = lrcData.entrys.get(lrcData.entrys.size() - 1).tones;
-            if (tone != null && !tone.isEmpty()) {
-                tone.get(tone.size() - 1).end = mTotalDuration; // update the last note timestamp
-            }
+            List<LrcEntryData.Tone> tones = lrcData.entrys.get(lrcData.entrys.size() - 1).tones; // Last line
 
-            tone = lrcData.entrys.get(0).tones;
-            if (tone != null && !tone.isEmpty()) {
-                mTimestampForFirstTone = tone.get(0).begin; // find the first tone timestamp
+            tones = lrcData.entrys.get(0).tones; // First line
+            if (tones != null && !tones.isEmpty()) {
+                mTimestampForFirstTone = tones.get(0).begin; // find the first tone timestamp
             }
         }
     }
