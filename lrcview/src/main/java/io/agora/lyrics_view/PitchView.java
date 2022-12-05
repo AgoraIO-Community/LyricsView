@@ -627,6 +627,7 @@ public class PitchView extends View {
         }
 
         if (pitch == 0 || pitch < pitchMin || pitch > pitchMax) {
+            assureAnimationForPitchPivot(0);
             mHandler.postDelayed(mRemoveAnimationCallback, mThresholdOfOffPitchTime);
             return;
         }
