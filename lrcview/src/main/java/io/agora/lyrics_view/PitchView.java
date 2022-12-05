@@ -218,6 +218,16 @@ public class PitchView extends View {
         }
     }
 
+    private final RectF mRectFAvoidingNewObject = new RectF(0, 0, 0, 0);
+
+    private RectF buildRectF(float left, float top, float right, float bottom) {
+        mRectFAvoidingNewObject.left = left;
+        mRectFAvoidingNewObject.top = top;
+        mRectFAvoidingNewObject.right = right;
+        mRectFAvoidingNewObject.bottom = bottom;
+        return mRectFAvoidingNewObject;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -395,18 +405,18 @@ public class PitchView extends View {
                 }
 
                 if (tone.highlight) {
-                    if (toneIndex == 1 && !tones.get(0).highlight) { // Workaround, always mark first tone highlighted if the second is highlighte
+                    if (toneIndex == 1 && !tones.get(0).highlight) { // Workaround, always mark first tone highlighted if the second is highlighted
                         tones.get(0).highlight = true;
                     }
 
                     if (x >= dotPointX) {
-                        RectF rNormal = new RectF(x, y, endX, y + pitchStickHeight);
+                        RectF rNormal = buildRectF(x, y, endX, y + pitchStickHeight);
                         canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
                     } else if (x < dotPointX && endX > dotPointX) {
-                        RectF rNormalRightHalf = new RectF(dotPointX, y, endX, y + pitchStickHeight);
+                        RectF rNormalRightHalf = buildRectF(dotPointX, y, endX, y + pitchStickHeight);
                         canvas.drawRoundRect(rNormalRightHalf, 8, 8, mPitchStickLinearGradientPaint);
 
-                        RectF rNormalLeftHalf = new RectF(x, y, dotPointX, y + pitchStickHeight);
+                        RectF rNormalLeftHalf = buildRectF(x, y, dotPointX, y + pitchStickHeight);
                         canvas.drawRoundRect(rNormalLeftHalf, 8, 8, mPitchStickLinearGradientPaint);
 
                         if (tone.highlightOffset >= 0) { // Partially draw
@@ -419,7 +429,7 @@ public class PitchView extends View {
                                 }
                             }
 
-                            RectF rHighlight = new RectF(highlightStartX, y, highlightEndX, y + pitchStickHeight);
+                            RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + pitchStickHeight);
                             if (tone.highlightOffset <= 0 || highlightEndX == dotPointX) {
                                 canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
                             } else {
@@ -428,7 +438,7 @@ public class PitchView extends View {
                             }
                         }
                     } else if (endX <= dotPointX) {
-                        RectF rNormal = new RectF(x, y, endX, y + pitchStickHeight);
+                        RectF rNormal = buildRectF(x, y, endX, y + pitchStickHeight);
                         canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
 
                         if (tone.highlightOffset >= 0) { // Partially draw
@@ -438,7 +448,7 @@ public class PitchView extends View {
                                 highlightEndX = x + tone.highlightOffset + tone.highlightWidth;
                             }
 
-                            RectF rHighlight = new RectF(highlightStartX, y, highlightEndX, y + pitchStickHeight);
+                            RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + pitchStickHeight);
                             if (tone.highlightOffset <= 0 && tone.highlightWidth <= 0 || highlightEndX == endX) {
                                 canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
                             } else {
@@ -449,7 +459,7 @@ public class PitchView extends View {
                     }
                     fineTuneTheHighlightAnimation(endX);
                 } else {
-                    RectF rNormal = new RectF(x, y, endX, y + pitchStickHeight);
+                    RectF rNormal = buildRectF(x, y, endX, y + pitchStickHeight);
                     canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
                     if (DEBUG) {
                         mHighlightPitchStickLinearGradientPaint.setTextSize(28);
