@@ -14,7 +14,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -202,7 +201,7 @@ public class PitchView extends View {
 
             mTailAnimationLinearGradient = new LinearGradient(dotPointX, 0, dotPointX - 12, 0, startColor, Color.YELLOW, Shader.TileMode.CLAMP);
 
-            invalidate();
+            tryInvalidate();
 
             mHandler.postDelayed(() -> {
                 // Create a particle system and start emiting
@@ -546,7 +545,7 @@ public class PitchView extends View {
             }
         }
 
-        invalidate();
+        tryInvalidate();
     }
 
     private long mTimestampForFirstTone = -1;
@@ -558,7 +557,17 @@ public class PitchView extends View {
 
     private void setMLocalPitch(float localPitch) {
         this.mLocalPitch = localPitch;
+    }
+
+    private long mLastViewInvalidateTs;
+
+    private void tryInvalidate() {
+        if (System.currentTimeMillis() - mLastViewInvalidateTs <= 16) {
+            return;
+        }
+        // Try to avoid too many `invalidate` operations, it is expensive
         invalidate();
+        mLastViewInvalidateTs = System.currentTimeMillis();
     }
 
     /**
@@ -807,7 +816,7 @@ public class PitchView extends View {
         }
         updateScore(time);
 
-        invalidate();
+        tryInvalidate();
     }
 
     @Override
