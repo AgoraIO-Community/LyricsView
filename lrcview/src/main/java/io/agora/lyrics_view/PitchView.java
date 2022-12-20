@@ -653,7 +653,7 @@ public class PitchView extends View {
             pitch = (float) mVoicePitchChanger.handlePitch(currentOriginalPitch, pitch, pitchMax);
         }
 
-        double scoreAfterNormalization = calculateScore(mCurrentTime, pitchToTone(pitch), pitchToTone(currentOriginalPitch));
+        double scoreAfterNormalization = calculateScore2(mCurrentTime, pitchToTone(pitch), pitchToTone(currentOriginalPitch));
 
         if (System.currentTimeMillis() - lastCurrentTs > 200) {
             int duration = (this.mLocalPitch == 0 && pitch > 0) ? 20 : 80;
@@ -671,6 +671,42 @@ public class PitchView extends View {
         double score = 1 - Math.abs(desiredTone - singerTone) / desiredTone;
         // 得分线以下的分数归零
         score = score >= minimumScorePerTone ? score : 0f;
+        scoreAfterNormalization = score;
+        // 百分制分数 * 每句固定分数
+        score *= scorePerSentence;
+        everyPitchList.put(currentTime, score);
+        return scoreAfterNormalization;
+    }
+
+    private float mScoreLevel = 10; // 0~100
+    private float mCompensationOffset = 0; // -100~100
+
+    public float getScoreLevel() {
+        return this.mScoreLevel;
+    }
+
+    public float getScoreCompensationOffset() {
+        return this.mCompensationOffset;
+    }
+
+    public void setScoreLevel(float level) {
+        this.mScoreLevel = level;
+    }
+
+    public void setScoreCompensationOffset(float offset) {
+        this.mCompensationOffset = offset;
+    }
+
+    private double calculateScore2(long currentTime, double tone, double tone_ref) {
+        double scoreAfterNormalization; // [0, 1]
+
+        double score = 1 - (mScoreLevel * Math.abs(tone - tone_ref)) / 100 + mCompensationOffset / 100;
+
+        // 得分线以下的分数归零
+        score = score >= minimumScorePerTone ? score : 0f;
+        // 得分太大的置一
+        score = score > 1 ? 1 : score;
+
         scoreAfterNormalization = score;
         // 百分制分数 * 每句固定分数
         score *= scorePerSentence;
