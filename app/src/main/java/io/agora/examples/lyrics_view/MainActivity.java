@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.AndroidRuntimeException;
+import android.util.Log;
 import android.view.View;
 
 import java.io.ByteArrayOutputStream;
@@ -12,18 +13,27 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.agora.examples.utils.ResourceHelper;
 import io.agora.lyrics_view.DownloadManager;
-import io.agora.lyrics_view.LrcLoadUtils;
-import io.agora.lyrics_view.LrcView;
-import io.agora.lyrics_view.bean.LrcData;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, LrcView.OnLyricsSeekListener {
+import io.agora.lyrics_view.v11.KaraokeEvent;
+import io.agora.lyrics_view.v11.KaraokeView;
+import io.agora.lyrics_view.v11.LyricsView;
+import io.agora.lyrics_view.v11.ScoringView;
+import io.agora.lyrics_view.v11.model.LyricsLineModel;
+import io.agora.lyrics_view.v11.model.LyricsModel;
 
-    private LrcView lrcView;
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private KaraokeView mKaraokeView;
+
     private int mCurrentIndex = 0;
 
     @Override
@@ -31,25 +41,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.clear_cache).setOnClickListener(this);
-        lrcView = findViewById(R.id.lrc_view);
-        lrcView.setSeekListener(this);
+        findViewById(R.id.play).setOnClickListener(this);
+        LyricsView lyricsView = findViewById(R.id.lrc_view);
+        ScoringView scoringView = findViewById(R.id.scoring_view);
+        mKaraokeView = new KaraokeView(lyricsView, scoringView);
 
-        loadLrc(LyricsResourcePool.LRC_SAMPLE_1);
+        mKaraokeView.setKaraokeEvent(new KaraokeEvent() {
+            @Override
+            public void onDragTo(KaraokeView view, long position) {
+                mKaraokeView.setProgress(position);
+            }
+
+            @Override
+            public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int index, int total) {
+
+            }
+        });
+
+        loadTheLyrics(LyricsResourcePool.LRC_SAMPLE_1);
     }
 
-    private void loadLrc(String lrcSample) {
-        lrcView.reset();
+    private void loadTheLyrics(String lrcSample) {
+        mKaraokeView.reset();
         if (lrcSample.startsWith("https://") || lrcSample.startsWith("http://")) {
             DownloadManager.getInstance().download(this, lrcSample, file -> {
                 file = extractFromZipFileIfPossible(file);
-                LrcData lrcData = LrcLoadUtils.parse(file);
-                lrcView.setLrcData(lrcData);
+                LyricsModel model = KaraokeView.parseLyricsData(file);
+                mKaraokeView.setLyricsData(model);
             }, Throwable::printStackTrace);
         } else {
             File file = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcSample);
             file = extractFromZipFileIfPossible(file);
-            LrcData lrcData = LrcLoadUtils.parse(file);
-            lrcView.setLrcData(lrcData);
+            LyricsModel model = KaraokeView.parseLyricsData(file);
+            mKaraokeView.setLyricsData(model);
         }
     }
 
@@ -107,30 +131,67 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return realFile;
     }
 
-    @Override
-    public void onClick(View view) {
+    private void doClearCacheAndLoadTheLyrics() {
         DownloadManager.getInstance().clearCache(this);
 
-        loadLrc(LyricsResourcePool.asList().get(mCurrentIndex));
+        loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex));
 
         mCurrentIndex++;
+
         if (mCurrentIndex >= LyricsResourcePool.asList().size()) {
             mCurrentIndex = 0;
         }
     }
 
-    @Override
-    public void onProgressChanged(long time) {
-        lrcView.updateTime(time + 1000);
+    private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
+
+    private long mCurrentPosition = 0;
+    private ScheduledFuture mFuture;
+
+    private void doMockPlay() {
+        mCurrentPosition = 0;
+        if (mFuture != null) {
+            mFuture.cancel(true);
+        }
+
+        mFuture = mExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                mCurrentPosition = mCurrentPosition + 20;
+
+                if (mCurrentPosition > 120 * 1000) {
+                    long lastPosition = mCurrentPosition;
+                    mCurrentPosition = 0;
+                    if (mFuture != null) {
+                        mFuture.cancel(true);
+                    }
+                    Log.d("HAI_GUO", "Finished at " + lastPosition);
+                    return;
+                }
+
+                float pitch = (float) Math.random() * 200;
+                Log.d("HAI_GUO", mCurrentPosition + " " + pitch + " " + Thread.currentThread());
+
+                mKaraokeView.setProgress(mCurrentPosition);
+                Log.d("HAI_GUO", mCurrentPosition + " MID " + pitch);
+//                mKaraokeView.setPitch(pitch);
+                Log.d("HAI_GUO", mCurrentPosition + " END " + pitch);
+            }
+        }, 0, 20, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public void onStartTrackingTouch() {
+    public void onClick(View view) {
 
-    }
-
-    @Override
-    public void onStopTrackingTouch() {
-
+        switch (view.getId()) {
+            case R.id.clear_cache:
+                doClearCacheAndLoadTheLyrics();
+                break;
+            case R.id.play:
+                doMockPlay();
+                break;
+            default:
+                break;
+        }
     }
 }

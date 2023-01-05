@@ -1,4 +1,4 @@
-package io.agora.lyrics_view;
+package io.agora.lyrics_view.v11;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -21,8 +21,9 @@ import androidx.annotation.MainThread;
 
 import java.util.List;
 
-import io.agora.lyrics_view.bean.LrcData;
-import io.agora.lyrics_view.bean.LrcEntryData;
+import io.agora.lyrics_view.R;
+import io.agora.lyrics_view.v11.model.LyricsLineModel;
+import io.agora.lyrics_view.v11.model.LyricsModel;
 
 /**
  * 歌词视图
@@ -32,10 +33,10 @@ import io.agora.lyrics_view.bean.LrcEntryData;
  * @date 2021/7/6
  */
 @SuppressLint("StaticFieldLeak")
-public class LrcView extends View {
+public class LyricsView extends View {
     private static final String TAG = "LrcView";
 
-    private static volatile LrcData lrcData;
+    private static volatile LyricsModel lrcData;
 
     private final TextPaint mPaintFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint mPaintBG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
@@ -56,7 +57,7 @@ public class LrcView extends View {
     /**
      * 歌词显示位置，靠左/居中/靠右
      */
-    private LrcEntry.Gravity mTextGravity;
+    private LyricsLineDrawerHelper.Gravity mTextGravity;
 
     private boolean mNewLine = true;
 
@@ -98,41 +99,41 @@ public class LrcView extends View {
         }
     };
 
-    public LrcView(Context context) {
+    public LyricsView(Context context) {
         this(context, null);
     }
 
-    public LrcView(Context context, AttributeSet attrs) {
+    public LyricsView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public LrcView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public LyricsView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(attrs);
     }
 
     private void init(AttributeSet attrs) {
-        TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.LrcView);
-        mCurrentTextSize = ta.getDimension(R.styleable.LrcView_lrcTextSize, getResources().getDimension(R.dimen.lrc_text_size));
-        mNormalTextSize = ta.getDimension(R.styleable.LrcView_lrcNormalTextSize, getResources().getDimension(R.dimen.lrc_text_size));
+        TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.LyricsView);
+        mCurrentTextSize = ta.getDimension(R.styleable.LyricsView_lrcTextSize, getResources().getDimension(R.dimen.lrc_text_size));
+        mNormalTextSize = ta.getDimension(R.styleable.LyricsView_lrcNormalTextSize, getResources().getDimension(R.dimen.lrc_text_size));
         if (mNormalTextSize == 0) {
             mNormalTextSize = mCurrentTextSize;
         }
 
-        mDividerHeight = ta.getDimension(R.styleable.LrcView_lrcDividerHeight, getResources().getDimension(R.dimen.lrc_divider_height));
-        mMarginTop = ta.getDimension(R.styleable.LrcView_lrcMarginTop, getResources().getDimension(R.dimen.lrc_margin_top));
-        mNormalTextColor = ta.getColor(R.styleable.LrcView_lrcNormalTextColor, getResources().getColor(R.color.lrc_normal_text_color));
-        mPastTextColor = ta.getColor(R.styleable.LrcView_lrcPastTextColor, getResources().getColor(R.color.lrc_normal_text_color));
-        mFutureTextColor = ta.getColor(R.styleable.LrcView_lrcFutureTextColor, getResources().getColor(R.color.lrc_normal_text_color));
-        mCurrentTextColor = ta.getColor(R.styleable.LrcView_lrcCurrentTextColor, getResources().getColor(R.color.lrc_current_text_color));
-        mDefaultLabel = ta.getString(R.styleable.LrcView_lrcLabel);
+        mDividerHeight = ta.getDimension(R.styleable.LyricsView_lrcDividerHeight, getResources().getDimension(R.dimen.lrc_divider_height));
+        mMarginTop = ta.getDimension(R.styleable.LyricsView_lrcMarginTop, getResources().getDimension(R.dimen.lrc_margin_top));
+        mNormalTextColor = ta.getColor(R.styleable.LyricsView_lrcNormalTextColor, getResources().getColor(R.color.lrc_normal_text_color));
+        mPastTextColor = ta.getColor(R.styleable.LyricsView_lrcPastTextColor, getResources().getColor(R.color.lrc_normal_text_color));
+        mFutureTextColor = ta.getColor(R.styleable.LyricsView_lrcFutureTextColor, getResources().getColor(R.color.lrc_normal_text_color));
+        mCurrentTextColor = ta.getColor(R.styleable.LyricsView_lrcCurrentTextColor, getResources().getColor(R.color.lrc_current_text_color));
+        mDefaultLabel = ta.getString(R.styleable.LyricsView_lrcLabel);
         mDefaultLabel = TextUtils.isEmpty(mDefaultLabel) ? getContext().getString(R.string.lrc_label) : mDefaultLabel;
-        int lrcTextGravity = ta.getInteger(R.styleable.LrcView_lrcTextGravity, 0);
-        mTextGravity = LrcEntry.Gravity.parse(lrcTextGravity);
-        enableDrag = ta.getBoolean(R.styleable.LrcView_lrcEnableDrag, true);
+        int lrcTextGravity = ta.getInteger(R.styleable.LyricsView_lrcTextGravity, 0);
+        mTextGravity = LyricsLineDrawerHelper.Gravity.parse(lrcTextGravity);
+        enableDrag = ta.getBoolean(R.styleable.LyricsView_lrcEnableDrag, true);
 
-        mFirstToneStartIndicatorPaddingTop = ta.getDimension(R.styleable.LrcView_firstToneStartIndicatorPaddingTop, getResources().getDimension(R.dimen.first_tone_start_indicator_padding_top));
-        mFirstToneStartIndicatorRadius = ta.getDimension(R.styleable.LrcView_firstToneStartIndicatorRadius, getResources().getDimension(R.dimen.first_tone_start_indicator_radius));
+        mFirstToneStartIndicatorPaddingTop = ta.getDimension(R.styleable.LyricsView_firstToneStartIndicatorPaddingTop, getResources().getDimension(R.dimen.first_tone_start_indicator_padding_top));
+        mFirstToneStartIndicatorRadius = ta.getDimension(R.styleable.LyricsView_firstToneStartIndicatorRadius, getResources().getDimension(R.dimen.first_tone_start_indicator_radius));
 
         ta.recycle();
 
@@ -165,11 +166,11 @@ public class LrcView extends View {
             return super.onTouchEvent(event);
         }
 
-        if (lrcData == null || lrcData.entrys == null || lrcData.entrys.isEmpty()) {
+        if (lrcData == null || lrcData.lines == null || lrcData.lines.isEmpty()) {
             return super.onTouchEvent(event);
         }
 
-        if (targetIndex < 0 || lrcData.entrys.size() <= targetIndex) {
+        if (targetIndex < 0 || lrcData.lines.size() <= targetIndex) {
             return super.onTouchEvent(event);
         }
 
@@ -178,7 +179,7 @@ public class LrcView extends View {
             mNewLine = true;
             mRectClip.setEmpty();
 
-            LrcEntryData mIEntry = lrcData.entrys.get(targetIndex);
+            LyricsLineModel mIEntry = lrcData.lines.get(targetIndex);
             updateTime(mIEntry.getStartTime());
 
             if (mOnSeekActionListener != null) {
@@ -206,10 +207,10 @@ public class LrcView extends View {
     public synchronized void setTotalDuration(long duration) {
         mTotalDuration = duration;
 
-        if (lrcData != null && lrcData.entrys != null && !lrcData.entrys.isEmpty()) {
-            List<LrcEntryData.Tone> tones = lrcData.entrys.get(lrcData.entrys.size() - 1).tones; // Last line
+        if (lrcData != null && lrcData.lines != null && !lrcData.lines.isEmpty()) {
+            List<LyricsLineModel.Tone> tones = lrcData.lines.get(lrcData.lines.size() - 1).tones; // Last line
 
-            tones = lrcData.entrys.get(0).tones; // First line
+            tones = lrcData.lines.get(0).tones; // First line
             if (tones != null && !tones.isEmpty()) {
                 mTimestampForFirstTone = tones.get(0).begin; // find the first tone timestamp
             }
@@ -222,7 +223,7 @@ public class LrcView extends View {
      * setLrcData(LrcData data) 以及 setTotalDuration(long duration) 调用完毕之后可以通过该方法查询
      *
      * @return mTimestampForFirstTone <= 0 通常表示歌词设置失败或者歌词内容不正确没有解析出来
-     *         mTimestampForFirstTone > 0 表示歌曲第一句开始时间
+     * mTimestampForFirstTone > 0 表示歌曲第一句开始时间
      */
     public double getFirstToneBeginPosition() {
         return mTimestampForFirstTone;
@@ -280,7 +281,7 @@ public class LrcView extends View {
      * @return true，如果歌词有效，否则 false
      */
     private boolean hasLrc() {
-        return lrcData != null && lrcData.entrys != null && !lrcData.entrys.isEmpty();
+        return lrcData != null && lrcData.lines != null && !lrcData.lines.isEmpty();
     }
 
     /**
@@ -356,7 +357,7 @@ public class LrcView extends View {
         mCanvasFG = new Canvas(mBitmapFG);
     }
 
-    private LrcEntry curLrcEntry;
+    private LyricsLineDrawerHelper curLrcEntry;
     private int targetIndex = 0;
 
     @Override
@@ -394,10 +395,10 @@ public class LrcView extends View {
             mBitmapFG.eraseColor(0);
             mPaintBG.setColor(mNormalTextColor);
 
-            LrcEntry mLrcEntry;
+            LyricsLineDrawerHelper mLrcEntry;
             float y = 0;
             float yReal;
-            for (int i = 0; i < lrcData.entrys.size(); i++) {
+            for (int i = 0; i < lrcData.lines.size(); i++) {
                 if (i == mCurrentLine) {
                     mPaintBG.setTextSize(mCurrentTextSize);
                 } else if (i < mCurrentLine) {
@@ -408,8 +409,8 @@ public class LrcView extends View {
                     mPaintBG.setTextSize(mNormalTextSize);
                 }
 
-                LrcEntryData mIEntry = lrcData.entrys.get(i);
-                mLrcEntry = new LrcEntry(mIEntry, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
+                LyricsLineModel mIEntry = lrcData.lines.get(i);
+                mLrcEntry = new LyricsLineDrawerHelper(mIEntry, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
 
                 yReal = y + mOffset;
                 if (i == 0 && yReal > (centerY - getPaddingTop() - (mLrcEntry.getHeight() / 2F))) {
@@ -464,19 +465,19 @@ public class LrcView extends View {
 
             canvas.drawLine(0, centerY, getWidth(), centerY + 1, mPaintFG);
         } else {
-            LrcEntryData cur = lrcData.entrys.get(mCurrentLine);
+            LyricsLineModel cur = lrcData.lines.get(mCurrentLine);
             if (mNewLine) {
                 mPaintBG.setColor(mNormalTextColor);
                 mPaintBG.setTextSize(mCurrentTextSize);
 
-                curLrcEntry = new LrcEntry(cur, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
+                curLrcEntry = new LyricsLineDrawerHelper(cur, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
 
                 // clear bitmap
                 if (mBitmapBG != null) {
                     mBitmapBG.eraseColor(0);
                 }
 
-                if (mCurrentLine < 0 || mCurrentLine >= lrcData.entrys.size()) {
+                if (mCurrentLine < 0 || mCurrentLine >= lrcData.lines.size()) {
                     mNewLine = false;
                     return;
                 }
@@ -526,8 +527,8 @@ public class LrcView extends View {
 
         float curPointY = (getLrcHeight() - curLrcEntry.getHeight()) / 2F + mMarginTop;
         float y;
-        LrcEntryData line;
-        LrcEntry mLrcEntry;
+        LyricsLineModel line;
+        LyricsLineDrawerHelper mLrcEntry;
         mPaintBG.setTextSize(mNormalTextSize);
         mPaintBG.setColor(mPastTextColor);
 
@@ -535,8 +536,8 @@ public class LrcView extends View {
         mCanvasBG.translate(0, curPointY);
 
         for (int i = mCurrentLine - 1; i >= 0; i--) {
-            line = lrcData.entrys.get(i);
-            mLrcEntry = new LrcEntry(line, mPaintBG, getLrcWidth(), mTextGravity);
+            line = lrcData.lines.get(i);
+            mLrcEntry = new LyricsLineDrawerHelper(line, mPaintBG, getLrcWidth(), mTextGravity);
 
             mOffset = mOffset - mLrcEntry.getHeight() - mDividerHeight;
 
@@ -572,17 +573,17 @@ public class LrcView extends View {
 
         float curPointY = (getLrcHeight() + curLrcEntry.getHeight()) / 2F + mDividerHeight + mMarginTop;
         float y;
-        LrcEntryData data;
-        LrcEntry mLrcEntry;
+        LyricsLineModel data;
+        LyricsLineDrawerHelper mLrcEntry;
         mPaintBG.setTextSize(mNormalTextSize);
         mPaintBG.setColor(mFutureTextColor);
 
         mCanvasBG.save();
         mCanvasBG.translate(0, curPointY);
 
-        for (int i = mCurrentLine + 1; i < lrcData.entrys.size(); i++) {
-            data = lrcData.entrys.get(i);
-            mLrcEntry = new LrcEntry(data, mPaintBG, getLrcWidth(), mTextGravity);
+        for (int i = mCurrentLine + 1; i < lrcData.lines.size(); i++) {
+            data = lrcData.lines.get(i);
+            mLrcEntry = new LyricsLineDrawerHelper(data, mPaintBG, getLrcWidth(), mTextGravity);
 
             if (curPointY + mLrcEntry.getHeight() > getLrcHeight())
                 break;
@@ -622,7 +623,7 @@ public class LrcView extends View {
         }
     }
 
-    public void setLrcData(LrcData data) {
+    public void setLrcData(LyricsModel data) {
         resetInternal();
 
         lrcData = data;
@@ -654,15 +655,15 @@ public class LrcView extends View {
      */
     private int findShowLine(long time) {
         int left = 0;
-        int right = lrcData.entrys.size();
+        int right = lrcData.lines.size();
         while (left <= right) {
             int middle = (left + right) / 2;
-            long middleTime = lrcData.entrys.get(middle).getStartTime();
+            long middleTime = lrcData.lines.get(middle).getStartTime();
 
             if (time < middleTime) {
                 right = middle - 1;
             } else {
-                if (middle + 1 >= lrcData.entrys.size() || time < lrcData.entrys.get(middle + 1).getStartTime()) {
+                if (middle + 1 >= lrcData.lines.size() || time < lrcData.lines.get(middle + 1).getStartTime()) {
                     return middle;
                 }
 

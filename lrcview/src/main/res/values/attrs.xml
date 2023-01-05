@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="LrcView">
+    <declare-styleable name="LyricsView">
         <attr name="firstToneStartIndicatorPaddingTop" format="dimension" />
         <attr name="firstToneStartIndicatorRadius" format="dimension" />
         <attr name="lrcMarginTop" format="dimension" />
@@ -20,7 +20,7 @@
         </attr>
     </declare-styleable>
 
-    <declare-styleable name="PitchView">
+    <declare-styleable name="ScoringView">
         <attr name="pitchIndicatorColor" format="reference|color" />
         <attr name="pitchIndicatorRadius" format="dimension" />
         <attr name="pitchStickHighlightColor" format="reference|color" />

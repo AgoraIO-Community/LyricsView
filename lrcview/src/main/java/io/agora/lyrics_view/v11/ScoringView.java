@@ -1,4 +1,4 @@
-package io.agora.lyrics_view;
+package io.agora.lyrics_view.v11;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -27,22 +28,23 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import io.agora.lyrics_view.bean.LrcData;
-import io.agora.lyrics_view.bean.LrcEntryData;
+import io.agora.lyrics_view.R;
+import io.agora.lyrics_view.v11.model.LyricsLineModel;
+import io.agora.lyrics_view.v11.model.LyricsModel;
 
 /**
- * 音调 View
+ * 激励，互动视图
  *
  * @author chenhengfei(Aslanchen)
  * @date 2021/08/04
  */
-public class PitchView extends View {
+public class ScoringView extends View {
 
     private static final boolean DEBUG = false;
 
     private static final float START_PERCENT = 0.4F;
 
-    private static volatile LrcData lrcData;
+    private static volatile LyricsModel lrcData;
     private Handler mHandler;
 
     private float movedPixelsPerMs = 0.4F; // 1ms 对应像素 px
@@ -108,21 +110,21 @@ public class PitchView extends View {
     private OnSingScoreListener onSingScoreListener;
 
     //<editor-fold desc="Init Related">
-    public PitchView(Context context) {
+    public ScoringView(Context context) {
         this(context, null);
     }
 
-    public PitchView(Context context, @Nullable AttributeSet attrs) {
+    public ScoringView(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public PitchView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public ScoringView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(attrs);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public PitchView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public ScoringView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(attrs);
     }
@@ -132,33 +134,33 @@ public class PitchView extends View {
             return;
         }
         this.mHandler = new Handler(Looper.myLooper());
-        TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.PitchView);
-        mLocalPitchIndicatorRadius = ta.getDimension(R.styleable.PitchView_pitchIndicatorRadius, getResources().getDimension(R.dimen.local_pitch_indicator_radius));
-        mLocalPitchIndicatorColor = ta.getColor(R.styleable.PitchView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
-        mInitialScore = ta.getFloat(R.styleable.PitchView_pitchInitialScore, 0f);
+        TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.ScoringView);
+        mLocalPitchIndicatorRadius = ta.getDimension(R.styleable.ScoringView_pitchIndicatorRadius, getResources().getDimension(R.dimen.local_pitch_indicator_radius));
+        mLocalPitchIndicatorColor = ta.getColor(R.styleable.ScoringView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
+        mInitialScore = ta.getFloat(R.styleable.ScoringView_pitchInitialScore, 0f);
 
         if (mInitialScore < 0) {
             throw new IllegalArgumentException("Invalid value for pitchInitialScore, must >= 0, current is " + mInitialScore);
         }
 
         mOriginPitchStickColor = getResources().getColor(R.color.lrc_normal_text_color);
-        mHighlightPitchStickColor = ta.getColor(R.styleable.PitchView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
+        mHighlightPitchStickColor = ta.getColor(R.styleable.ScoringView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
 
-        pitchStickHeight = ta.getDimension(R.styleable.PitchView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));
+        pitchStickHeight = ta.getDimension(R.styleable.ScoringView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));
 
-        minimumScorePerTone = ta.getFloat(R.styleable.PitchView_minimumScore, 40f) / 100;
+        minimumScorePerTone = ta.getFloat(R.styleable.ScoringView_minimumScore, 40f) / 100;
 
         if (minimumScorePerTone < 0 || minimumScorePerTone > 1.0f) {
             throw new IllegalArgumentException("Invalid value for minimumScore, must between 0 and 100, current is " + minimumScorePerTone);
         }
 
-        mThresholdOfHitScore = ta.getFloat(R.styleable.PitchView_hitScoreThreshold, 70f) / 100;
+        mThresholdOfHitScore = ta.getFloat(R.styleable.ScoringView_hitScoreThreshold, 70f) / 100;
 
         if (mThresholdOfHitScore <= 0 || mThresholdOfHitScore > 1.0f) {
             throw new IllegalArgumentException("Invalid value for hitScoreThreshold, must > 0 and <= 100, current is " + mThresholdOfHitScore);
         }
 
-        mThresholdOfOffPitchTime = ta.getInt(R.styleable.PitchView_offPitchTimeThreshold, 1000);
+        mThresholdOfOffPitchTime = ta.getInt(R.styleable.ScoringView_offPitchTimeThreshold, 1000);
 
         if (mThresholdOfOffPitchTime <= 0 || mThresholdOfOffPitchTime > 5000f) {
             throw new IllegalArgumentException("Invalid value for offPitchTimeThreshold(time of off pitch), must > 0 and <= 5000, current is " + mThresholdOfOffPitchTime);
@@ -174,11 +176,11 @@ public class PitchView extends View {
     }
 
     /**
-     * 绑定唱歌打分事件回调，用于接收唱歌过程中事件回调。具体事件参考 {@link PitchView.OnSingScoreListener}
+     * 绑定唱歌打分事件回调，用于接收唱歌过程中事件回调。具体事件参考 {@link OnSingScoreListener}
      *
      * @param onSingScoreListener
      */
-    public void setSingScoreListener(PitchView.OnSingScoreListener onSingScoreListener) {
+    public void setSingScoreListener(OnSingScoreListener onSingScoreListener) {
         this.onSingScoreListener = onSingScoreListener;
     }
 
@@ -306,14 +308,14 @@ public class PitchView extends View {
         mHighlightPitchStickLinearGradientPaint.setColor(mHighlightPitchStickColor);
         mHighlightPitchStickLinearGradientPaint.setAntiAlias(true);
 
-        if (lrcData == null || lrcData.entrys == null || lrcData.entrys.isEmpty()) {
+        if (lrcData == null || lrcData.lines == null || lrcData.lines.isEmpty()) {
             return;
         }
 
         float realPitchMax = pitchMax + 5;
         float realPitchMin = pitchMin - 5;
 
-        List<LrcEntryData> entrys = lrcData.entrys;
+        List<LyricsLineModel> entrys = lrcData.lines;
 
         float y;
         float widthOfPitchStick;
@@ -322,8 +324,8 @@ public class PitchView extends View {
         long preEntryEndTime = 0; // Not used so far
 
         for (int i = 0; i < entrys.size(); i++) {
-            LrcEntryData entry = lrcData.entrys.get(i);
-            List<LrcEntryData.Tone> tones = entry.tones;
+            LyricsLineModel entry = lrcData.lines.get(i);
+            List<LyricsLineModel.Tone> tones = entry.tones;
             if (tones == null || tones.isEmpty()) {
                 return;
             }
@@ -340,11 +342,11 @@ public class PitchView extends View {
                 // Get next entry
                 // If start for next is far away than 2 seconds
                 // stop the current animation now
-                long nextEntryStartTime = lrcData.entrys.get(i + 1).getStartTime();
+                long nextEntryStartTime = lrcData.lines.get(i + 1).getStartTime();
                 if ((nextEntryStartTime - entry.getEndTime() >= 2 * 1000) && this.mCurrentTime > entry.getEndTime() && this.mCurrentTime < nextEntryStartTime) { // Two seconds after this entry stop
                     assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
                     if (mTimestampForLastAnimationDecrease < 0 || this.mCurrentTime - mTimestampForLastAnimationDecrease > 4 * 1000) {
-                        ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
+                        ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
                         mTimestampForLastAnimationDecrease = this.mCurrentTime;
                     }
                 }
@@ -366,7 +368,7 @@ public class PitchView extends View {
             }
 
             for (int toneIndex = 0; toneIndex < tones.size(); toneIndex++) {
-                LrcEntryData.Tone tone = tones.get(toneIndex);
+                LyricsLineModel.Tone tone = tones.get(toneIndex);
 
                 pixelsAwayFromPilot = (tone.begin - this.mCurrentTime) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
                 x = dotPointX + pixelsAwayFromPilot;
@@ -498,7 +500,7 @@ public class PitchView extends View {
      *
      * @param data 歌词信息对象
      */
-    public void setLrcData(@Nullable LrcData data) {
+    public void setLrcData(@Nullable LyricsModel data) {
         lrcData = data;
         totalPitch = 0;
 
@@ -527,19 +529,19 @@ public class PitchView extends View {
             mVoicePitchChanger = new VoicePitchChanger();
         }
 
-        if (lrcData != null && lrcData.entrys != null && !lrcData.entrys.isEmpty()) {
-            lrcEndTime = lrcData.entrys.get(lrcData.entrys.size() - 1).getEndTime();
-            totalScore = scorePerSentence * lrcData.entrys.size() + mInitialScore;
+        if (lrcData != null && lrcData.lines != null && !lrcData.lines.isEmpty()) {
+            lrcEndTime = lrcData.lines.get(lrcData.lines.size() - 1).getEndTime();
+            totalScore = scorePerSentence * lrcData.lines.size() + mInitialScore;
 
-            for (LrcEntryData entry : lrcData.entrys) {
-                for (LrcEntryData.Tone tone : entry.tones) {
+            for (LyricsLineModel entry : lrcData.lines) {
+                for (LyricsLineModel.Tone tone : entry.tones) {
                     pitchMin = Math.min(pitchMin, tone.pitch);
                     pitchMax = Math.max(pitchMax, tone.pitch);
                     totalPitch++;
                 }
             }
 
-            List<LrcEntryData.Tone> tone = lrcData.entrys.get(0).tones;
+            List<LyricsLineModel.Tone> tone = lrcData.lines.get(0).tones;
             if (tone != null && !tone.isEmpty()) {
                 mTimestampForFirstTone = tone.get(0).begin; // find the first tone timestamp
             }
@@ -582,13 +584,13 @@ public class PitchView extends View {
         if (lrcData == null) return 0;
 
         float targetPitch = 0;
-        int entryCount = lrcData.entrys.size();
+        int entryCount = lrcData.lines.size();
         for (int i = 0; i < entryCount; i++) {
-            LrcEntryData entry = lrcData.entrys.get(i);
+            LyricsLineModel entry = lrcData.lines.get(i);
             if (time >= entry.getStartTime() && time <= entry.getEndTime()) { // 索引
                 int toneCount = entry.tones.size();
                 for (int j = 0; j < toneCount; j++) {
-                    LrcEntryData.Tone tone = entry.tones.get(j);
+                    LyricsLineModel.Tone tone = entry.tones.get(j);
                     if (time >= tone.begin && time <= tone.end) {
                         targetPitch = tone.pitch;
                         currentPitchStartTime = tone.begin;
@@ -621,7 +623,7 @@ public class PitchView extends View {
         @Override
         public void run() {
             assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
-            ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
+            ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
         }
     };
 
@@ -635,33 +637,44 @@ public class PitchView extends View {
             return;
         }
 
+        Log.d("HAI_GUO", "updateLocalPitch +++ " + pitch + " " + pitchMax + " " + pitchMin + " " + mCurrentOriginalPitch);
+
         if (pitch == 0 || pitch < pitchMin || pitch > pitchMax) {
             assureAnimationForPitchPivot(0);
+            Log.d("HAI_GUO", "updateLocalPitch not in");
             mHandler.postDelayed(mRemoveAnimationCallback, mThresholdOfOffPitchTime);
+            Log.d("HAI_GUO", "updateLocalPitch not in out");
             return;
         }
 
         float currentOriginalPitch = mCurrentOriginalPitch;
 
         if (currentOriginalPitch == 0) {
+            Log.d("HAI_GUO", "updateLocalPitch currentOriginalPitch 0");
             return;
         }
 
+        Log.d("HAI_GUO", "updateLocalPitch removeCallbacks +++");
         mHandler.removeCallbacks(mRemoveAnimationCallback);
+        Log.d("HAI_GUO", "updateLocalPitch removeCallbacks ---");
 
         if (mVoicePitchChanger != null) {
             pitch = (float) mVoicePitchChanger.handlePitch(currentOriginalPitch, pitch, pitchMax);
         }
 
+        Log.d("HAI_GUO", "updateLocalPitch calculateScore2 +++");
         double scoreAfterNormalization = calculateScore2(mCurrentTime, pitchToTone(pitch), pitchToTone(currentOriginalPitch));
+        Log.d("HAI_GUO", "updateLocalPitch calculateScore2 ---");
 
         if (System.currentTimeMillis() - lastCurrentTs > 200) {
             int duration = (this.mLocalPitch == 0 && pitch > 0) ? 20 : 80;
+            Log.d("HAI_GUO", "updateLocalPitch ofFloat +++");
             ObjectAnimator.ofFloat(this, "mLocalPitch", this.mLocalPitch, pitch).setDuration(duration).start();
             lastCurrentTs = System.currentTimeMillis();
-
+            Log.d("HAI_GUO", "updateLocalPitch ofFloat ---");
             assureAnimationForPitchPivot(scoreAfterNormalization);
         }
+        Log.d("HAI_GUO", "updateLocalPitch ---" + pitch);
     }
 
     private long lastCurrentTs = 0;
@@ -756,6 +769,8 @@ public class PitchView extends View {
         // 当前时间 >= 歌词结束时间
         boolean isThisSongOver = time >= lrcEndTime;
 
+        Log.d("HAI_GUO", "updateScore " + pushAll + " " + isThisSentenceOver + " " + isThisSongOver + " ts " + time + " " + !everyPitchList.isEmpty());
+
         if (pushAll || isThisSentenceOver || isThisSongOver) {
             if (!everyPitchList.isEmpty()) {
                 // 计算歌词当前句的分数 = 所有打分/分数个数
@@ -777,7 +792,7 @@ public class PitchView extends View {
                             } else {
                                 continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
                                 assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
-                                ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
+                                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
                             }
                         } else {
                             continuousZeroCount = 0;
@@ -802,7 +817,7 @@ public class PitchView extends View {
 
                 if (scoreThisTime == 0 && this.mLocalPitch != 0) {
                     assureAnimationForPitchPivot(0); // Force stop the animation when there is no new score for a long time(a full sentence)
-                    ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
+                    ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
                 }
             }
         }
@@ -834,10 +849,10 @@ public class PitchView extends View {
         }
 
         if (this.mCurrentTime != 0 && Math.abs(time - this.mCurrentTime) >= 500) { // Workaround(We assume this as dragging happened)
-            for (int lineIndex = 0; lineIndex < lrcData.entrys.size(); lineIndex++) {
-                LrcEntryData line = lrcData.entrys.get(lineIndex);
+            for (int lineIndex = 0; lineIndex < lrcData.lines.size(); lineIndex++) {
+                LyricsLineModel line = lrcData.lines.get(lineIndex);
                 for (int toneIndex = 0; toneIndex < line.tones.size(); toneIndex++) {
-                    LrcEntryData.Tone tone = line.tones.get(toneIndex);
+                    LyricsLineModel.Tone tone = line.tones.get(toneIndex);
                     tone.resetHighlight();
                 }
             }

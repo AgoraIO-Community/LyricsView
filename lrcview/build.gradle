@@ -2,13 +2,13 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 32
 
     defaultConfig {
         minSdkVersion 17
-        targetSdkVersion 31
-        versionCode 9
-        versionName "1.0.15"
+        targetSdkVersion 32
+        versionCode 10
+        versionName "1.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -31,6 +31,8 @@ android {
             withSourcesJar()
         }
     }
+
+    namespace 'io.agora.lyrics_view'
 
     libraryVariants.all { variant ->
         variant.outputs.all {
