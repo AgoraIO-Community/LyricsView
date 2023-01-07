@@ -60,6 +60,8 @@ public class PitchView extends View {
     private long currentPitchEndTime = -1;
     // 当前 Pitch 所在的句的结束时间
     private long currentEntryEndTime = -1;
+    // FIXME(HAI_GUO) Not very accurate for all the time
+    private boolean lastWord = false;
     // 当前在打分的所在句的结束时间
     private long lrcEndTime = 0;
     // 当前 时间的 Pitch，不断变化
@@ -595,6 +597,7 @@ public class PitchView extends View {
                         currentPitchEndTime = tone.end;
 
                         currentEntryEndTime = entry.getEndTime();
+                        lastWord = (tone.end == currentEntryEndTime);
                         break;
                     }
                 }
@@ -756,7 +759,7 @@ public class PitchView extends View {
         // 当前时间 >= 歌词结束时间
         boolean isThisSongOver = time >= lrcEndTime;
 
-        if (pushAll || isThisSentenceOver || isThisSongOver) {
+        if (pushAll || isThisSentenceOver || isThisSongOver || lastWord) {
             if (!everyPitchList.isEmpty()) {
                 // 计算歌词当前句的分数 = 所有打分/分数个数
                 double tempTotalScore = 0;

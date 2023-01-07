@@ -66,8 +66,8 @@ public class LrcEntryData {
         return first.begin;
     }
 
-    public long getEndTime(){
+    public long getEndTime() {
         if (tones == null || tones.isEmpty()) return 0;
-        else return tones.get(tones.size()-1).end;
+        else return tones.get(tones.size() - 1).end;
     }
 }
