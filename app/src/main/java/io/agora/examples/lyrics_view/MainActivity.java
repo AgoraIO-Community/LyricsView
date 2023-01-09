@@ -165,26 +165,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (mFuture != null) {
                         mFuture.cancel(true);
                     }
-                    Log.d("HAI_GUO", "Finished at " + lastPosition);
                     return;
                 }
 
                 float pitch = (float) Math.random() * 200;
-                Log.d("HAI_GUO", mCurrentPosition + " " + pitch + " " + Thread.currentThread());
 
                 mKaraokeView.setProgress(mCurrentPosition);
-                Log.d("HAI_GUO", mCurrentPosition + " MID " + pitch);
-//                mKaraokeView.setPitch(pitch);
-                Log.d("HAI_GUO", mCurrentPosition + " END " + pitch);
+                mKaraokeView.setPitch(pitch);
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void onClick(View view) {
-
         switch (view.getId()) {
             case R.id.clear_cache:
+                mCurrentPosition = 0; // Replay if already playing
                 doClearCacheAndLoadTheLyrics();
                 break;
             case R.id.play:

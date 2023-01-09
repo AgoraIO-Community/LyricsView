@@ -14,7 +14,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -64,6 +63,8 @@ public class ScoringView extends View {
     private long currentEntryEndTime = -1;
     // 当前在打分的所在句的结束时间
     private long lrcEndTime = 0;
+    // FIXME(HAI_GUO) Not very accurate for all the time
+    private boolean isLastWordForTheLine;
     // 当前 时间的 Pitch，不断变化
     private float mCurrentOriginalPitch = 0f;
 
@@ -597,6 +598,8 @@ public class ScoringView extends View {
                         currentPitchEndTime = tone.end;
 
                         currentEntryEndTime = entry.getEndTime();
+
+                        isLastWordForTheLine = (tone.end == currentEntryEndTime);
                         break;
                     }
                 }
@@ -637,47 +640,50 @@ public class ScoringView extends View {
             return;
         }
 
-        Log.d("HAI_GUO", "updateLocalPitch +++ " + pitch + " " + pitchMax + " " + pitchMin + " " + mCurrentOriginalPitch);
-
         if (pitch == 0 || pitch < pitchMin || pitch > pitchMax) {
             assureAnimationForPitchPivot(0);
-            Log.d("HAI_GUO", "updateLocalPitch not in");
             mHandler.postDelayed(mRemoveAnimationCallback, mThresholdOfOffPitchTime);
-            Log.d("HAI_GUO", "updateLocalPitch not in out");
             return;
         }
 
         float currentOriginalPitch = mCurrentOriginalPitch;
 
         if (currentOriginalPitch == 0) {
-            Log.d("HAI_GUO", "updateLocalPitch currentOriginalPitch 0");
             return;
         }
 
-        Log.d("HAI_GUO", "updateLocalPitch removeCallbacks +++");
         mHandler.removeCallbacks(mRemoveAnimationCallback);
-        Log.d("HAI_GUO", "updateLocalPitch removeCallbacks ---");
 
         if (mVoicePitchChanger != null) {
             pitch = (float) mVoicePitchChanger.handlePitch(currentOriginalPitch, pitch, pitchMax);
         }
 
-        Log.d("HAI_GUO", "updateLocalPitch calculateScore2 +++");
-        double scoreAfterNormalization = calculateScore2(mCurrentTime, pitchToTone(pitch), pitchToTone(currentOriginalPitch));
-        Log.d("HAI_GUO", "updateLocalPitch calculateScore2 ---");
+        final float finalPitch = pitch;
 
-        if (System.currentTimeMillis() - lastCurrentTs > 200) {
-            int duration = (this.mLocalPitch == 0 && pitch > 0) ? 20 : 80;
-            Log.d("HAI_GUO", "updateLocalPitch ofFloat +++");
-            ObjectAnimator.ofFloat(this, "mLocalPitch", this.mLocalPitch, pitch).setDuration(duration).start();
-            lastCurrentTs = System.currentTimeMillis();
-            Log.d("HAI_GUO", "updateLocalPitch ofFloat ---");
-            assureAnimationForPitchPivot(scoreAfterNormalization);
+        final double scoreAfterNormalization = calculateScore2(mCurrentTime, pitchToTone(pitch), pitchToTone(currentOriginalPitch));
+
+        if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    performPivotAnimationIfNecessary(finalPitch, scoreAfterNormalization);
+                }
+            });
+        } else {
+            performPivotAnimationIfNecessary(finalPitch, scoreAfterNormalization);
         }
-        Log.d("HAI_GUO", "updateLocalPitch ---" + pitch);
     }
 
     private long lastCurrentTs = 0;
+
+    private void performPivotAnimationIfNecessary(float pitch, double scoreAfterNormalization) {
+        if (System.currentTimeMillis() - lastCurrentTs > 200) {
+            int duration = (ScoringView.this.mLocalPitch == 0 && pitch > 0) ? 20 : 80;
+            ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, pitch).setDuration(duration).start();
+            lastCurrentTs = System.currentTimeMillis();
+            assureAnimationForPitchPivot(scoreAfterNormalization);
+        }
+    }
 
     private double calculateScore(long currentTime, double singerTone, double desiredTone) {
         double scoreAfterNormalization; // [0, 1]
@@ -752,6 +758,26 @@ public class ScoringView extends View {
         }
     }
 
+    private void forceStopPivotAnimationWhenReachingContinuousZeros() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
+                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
+            }
+        });
+      }
+
+    private void forceStopPivotAnimationWhenFullLineFinished() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                assureAnimationForPitchPivot(0); // Force stop the animation when there is no new score for a long time(a full sentence)
+                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
+            }
+        });
+    }
+
     /**
      * 更新当前分数
      *
@@ -763,15 +789,13 @@ public class ScoringView extends View {
         }
 
         //  没有开始 || 在空档期
-        boolean pushAll = currentEntryEndTime == -1;
+        boolean notStarted = currentEntryEndTime == -1;
         // 当前时间 >= 打分句结束时间
-        boolean isThisSentenceOver = time >= currentEntryEndTime;
+        boolean isThisLineJustFinished = time >= currentEntryEndTime;
         // 当前时间 >= 歌词结束时间
-        boolean isThisSongOver = time >= lrcEndTime;
+        boolean isThisSongFinished = time >= lrcEndTime;
 
-        Log.d("HAI_GUO", "updateScore " + pushAll + " " + isThisSentenceOver + " " + isThisSongOver + " ts " + time + " " + !everyPitchList.isEmpty());
-
-        if (pushAll || isThisSentenceOver || isThisSongOver) {
+        if (notStarted || isThisLineJustFinished || isThisSongFinished || isLastWordForTheLine) {
             if (!everyPitchList.isEmpty()) {
                 // 计算歌词当前句的分数 = 所有打分/分数个数
                 double tempTotalScore = 0;
@@ -783,7 +807,7 @@ public class ScoringView extends View {
                 int continuousZeroCount = 0;
                 while (iterator.hasNext()) {
                     Long duration = iterator.next();
-                    if (pushAll || duration <= currentEntryEndTime) {
+                    if (notStarted || duration <= currentEntryEndTime) {
                         tempScore = everyPitchList.get(duration);
                         if (tempScore == null || tempScore.floatValue() == 0.f) {
                             continuousZeroCount++;
@@ -791,8 +815,7 @@ public class ScoringView extends View {
                                 tempScore = null; // Ignore it when not enough continuous zeros
                             } else {
                                 continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
-                                assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
-                                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
+                                forceStopPivotAnimationWhenReachingContinuousZeros();
                             }
                         } else {
                             continuousZeroCount = 0;
@@ -816,8 +839,7 @@ public class ScoringView extends View {
                 dispatchScore(scoreThisTime);
 
                 if (scoreThisTime == 0 && this.mLocalPitch != 0) {
-                    assureAnimationForPitchPivot(0); // Force stop the animation when there is no new score for a long time(a full sentence)
-                    ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
+                    forceStopPivotAnimationWhenFullLineFinished();
                 }
             }
         }
