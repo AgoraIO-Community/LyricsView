@@ -28,14 +28,14 @@ public class LyricsParser {
     @Nullable
     public static LyricsModel parse(LyricsModel.Type type, File lrcFile) {
         if (type == null) {
-            InputStream instream = null;
-            InputStreamReader inputreader = null;
-            BufferedReader buffreader = null;
+            InputStream inputStream = null;
+            InputStreamReader inputStreamReader = null;
+            BufferedReader bufferedReader = null;
             try {
-                instream = new FileInputStream(lrcFile);
-                inputreader = new InputStreamReader(instream);
-                buffreader = new BufferedReader(inputreader);
-                String line = buffreader.readLine();
+                inputStream = new FileInputStream(lrcFile);
+                inputStreamReader = new InputStreamReader(inputStream);
+                bufferedReader = new BufferedReader(inputStreamReader);
+                String line = bufferedReader.readLine();
                 if (line.contains("xml") || line.contains("<song>")) {
                     type = LyricsModel.Type.Migu;
                 } else {
@@ -47,22 +47,22 @@ public class LyricsParser {
                 e.printStackTrace();
             } finally {
                 try {
-                    if (instream != null) {
-                        instream.close();
+                    if (inputStream != null) {
+                        inputStream.close();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 try {
-                    if (inputreader != null) {
-                        inputreader.close();
+                    if (inputStreamReader != null) {
+                        inputStreamReader.close();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 try {
-                    if (buffreader != null) {
-                        buffreader.close();
+                    if (bufferedReader != null) {
+                        bufferedReader.close();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

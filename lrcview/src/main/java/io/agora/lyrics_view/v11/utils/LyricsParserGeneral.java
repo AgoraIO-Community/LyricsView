@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,7 +41,7 @@ class LyricsParserGeneral {
         List<LyricsLineModel> entryList = new ArrayList<>();
         mLrcData.lines = entryList;
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(lrcFile), "utf-8"));
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(lrcFile), StandardCharsets.UTF_8));
             String line;
             while ((line = br.readLine()) != null) {
                 List<LyricsLineModel> list = parseLine(line);

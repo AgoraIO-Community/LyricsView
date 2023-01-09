@@ -38,7 +38,7 @@ class LyricsParserMigu {
     }
 
     public static class Paragraph {
-        public List<LyricsLineModel> sentences;
+        public List<LyricsLineModel> lines;
     }
 
     /**
@@ -54,17 +54,17 @@ class LyricsParserMigu {
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
             parser.setInput(in, null);
             parser.nextTag();
-            Song mSong = readLrc(parser);
-            if (mSong == null || mSong.midi == null || mSong.midi.paragraphs == null) {
+            Song song = readLrc(parser);
+            if (song == null || song.midi == null || song.midi.paragraphs == null) {
                 return null;
             }
 
             LyricsModel mLrcData = new LyricsModel(LyricsModel.Type.Migu);
-            List<LyricsLineModel> entrys = new ArrayList<>();
-            for (Paragraph paragraph : mSong.midi.paragraphs) {
-                entrys.addAll(paragraph.sentences);
+            List<LyricsLineModel> lines = new ArrayList<>();
+            for (Paragraph paragraph : song.midi.paragraphs) {
+                lines.addAll(paragraph.lines);
             }
-            mLrcData.lines = entrys;
+            mLrcData.lines = lines;
             return mLrcData;
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,7 +74,7 @@ class LyricsParserMigu {
     }
 
     private static Song readLrc(XmlPullParser parser) throws XmlPullParserException, IOException {
-        Song mSong = new Song();
+        Song song = new Song();
 //        parser.require(XmlPullParser.START_TAG, null, "song");
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -83,16 +83,16 @@ class LyricsParserMigu {
             String name = parser.getName();
             // Starts by looking for the entry tag
             if (name.equals("general")) {
-                mSong.general = new SongGeneral();
-                readGeneral(parser, mSong.general);
+                song.general = new SongGeneral();
+                readGeneral(parser, song.general);
             } else if (name.equals("midi_lrc")) {
-                mSong.midi = new SongMidi();
-                readMidiLrc(parser, mSong.midi);
+                song.midi = new SongMidi();
+                readMidiLrc(parser, song.midi);
             } else {
                 skip(parser);
             }
         }
-        return mSong;
+        return song;
     }
 
     private static void readGeneral(XmlPullParser parser, SongGeneral general) throws XmlPullParserException, IOException {
@@ -140,7 +140,7 @@ class LyricsParserMigu {
     private static void readParagraph(XmlPullParser parser, Paragraph paragraph) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, null, "paragraph");
 
-        paragraph.sentences = new ArrayList<>();
+        paragraph.lines = new ArrayList<>();
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
@@ -148,20 +148,18 @@ class LyricsParserMigu {
 
             String name = parser.getName();
             if (name.equals("sentence")) {
-                List<LyricsLineModel> sentence = new ArrayList<>();
-                readSentence(parser, sentence);
-                for (LyricsLineModel item : sentence) {
-                    paragraph.sentences.add(item);
-                }
+                List<LyricsLineModel> lines = new ArrayList<>();
+                readLines(parser, lines);
+                paragraph.lines.addAll(lines);
             } else {
                 skip(parser);
             }
         }
     }
 
-    private static void readSentence(XmlPullParser parser, List<LyricsLineModel> list) throws XmlPullParserException, IOException {
-        LyricsLineModel sentence = new LyricsLineModel(new ArrayList<>());
-        list.add(sentence);
+    private static void readLines(XmlPullParser parser, List<LyricsLineModel> list) throws XmlPullParserException, IOException {
+        LyricsLineModel line = new LyricsLineModel(new ArrayList<>());
+        list.add(line);
         parser.require(XmlPullParser.START_TAG, null, "sentence");
         String m = parser.getAttributeValue(null, "mode");
         if (m != null) {
@@ -185,22 +183,22 @@ class LyricsParserMigu {
             if (name.equals("tone")) {
                 tone_index++;
                 if ((isEnglish || isEnglishSong(parser)) && tone_index > 5) {
-                    sentence = new LyricsLineModel(new ArrayList<>());
-                    list.add(sentence);
+                    line = new LyricsLineModel(new ArrayList<>());
+                    list.add(line);
                     tone_index = 0;
                 }
                 LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
-                sentence.tones.add(tone);
+                line.tones.add(tone);
                 isEnglish = readTone(parser, tone);
             } else if (name.equals("monolog")) {
                 tone_index++;
                 if ((isEnglish || isEnglishSong(parser)) && tone_index > 5) {
-                    sentence = new LyricsLineModel(new ArrayList<>());
-                    list.add(sentence);
+                    line = new LyricsLineModel(new ArrayList<>());
+                    list.add(line);
                     tone_index = 0;
                 }
                 LyricsLineModel.Monolog monolog = new LyricsLineModel.Monolog();
-                sentence.tones.add(monolog);
+                line.tones.add(monolog);
                 isEnglish = readMonolog(parser, monolog);
             } else {
                 skip(parser);
