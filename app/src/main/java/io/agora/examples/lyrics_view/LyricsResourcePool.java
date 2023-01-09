@@ -14,6 +14,8 @@ public class LyricsResourcePool {
 
     public static final String LRC_SAMPLE_LOCAL_FILE_810507 = "810507.xml"; // Located under assets folder, one and only one line xml file
 
+    public static final String LRC_SAMPLE_LOCAL_FILE_825003 = "825003.xml"; // Start and end(previous line) may have same timestamp
+
     public static final List<String> asList() {
         ArrayList<String> list = new ArrayList<>();
         list.add(LRC_SAMPLE_1);
@@ -24,6 +26,7 @@ public class LyricsResourcePool {
         list.add(LRC_SAMPLE_6);
         list.add(LRC_SAMPLE_7);
         list.add(LRC_SAMPLE_LOCAL_FILE_810507);
+        list.add(LRC_SAMPLE_LOCAL_FILE_825003);
         return list;
     }
 }
