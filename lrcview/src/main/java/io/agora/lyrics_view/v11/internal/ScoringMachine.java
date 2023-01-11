@@ -1,7 +1,5 @@
 package io.agora.lyrics_view.v11.internal;
 
-import android.util.Log;
-
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,8 +12,8 @@ import io.agora.lyrics_view.v11.model.LyricsModel;
  * <p>
  * Non-ui related, shared by all components
  */
-public class OngoingStats {
-    private static final String TAG = "OngoingStats";
+public class ScoringMachine {
+    private static final String TAG = "ScoringMachine";
 
     private LyricsModel mLyricsModel;
 
@@ -69,7 +67,7 @@ public class OngoingStats {
 
     private OnScoringListener mListener;
 
-    public OngoingStats(OnScoringListener listener) {
+    public ScoringMachine(OnScoringListener listener) {
         reset();
         this.mListener = listener;
     }
@@ -248,7 +246,7 @@ public class OngoingStats {
 
     /**
      * 更新进度，单位毫秒
-     * 根据当前时间，决定是否回调 {@link OngoingStats.OnScoringListener#onRefPitch(float, int)}}
+     * 根据当前时间，决定是否回调 {@link ScoringMachine.OnScoringListener#onRefPitch(float, int)}}
      * 与打分逻辑无关
      *
      * @param progress 当前播放时间，毫秒

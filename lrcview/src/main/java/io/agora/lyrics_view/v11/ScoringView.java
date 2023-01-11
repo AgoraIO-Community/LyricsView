@@ -26,7 +26,7 @@ import com.plattysoft.leonids.ParticleSystem;
 import java.util.List;
 
 import io.agora.lyrics_view.R;
-import io.agora.lyrics_view.v11.internal.OngoingStats;
+import io.agora.lyrics_view.v11.internal.ScoringMachine;
 import io.agora.lyrics_view.v11.model.LyricsLineModel;
 import io.agora.lyrics_view.v11.model.LyricsModel;
 
@@ -232,14 +232,14 @@ public class ScoringView extends View {
     private float getYForPitchPivot() {
         float targetY = 0;
 
-        if (mOngoingStats == null) { // Not initialized
+        if (this.mScoringMachine == null) { // Not initialized
             targetY = getHeight() - this.mLocalPitchIndicatorRadius;
-        } else if (this.mLocalPitch >= mOngoingStats.getMinimumRefPitch() && mOngoingStats.getMaximumRefPitch() != 0) { // Has value, not the default case
-            float realPitchMax = mOngoingStats.getMaximumRefPitch() + 5;
-            float realPitchMin = mOngoingStats.getMinimumRefPitch() - 5;
+        } else if (this.mLocalPitch >= this.mScoringMachine.getMinimumRefPitch() && this.mScoringMachine.getMaximumRefPitch() != 0) { // Has value, not the default case
+            float realPitchMax = this.mScoringMachine.getMaximumRefPitch() + 5;
+            float realPitchMin = this.mScoringMachine.getMinimumRefPitch() - 5;
             float mItemHeightPerPitchLevel = getHeight() / (realPitchMax - realPitchMin);
             targetY = (realPitchMax - this.mLocalPitch) * mItemHeightPerPitchLevel;
-        } else if (this.mLocalPitch < mOngoingStats.getMinimumRefPitch()) { // minimal local pitch
+        } else if (this.mLocalPitch < this.mScoringMachine.getMinimumRefPitch()) { // minimal local pitch
             targetY = getHeight();
         }
 
@@ -259,7 +259,7 @@ public class ScoringView extends View {
         canvas.drawRect(0, 0, dotPointX, getHeight(), mLinearGradientPaint);
 
         if (DEBUG) {
-            canvas.drawText("" + mOngoingStats.toString() + ", y: " + (int) (getYForPitchPivot()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mHighlightPitchStickLinearGradientPaint);
+            canvas.drawText("" + this.mScoringMachine.toString() + ", y: " + (int) (getYForPitchPivot()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mHighlightPitchStickLinearGradientPaint);
         }
     }
 
@@ -276,8 +276,8 @@ public class ScoringView extends View {
             return;
         }
 
-        float realPitchMax = mOngoingStats.getMaximumRefPitch() + 5;
-        float realPitchMin = mOngoingStats.getMinimumRefPitch() - 5;
+        float realPitchMax = this.mScoringMachine.getMaximumRefPitch() + 5;
+        float realPitchMin = this.mScoringMachine.getMinimumRefPitch() - 5;
 
         List<LyricsLineModel> lines = mLyricsModel.lines;
 
@@ -297,26 +297,26 @@ public class ScoringView extends View {
             long startTime = line.getStartTime();
             long durationOfCurrentEntry = line.getEndTime() - startTime;
 
-            if (mOngoingStats.getCurrentTimestamp() - startTime <= -(2 * durationOfCurrentEntry)) { // If still to early for current entry, we do not draw the sticks
+            if (this.mScoringMachine.getCurrentTimestamp() - startTime <= -(2 * durationOfCurrentEntry)) { // If still to early for current entry, we do not draw the sticks
                 // If we show the sticks too late, they will appear suddenly in the central of screen, not start from the right side
                 break;
             }
 
-            if (i + 1 < lines.size() && line.getStartTime() < mOngoingStats.getCurrentTimestamp()) { // Has next entry
+            if (i + 1 < lines.size() && line.getStartTime() < this.mScoringMachine.getCurrentTimestamp()) { // Has next entry
                 // Get next entry
                 // If start for next is far away than 2 seconds
                 // stop the current animation now
                 long nextEntryStartTime = mLyricsModel.lines.get(i + 1).getStartTime();
-                if ((nextEntryStartTime - line.getEndTime() >= 2 * 1000) && mOngoingStats.getCurrentTimestamp() > line.getEndTime() && mOngoingStats.getCurrentTimestamp() < nextEntryStartTime) { // Two seconds after this entry stop
+                if ((nextEntryStartTime - line.getEndTime() >= 2 * 1000) && this.mScoringMachine.getCurrentTimestamp() > line.getEndTime() && this.mScoringMachine.getCurrentTimestamp() < nextEntryStartTime) { // Two seconds after this entry stop
                     assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
-                    if (mTimestampForLastAnimationDecrease < 0 || mOngoingStats.getCurrentTimestamp() - mTimestampForLastAnimationDecrease > 4 * 1000) {
+                    if (mTimestampForLastAnimationDecrease < 0 || this.mScoringMachine.getCurrentTimestamp() - mTimestampForLastAnimationDecrease > 4 * 1000) {
                         ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
-                        mTimestampForLastAnimationDecrease = mOngoingStats.getCurrentTimestamp();
+                        mTimestampForLastAnimationDecrease = this.mScoringMachine.getCurrentTimestamp();
                     }
                 }
             }
 
-            float pixelsAwayFromPilot = (startTime - mOngoingStats.getCurrentTimestamp()) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
+            float pixelsAwayFromPilot = (startTime - this.mScoringMachine.getCurrentTimestamp()) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
             float x = dotPointX + pixelsAwayFromPilot;
 
             if (endTimeOfPreviousLine != 0) { // If has empty divider before
@@ -334,7 +334,7 @@ public class ScoringView extends View {
             for (int toneIndex = 0; toneIndex < tones.size(); toneIndex++) {
                 LyricsLineModel.Tone tone = tones.get(toneIndex);
 
-                pixelsAwayFromPilot = (tone.begin - mOngoingStats.getCurrentTimestamp()) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
+                pixelsAwayFromPilot = (tone.begin - this.mScoringMachine.getCurrentTimestamp()) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
                 x = dotPointX + pixelsAwayFromPilot;
                 widthOfPitchStick = movedPixelsPerMs * tone.getDuration();
                 float endX = x + widthOfPitchStick;
@@ -469,18 +469,18 @@ public class ScoringView extends View {
 
     private long mLastViewInvalidateTs;
 
-    private OngoingStats mOngoingStats;
+    private ScoringMachine mScoringMachine;
     private VoicePitchChanger mPitchChanger;
 
     private LyricsModel mLyricsModel;
 
-    public void attachToOngoingStats(OngoingStats machine, VoicePitchChanger changer) {
-        this.mOngoingStats = machine;
+    public void attachToOngoingStats(ScoringMachine machine, VoicePitchChanger changer) {
+        this.mScoringMachine = machine;
         this.mPitchChanger = changer;
         this.mLyricsModel = machine.getLyricsModel();
 
         // Update values from UI view
-        this.mOngoingStats.setInitialScore(mInitialScore);
+        this.mScoringMachine.setInitialScore(mInitialScore);
     }
 
     public void requestRefreshUi() {
@@ -521,17 +521,17 @@ public class ScoringView extends View {
      * @param pitch 单位 hz
      */
     public void updateLocalPitch(float pitch) {
-        if (mOngoingStats == null || mOngoingStats.getLyricsModel() == null) {
+        if (this.mScoringMachine == null || this.mScoringMachine.getLyricsModel() == null) {
             return;
         }
 
-        if (pitch == 0 || pitch < mOngoingStats.getMinimumRefPitch() || pitch > mOngoingStats.getMaximumRefPitch()) {
+        if (pitch == 0 || pitch < this.mScoringMachine.getMinimumRefPitch() || pitch > this.mScoringMachine.getMaximumRefPitch()) {
             assureAnimationForPitchPivot(0);
             mHandler.postDelayed(mRemoveAnimationCallback, mThresholdOfOffPitchTime);
             return;
         }
 
-        float currentRefPitch = mOngoingStats.getRefPitchForCurrentTimestamp();
+        float currentRefPitch = this.mScoringMachine.getRefPitchForCurrentTimestamp();
 
         if (currentRefPitch == 0) {
             return;
@@ -540,12 +540,12 @@ public class ScoringView extends View {
         mHandler.removeCallbacks(mRemoveAnimationCallback);
 
         if (mPitchChanger != null) {
-            pitch = (float) mPitchChanger.handlePitch(currentRefPitch, pitch, mOngoingStats.getMaximumRefPitch());
+            pitch = (float) mPitchChanger.handlePitch(currentRefPitch, pitch, this.mScoringMachine.getMaximumRefPitch());
         }
 
         final float finalPitch = pitch;
 
-        final double scoreAfterNormalization = mOngoingStats.calculateScore2(minimumScorePerTone, pitch, currentRefPitch);
+        final double scoreAfterNormalization = this.mScoringMachine.calculateScore2(minimumScorePerTone, pitch, currentRefPitch);
 
         if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
             mHandler.post(new Runnable() {

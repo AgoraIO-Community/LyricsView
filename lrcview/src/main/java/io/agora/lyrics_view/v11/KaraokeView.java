@@ -6,7 +6,7 @@ import androidx.annotation.MainThread;
 
 import java.io.File;
 
-import io.agora.lyrics_view.v11.internal.OngoingStats;
+import io.agora.lyrics_view.v11.internal.ScoringMachine;
 import io.agora.lyrics_view.v11.model.LyricsLineModel;
 import io.agora.lyrics_view.v11.model.LyricsModel;
 import io.agora.lyrics_view.v11.utils.LyricsParser;
@@ -25,7 +25,7 @@ public class KaraokeView {
     private LyricsView mLyricsView;
     private ScoringView mScoringView;
 
-    private OngoingStats mOngoingStats;
+    private ScoringMachine mScoringMachine;
 
     private VoicePitchChanger mVoicePitchChanger;
 
@@ -42,7 +42,7 @@ public class KaraokeView {
     private void initialize() {
         mScoringAlgorithm = new DefaultScoringAlgorithm();
         mVoicePitchChanger = new VoicePitchChanger();
-        mOngoingStats = new OngoingStats(new OngoingStats.OnScoringListener() {
+        mScoringMachine = new ScoringMachine(new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, double score, double cumulativeScore, double perfectScore, int index, int total) {
                 Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + total);
@@ -84,7 +84,7 @@ public class KaraokeView {
         }
         if (mScoringView != null) {
         }
-        mOngoingStats.reset();
+        mScoringMachine.reset();
     }
 
     public static LyricsModel parseLyricsData(File file) {
@@ -96,14 +96,14 @@ public class KaraokeView {
     }
 
     public void setLyricsData(LyricsModel model) {
-        mOngoingStats.prepare(model);
+        mScoringMachine.prepare(model);
 
         if (mLyricsView != null) {
             mLyricsView.setLrcData(model);
         }
 
         if (mScoringView != null) {
-            mScoringView.attachToOngoingStats(mOngoingStats, mVoicePitchChanger);
+            mScoringView.attachToOngoingStats(mScoringMachine, mVoicePitchChanger);
         }
     }
 
@@ -117,8 +117,8 @@ public class KaraokeView {
     }
 
     public void setProgress(long progress) {
-        if (mOngoingStats != null) {
-            mOngoingStats.setProgress(progress);
+        if (mScoringMachine != null) {
+            mScoringMachine.setProgress(progress);
         }
         if (mLyricsView != null) {
             mLyricsView.updateTime(progress);
