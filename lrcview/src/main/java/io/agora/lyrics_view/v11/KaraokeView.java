@@ -1,13 +1,19 @@
 package io.agora.lyrics_view.v11;
 
+import android.util.Log;
+
 import androidx.annotation.MainThread;
 
 import java.io.File;
 
+import io.agora.lyrics_view.v11.internal.OngoingStats;
+import io.agora.lyrics_view.v11.model.LyricsLineModel;
 import io.agora.lyrics_view.v11.model.LyricsModel;
 import io.agora.lyrics_view.v11.utils.LyricsParser;
 
 public class KaraokeView {
+
+    private static final String TAG = "KaraokeView";
 
     private IScoringAlgorithm mScoringAlgorithm;
 
@@ -18,6 +24,10 @@ public class KaraokeView {
 
     private LyricsView mLyricsView;
     private ScoringView mScoringView;
+
+    private OngoingStats mOngoingStats;
+
+    private VoicePitchChanger mVoicePitchChanger;
 
     public KaraokeView(LyricsView lyricsView, ScoringView scoringView) {
         this.mLyricsView = lyricsView;
@@ -31,6 +41,41 @@ public class KaraokeView {
 
     private void initialize() {
         mScoringAlgorithm = new DefaultScoringAlgorithm();
+        mVoicePitchChanger = new VoicePitchChanger();
+        mOngoingStats = new OngoingStats(new OngoingStats.OnScoringListener() {
+            @Override
+            public void onLineFinished(LyricsLineModel line, double score, double cumulativeScore, double perfectScore, int index, int total) {
+                Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + total);
+
+                if (mScoringView != null) {
+                    mScoringView.forceStopPivotAnimationWhenFullLineFinished(score);
+                }
+
+                if (mKaraokeEvent != null) {
+                    mKaraokeEvent.onLineFinished(KaraokeView.this, line, (int) score, index, total);
+                }
+            }
+
+            @Override
+            public void resetUi() {
+                Log.d(TAG, "resetUi");
+                if (mScoringView != null) {
+                    mScoringView.forceStopPivotAnimationWhenReachingContinuousZeros();
+                    mScoringView.requestRefreshUi();
+                }
+            }
+
+            public void onRefPitch(float refPitch, int numberOfRefPitches) {
+                Log.d(TAG, "onRefPitch " + refPitch + " " + numberOfRefPitches);
+            }
+
+            public void requestRefreshUi() {
+                Log.d(TAG, "requestRefreshUi");
+                if (mScoringView != null) {
+                    mScoringView.requestRefreshUi();
+                }
+            }
+        });
     }
 
     public void reset() {
@@ -39,6 +84,7 @@ public class KaraokeView {
         }
         if (mScoringView != null) {
         }
+        mOngoingStats.reset();
     }
 
     public static LyricsModel parseLyricsData(File file) {
@@ -50,18 +96,20 @@ public class KaraokeView {
     }
 
     public void setLyricsData(LyricsModel model) {
+        mOngoingStats.prepare(model);
+
         if (mLyricsView != null) {
             mLyricsView.setLrcData(model);
         }
+
         if (mScoringView != null) {
-            mScoringView.setLrcData(model);
+            mScoringView.attachToOngoingStats(mOngoingStats, mVoicePitchChanger);
         }
     }
 
     @MainThread
     public void setPitch(float pitch) {
         if (mLyricsView != null) {
-
         }
         if (mScoringView != null) {
             mScoringView.updateLocalPitch(pitch);
@@ -69,11 +117,11 @@ public class KaraokeView {
     }
 
     public void setProgress(long progress) {
+        if (mOngoingStats != null) {
+            mOngoingStats.setProgress(progress);
+        }
         if (mLyricsView != null) {
             mLyricsView.updateTime(progress);
-        }
-        if (mScoringView != null) {
-            mScoringView.updateTime(progress);
         }
     }
 
@@ -97,22 +145,6 @@ public class KaraokeView {
                 @Override
                 public void onStopTrackingTouch() {
 
-                }
-            });
-        }
-
-        if (mScoringView != null) {
-            mScoringView.setSingScoreListener(new ScoringView.OnSingScoreListener() {
-                @Override
-                public void onOriginalPitch(float pitch, int totalCount) {
-
-                }
-
-                @Override
-                public void onScore(double score, double cumulativeScore, double totalScore) {
-                    if (mKaraokeEvent != null) {
-                        mKaraokeEvent.onLineFinished(KaraokeView.this, /** Fake **/null, (int) score, /** Fake **/0, (int) totalScore);
-                    }
                 }
             });
         }

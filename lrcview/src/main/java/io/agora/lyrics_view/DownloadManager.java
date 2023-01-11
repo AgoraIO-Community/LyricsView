@@ -20,23 +20,26 @@ import okhttp3.ResponseBody;
 
 public class DownloadManager {
 
+    private static final String TAG = "DownloadManager";
+
     private static final String CACHE_FOLDER = "assets";
     private final OkHttpClient okHttpClient = new OkHttpClient();
     private static DownloadManager instance;
 
     public static DownloadManager getInstance() {
-        if(instance == null){
+        if (instance == null) {
             instance = new DownloadManager();
         }
         return instance;
     }
 
-    private DownloadManager() {}
+    private DownloadManager() {
+    }
 
     @Nullable
-    public void download(Context context, String url, FileDownloadSuccessCallback callback, FileDownloadFailureCallback error){
+    public void download(Context context, String url, FileDownloadSuccessCallback callback, FileDownloadFailureCallback error) {
         File folder = new File(context.getExternalCacheDir(), CACHE_FOLDER);
-        if(!folder.exists()){
+        if (!folder.exists()) {
             folder.mkdir();
         }
 
@@ -74,11 +77,11 @@ public class DownloadManager {
                         fos.write(buf, 0, len);
                         sum += len;
                         int progress = (int) (sum * 1.0f / total * 100);
-                        Log.d("down", file.getName() + ", progress: " + progress);
+                        Log.d(TAG, file.getName() + ", progress: " + progress);
                     }
                     fos.flush();
                     // 下载完成
-                    Log.d("down", file.getName() + " onComplete");
+                    Log.d(TAG, file.getName() + " onComplete");
                     callback.onSuccess(file);
                 } catch (Exception e) {
                     error.onFailed(e);
@@ -98,7 +101,7 @@ public class DownloadManager {
         });
     }
 
-    public boolean clearCache(Context context){
+    public boolean clearCache(Context context) {
         File folder = new File(context.getExternalCacheDir(), CACHE_FOLDER);
         return deleteDir(folder);
     }
@@ -118,9 +121,9 @@ public class DownloadManager {
         return dir.delete();
     }
 
-    public boolean clearFile(Context context, String fileName){
+    public boolean clearFile(Context context, String fileName) {
         File folder = new File(context.getExternalCacheDir(), CACHE_FOLDER);
-        if(folder.isDirectory() && folder.exists()){
+        if (folder.isDirectory() && folder.exists()) {
             File file = new File(folder, fileName);
             file.deleteOnExit();
             return true;
@@ -136,4 +139,3 @@ public class DownloadManager {
         void onFailed(Exception exception);
     }
 }
-

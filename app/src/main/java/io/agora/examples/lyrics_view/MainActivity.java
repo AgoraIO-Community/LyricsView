@@ -13,7 +13,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -32,6 +31,8 @@ import io.agora.lyrics_view.v11.model.LyricsLineModel;
 import io.agora.lyrics_view.v11.model.LyricsModel;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final String TAG = "MainActivity";
+
     private KaraokeView mKaraokeView;
 
     private int mCurrentIndex = 0;
@@ -155,23 +156,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         mFuture = mExecutor.scheduleAtFixedRate(new Runnable() {
+
+            private static final int DURATION_FAKED = 120;
+
             @Override
             public void run() {
-                mCurrentPosition = mCurrentPosition + 20;
-
-                if (mCurrentPosition > 120 * 1000) {
+                if (mCurrentPosition >= 0 && mCurrentPosition < (DURATION_FAKED) * 1000) {
+                    mKaraokeView.setProgress(mCurrentPosition);
+                    float pitch = (float) Math.random() * 200;
+                    mKaraokeView.setPitch(pitch);
+                    Log.d(TAG, "timer mCurrentPosition: " + mCurrentPosition + ", pitch: " + pitch);
+                } else if (mCurrentPosition >= (DURATION_FAKED) * 1000 && mCurrentPosition < (DURATION_FAKED + 1) * 1000) {
                     long lastPosition = mCurrentPosition;
-                    mCurrentPosition = 0;
+                    mKaraokeView.setProgress(0);
+                    mKaraokeView.setPitch(0);
+                    // Put the pivot back in space
+                } else if (mCurrentPosition >= (DURATION_FAKED + 1) * 1000) {
                     if (mFuture != null) {
                         mFuture.cancel(true);
                     }
+                    mCurrentPosition = 0;
+                    Log.d(TAG, "quit 20ms trigger");
                     return;
                 }
-
-                float pitch = (float) Math.random() * 200;
-
-                mKaraokeView.setProgress(mCurrentPosition);
-                mKaraokeView.setPitch(pitch);
+                mCurrentPosition += 20;
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
     }

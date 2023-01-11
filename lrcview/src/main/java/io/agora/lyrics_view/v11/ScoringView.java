@@ -23,11 +23,10 @@ import androidx.annotation.RequiresApi;
 
 import com.plattysoft.leonids.ParticleSystem;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import io.agora.lyrics_view.R;
+import io.agora.lyrics_view.v11.internal.OngoingStats;
 import io.agora.lyrics_view.v11.model.LyricsLineModel;
 import io.agora.lyrics_view.v11.model.LyricsModel;
 
@@ -43,7 +42,6 @@ public class ScoringView extends View {
 
     private static final float START_PERCENT = 0.4F;
 
-    private static volatile LyricsModel lrcData;
     private Handler mHandler;
 
     private float movedPixelsPerMs = 0.4F; // 1ms 对应像素 px
@@ -51,35 +49,9 @@ public class ScoringView extends View {
     private float pitchStickHeight; // 每一项高度 px
     private int pitchStickSpace = 4; // 间距 px
 
-    private int pitchMax = 0; // 最大值
-    private int pitchMin = 100; // 最小值 // FIXME(Hai_Guo Should not be zero, song 夏天)
-    private int totalPitch = 0;
-
-    // 当前 Pitch 所在的字的开始时间
-    private long currentPitchStartTime = -1;
-    // 当前 Pitch 所在的字的结束时间
-    private long currentPitchEndTime = -1;
-    // 当前 Pitch 所在的句的结束时间
-    private long currentEntryEndTime = -1;
-    // 当前在打分的所在句的结束时间
-    private long lrcEndTime = 0;
-    // FIXME(HAI_GUO) Not very accurate for all the time
-    private boolean isLastWordForTheLine;
-    // 当前 时间的 Pitch，不断变化
-    private float mCurrentOriginalPitch = 0f;
-
     // 音调指示器的半径
     private float mLocalPitchIndicatorRadius;
-    // 每句最高分
-    private int scorePerSentence = 100;
-    // 初始分数
-    private float mInitialScore;
-    // 每句歌词分数
-    public LinkedHashMap<Long, Double> everyPitchList = new LinkedHashMap<>();
-    // 累计分数
-    public float cumulatedScore;
-    // 歌曲总分数
-    public float totalScore;
+
     // 分数阈值 大于此值计分 小于不计分
     public float minimumScorePerTone;
 
@@ -101,14 +73,11 @@ public class ScoringView extends View {
 
     private ParticleSystem mParticleSystem;
 
-    private VoicePitchChanger mVoicePitchChanger;
+    private float mInitialScore;
 
     private float mThresholdOfHitScore;
 
     private long mThresholdOfOffPitchTime;
-
-    // 音调及分数回调
-    private OnSingScoreListener onSingScoreListener;
 
     //<editor-fold desc="Init Related">
     public ScoringView(Context context) {
@@ -174,15 +143,6 @@ public class ScoringView extends View {
         linearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
 
         mTailAnimationLinearGradient = new LinearGradient(dotPointX, 0, dotPointX - 12, 0, startColor, Color.YELLOW, Shader.TileMode.CLAMP);
-    }
-
-    /**
-     * 绑定唱歌打分事件回调，用于接收唱歌过程中事件回调。具体事件参考 {@link OnSingScoreListener}
-     *
-     * @param onSingScoreListener
-     */
-    public void setSingScoreListener(OnSingScoreListener onSingScoreListener) {
-        this.onSingScoreListener = onSingScoreListener;
     }
 
     @Override
@@ -271,12 +231,15 @@ public class ScoringView extends View {
 
     private float getYForPitchPivot() {
         float targetY = 0;
-        if (this.mLocalPitch >= pitchMin && pitchMax != 0) { // Has value, not the default case
-            float realPitchMax = pitchMax + 5;
-            float realPitchMin = pitchMin - 5;
+
+        if (mOngoingStats == null) { // Not initialized
+            targetY = getHeight() - this.mLocalPitchIndicatorRadius;
+        } else if (this.mLocalPitch >= mOngoingStats.getMinimumRefPitch() && mOngoingStats.getMaximumRefPitch() != 0) { // Has value, not the default case
+            float realPitchMax = mOngoingStats.getMaximumRefPitch() + 5;
+            float realPitchMin = mOngoingStats.getMinimumRefPitch() - 5;
             float mItemHeightPerPitchLevel = getHeight() / (realPitchMax - realPitchMin);
             targetY = (realPitchMax - this.mLocalPitch) * mItemHeightPerPitchLevel;
-        } else if (this.mLocalPitch < pitchMin) { // minimal local pitch
+        } else if (this.mLocalPitch < mOngoingStats.getMinimumRefPitch()) { // minimal local pitch
             targetY = getHeight();
         }
 
@@ -296,7 +259,7 @@ public class ScoringView extends View {
         canvas.drawRect(0, 0, dotPointX, getHeight(), mLinearGradientPaint);
 
         if (DEBUG) {
-            canvas.drawText("" + mCurrentTime + " " + pitchMin + " " + pitchMax + ", y: " + (int) (getYForPitchPivot()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mHighlightPitchStickLinearGradientPaint);
+            canvas.drawText("" + mOngoingStats.toString() + ", y: " + (int) (getYForPitchPivot()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mHighlightPitchStickLinearGradientPaint);
         }
     }
 
@@ -309,60 +272,60 @@ public class ScoringView extends View {
         mHighlightPitchStickLinearGradientPaint.setColor(mHighlightPitchStickColor);
         mHighlightPitchStickLinearGradientPaint.setAntiAlias(true);
 
-        if (lrcData == null || lrcData.lines == null || lrcData.lines.isEmpty()) {
+        if (mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty()) {
             return;
         }
 
-        float realPitchMax = pitchMax + 5;
-        float realPitchMin = pitchMin - 5;
+        float realPitchMax = mOngoingStats.getMaximumRefPitch() + 5;
+        float realPitchMin = mOngoingStats.getMinimumRefPitch() - 5;
 
-        List<LyricsLineModel> entrys = lrcData.lines;
+        List<LyricsLineModel> lines = mLyricsModel.lines;
 
         float y;
         float widthOfPitchStick;
         float mItemHeightPerPitchLevel = (getHeight() - pitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);
 
-        long preEntryEndTime = 0; // Not used so far
+        long endTimeOfPreviousLine = 0; // Not used so far
 
-        for (int i = 0; i < entrys.size(); i++) {
-            LyricsLineModel entry = lrcData.lines.get(i);
-            List<LyricsLineModel.Tone> tones = entry.tones;
+        for (int i = 0; i < lines.size(); i++) {
+            LyricsLineModel line = mLyricsModel.lines.get(i);
+            List<LyricsLineModel.Tone> tones = line.tones;
             if (tones == null || tones.isEmpty()) {
                 return;
             }
 
-            long startTime = entry.getStartTime();
-            long durationOfCurrentEntry = entry.getEndTime() - startTime;
+            long startTime = line.getStartTime();
+            long durationOfCurrentEntry = line.getEndTime() - startTime;
 
-            if (this.mCurrentTime - startTime <= -(2 * durationOfCurrentEntry)) { // If still to early for current entry, we do not draw the sticks
+            if (mOngoingStats.getCurrentTimestamp() - startTime <= -(2 * durationOfCurrentEntry)) { // If still to early for current entry, we do not draw the sticks
                 // If we show the sticks too late, they will appear suddenly in the central of screen, not start from the right side
                 break;
             }
 
-            if (i + 1 < entrys.size() && entry.getStartTime() < this.mCurrentTime) { // Has next entry
+            if (i + 1 < lines.size() && line.getStartTime() < mOngoingStats.getCurrentTimestamp()) { // Has next entry
                 // Get next entry
                 // If start for next is far away than 2 seconds
                 // stop the current animation now
-                long nextEntryStartTime = lrcData.lines.get(i + 1).getStartTime();
-                if ((nextEntryStartTime - entry.getEndTime() >= 2 * 1000) && this.mCurrentTime > entry.getEndTime() && this.mCurrentTime < nextEntryStartTime) { // Two seconds after this entry stop
+                long nextEntryStartTime = mLyricsModel.lines.get(i + 1).getStartTime();
+                if ((nextEntryStartTime - line.getEndTime() >= 2 * 1000) && mOngoingStats.getCurrentTimestamp() > line.getEndTime() && mOngoingStats.getCurrentTimestamp() < nextEntryStartTime) { // Two seconds after this entry stop
                     assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
-                    if (mTimestampForLastAnimationDecrease < 0 || this.mCurrentTime - mTimestampForLastAnimationDecrease > 4 * 1000) {
+                    if (mTimestampForLastAnimationDecrease < 0 || mOngoingStats.getCurrentTimestamp() - mTimestampForLastAnimationDecrease > 4 * 1000) {
                         ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
-                        mTimestampForLastAnimationDecrease = this.mCurrentTime;
+                        mTimestampForLastAnimationDecrease = mOngoingStats.getCurrentTimestamp();
                     }
                 }
             }
 
-            float pixelsAwayFromPilot = (startTime - this.mCurrentTime) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
+            float pixelsAwayFromPilot = (startTime - mOngoingStats.getCurrentTimestamp()) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
             float x = dotPointX + pixelsAwayFromPilot;
 
-            if (preEntryEndTime != 0) { // If has empty divider before
+            if (endTimeOfPreviousLine != 0) { // If has empty divider before
                 // Not used so far
-                int emptyDividerWidth = (int) (movedPixelsPerMs * (startTime - preEntryEndTime));
+                int emptyDividerWidth = (int) (movedPixelsPerMs * (startTime - endTimeOfPreviousLine));
                 x = x + emptyDividerWidth;
             }
 
-            preEntryEndTime = entry.getEndTime();
+            endTimeOfPreviousLine = line.getEndTime();
 
             if (x + 2 * durationOfCurrentEntry * movedPixelsPerMs < 0) { // Already past for long time enough
                 continue;
@@ -371,7 +334,7 @@ public class ScoringView extends View {
             for (int toneIndex = 0; toneIndex < tones.size(); toneIndex++) {
                 LyricsLineModel.Tone tone = tones.get(toneIndex);
 
-                pixelsAwayFromPilot = (tone.begin - this.mCurrentTime) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
+                pixelsAwayFromPilot = (tone.begin - mOngoingStats.getCurrentTimestamp()) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
                 x = dotPointX + pixelsAwayFromPilot;
                 widthOfPitchStick = movedPixelsPerMs * tone.getDuration();
                 float endX = x + widthOfPitchStick;
@@ -496,64 +459,6 @@ public class ScoringView extends View {
         return (int) (dipValue * scale + 0.5f);
     }
 
-    /**
-     * 设置歌词信息
-     *
-     * @param data 歌词信息对象
-     */
-    public void setLrcData(@Nullable LyricsModel data) {
-        lrcData = data;
-        totalPitch = 0;
-
-        mCurrentTime = 0;
-        pitchMax = 0;
-        pitchMin = 100;
-
-        currentPitchStartTime = -1;
-        currentPitchEndTime = -1;
-        currentEntryEndTime = -1;
-        everyPitchList.clear();
-
-        cumulatedScore = mInitialScore;
-        totalScore = 0;
-
-        mTimestampForFirstTone = -1;
-        mInHighlightStatus = false;
-        mLocalPitch = 0;
-        if (mParticleSystem != null) {
-            mParticleSystem.stopEmitting();
-        }
-
-        if (mVoicePitchChanger != null) {
-            mVoicePitchChanger.reset();
-        } else {
-            mVoicePitchChanger = new VoicePitchChanger();
-        }
-
-        if (lrcData != null && lrcData.lines != null && !lrcData.lines.isEmpty()) {
-            lrcEndTime = lrcData.lines.get(lrcData.lines.size() - 1).getEndTime();
-            totalScore = scorePerSentence * lrcData.lines.size() + mInitialScore;
-
-            for (LyricsLineModel entry : lrcData.lines) {
-                for (LyricsLineModel.Tone tone : entry.tones) {
-                    pitchMin = Math.min(pitchMin, tone.pitch);
-                    pitchMax = Math.max(pitchMax, tone.pitch);
-                    totalPitch++;
-                }
-            }
-
-            List<LyricsLineModel.Tone> tone = lrcData.lines.get(0).tones;
-            if (tone != null && !tone.isEmpty()) {
-                mTimestampForFirstTone = tone.get(0).begin; // find the first tone timestamp
-            }
-        }
-
-        tryInvalidate();
-    }
-
-    private long mTimestampForFirstTone = -1;
-
-    private long mCurrentTime = 0;
     private volatile float mLocalPitch = 0.0F;
 
     private long mTimestampForLastAnimationDecrease = -1;
@@ -564,6 +469,35 @@ public class ScoringView extends View {
 
     private long mLastViewInvalidateTs;
 
+    private OngoingStats mOngoingStats;
+    private VoicePitchChanger mPitchChanger;
+
+    private LyricsModel mLyricsModel;
+
+    public void attachToOngoingStats(OngoingStats machine, VoicePitchChanger changer) {
+        this.mOngoingStats = machine;
+        this.mPitchChanger = changer;
+        this.mLyricsModel = machine.getLyricsModel();
+
+        // Update values from UI view
+        this.mOngoingStats.setInitialScore(mInitialScore);
+    }
+
+    public void requestRefreshUi() {
+        if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    tryInvalidate();
+                }
+            });
+        } else {
+            tryInvalidate();
+        }
+
+//        tryInvalidate();
+    }
+
     private void tryInvalidate() {
         if (System.currentTimeMillis() - mLastViewInvalidateTs <= 16) {
             return;
@@ -571,55 +505,6 @@ public class ScoringView extends View {
         // Try to avoid too many `invalidate` operations, it is expensive
         invalidate();
         mLastViewInvalidateTs = System.currentTimeMillis();
-    }
-
-    /**
-     * 根据当前播放时间获取 Pitch，并且更新
-     * {@link this#currentPitchStartTime}
-     * {@link this#currentPitchEndTime}
-     * {@link this#currentEntryEndTime}
-     *
-     * @return 当前时间歌词的 Pitch
-     */
-    private float findPitchByTime(long time) {
-        if (lrcData == null) return 0;
-
-        float targetPitch = 0;
-        int entryCount = lrcData.lines.size();
-        for (int i = 0; i < entryCount; i++) {
-            LyricsLineModel entry = lrcData.lines.get(i);
-            if (time >= entry.getStartTime() && time <= entry.getEndTime()) { // 索引
-                int toneCount = entry.tones.size();
-                for (int j = 0; j < toneCount; j++) {
-                    LyricsLineModel.Tone tone = entry.tones.get(j);
-                    if (time >= tone.begin && time <= tone.end) {
-                        targetPitch = tone.pitch;
-                        currentPitchStartTime = tone.begin;
-                        currentPitchEndTime = tone.end;
-
-                        currentEntryEndTime = entry.getEndTime();
-
-                        isLastWordForTheLine = (tone.end == currentEntryEndTime);
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-        if (targetPitch == 0) {
-            currentPitchStartTime = -1;
-            currentPitchEndTime = -1;
-            if (time > currentEntryEndTime) {
-                currentEntryEndTime = -1;
-            }
-        } else {
-            // 进入此行代码条件 ： 所唱歌词句开始时间 <= 当前时间 >= 所唱歌词句结束时间
-            // 强行加上一个　0 分 ，标识此为可打分句
-            // 相当于歌词当中预期有 pitch，所以需要做好占位
-            everyPitchList.put(time, 0d);
-        }
-        mCurrentOriginalPitch = targetPitch;
-        return targetPitch;
     }
 
     private final Runnable mRemoveAnimationCallback = new Runnable() {
@@ -636,31 +521,31 @@ public class ScoringView extends View {
      * @param pitch 单位 hz
      */
     public void updateLocalPitch(float pitch) {
-        if (lrcData == null) {
+        if (mOngoingStats == null || mOngoingStats.getLyricsModel() == null) {
             return;
         }
 
-        if (pitch == 0 || pitch < pitchMin || pitch > pitchMax) {
+        if (pitch == 0 || pitch < mOngoingStats.getMinimumRefPitch() || pitch > mOngoingStats.getMaximumRefPitch()) {
             assureAnimationForPitchPivot(0);
             mHandler.postDelayed(mRemoveAnimationCallback, mThresholdOfOffPitchTime);
             return;
         }
 
-        float currentOriginalPitch = mCurrentOriginalPitch;
+        float currentRefPitch = mOngoingStats.getRefPitchForCurrentTimestamp();
 
-        if (currentOriginalPitch == 0) {
+        if (currentRefPitch == 0) {
             return;
         }
 
         mHandler.removeCallbacks(mRemoveAnimationCallback);
 
-        if (mVoicePitchChanger != null) {
-            pitch = (float) mVoicePitchChanger.handlePitch(currentOriginalPitch, pitch, pitchMax);
+        if (mPitchChanger != null) {
+            pitch = (float) mPitchChanger.handlePitch(currentRefPitch, pitch, mOngoingStats.getMaximumRefPitch());
         }
 
         final float finalPitch = pitch;
 
-        final double scoreAfterNormalization = calculateScore2(mCurrentTime, pitchToTone(pitch), pitchToTone(currentOriginalPitch));
+        final double scoreAfterNormalization = mOngoingStats.calculateScore2(minimumScorePerTone, pitch, currentRefPitch);
 
         if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
             mHandler.post(new Runnable() {
@@ -683,54 +568,6 @@ public class ScoringView extends View {
             lastCurrentTs = System.currentTimeMillis();
             assureAnimationForPitchPivot(scoreAfterNormalization);
         }
-    }
-
-    private double calculateScore(long currentTime, double singerTone, double desiredTone) {
-        double scoreAfterNormalization; // [0, 1]
-        double score = 1 - Math.abs(desiredTone - singerTone) / desiredTone;
-        // 得分线以下的分数归零
-        score = score >= minimumScorePerTone ? score : 0f;
-        scoreAfterNormalization = score;
-        // 百分制分数 * 每句固定分数
-        score *= scorePerSentence;
-        everyPitchList.put(currentTime, score);
-        return scoreAfterNormalization;
-    }
-
-    private float mScoreLevel = 10; // 0~100
-    private float mCompensationOffset = 0; // -100~100
-
-    public float getScoreLevel() {
-        return this.mScoreLevel;
-    }
-
-    public float getScoreCompensationOffset() {
-        return this.mCompensationOffset;
-    }
-
-    public void setScoreLevel(float level) {
-        this.mScoreLevel = level;
-    }
-
-    public void setScoreCompensationOffset(float offset) {
-        this.mCompensationOffset = offset;
-    }
-
-    private double calculateScore2(long currentTime, double tone, double tone_ref) {
-        double scoreAfterNormalization; // [0, 1]
-
-        double score = 1 - (mScoreLevel * Math.abs(tone - tone_ref)) / 100 + mCompensationOffset / 100;
-
-        // 得分线以下的分数归零
-        score = score >= minimumScorePerTone ? score : 0f;
-        // 得分太大的置一
-        score = score > 1 ? 1 : score;
-
-        scoreAfterNormalization = score;
-        // 百分制分数 * 每句固定分数
-        score *= scorePerSentence;
-        everyPitchList.put(currentTime, score);
-        return scoreAfterNormalization;
     }
 
     private void assureAnimationForPitchPivot(double scoreAfterNormalization) {
@@ -758,170 +595,34 @@ public class ScoringView extends View {
         }
     }
 
-    private void forceStopPivotAnimationWhenReachingContinuousZeros() {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
-                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
-            }
-        });
-      }
-
-    private void forceStopPivotAnimationWhenFullLineFinished() {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                assureAnimationForPitchPivot(0); // Force stop the animation when there is no new score for a long time(a full sentence)
-                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
-            }
-        });
+    public void forceStopPivotAnimationWhenReachingContinuousZeros() {
+        if (this.mLocalPitch != 0) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
+                    ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
+                }
+            });
+        }
     }
 
-    /**
-     * 更新当前分数
-     *
-     * @param time 当前歌曲播放时间 毫秒
-     */
-    private void updateScore(long time) {
-        if (time < mTimestampForFirstTone) { // Not started
-            return;
-        }
-
-        //  没有开始 || 在空档期
-        boolean notStarted = currentEntryEndTime == -1;
-        // 当前时间 >= 打分句结束时间
-        boolean isThisLineJustFinished = time >= currentEntryEndTime;
-        // 当前时间 >= 歌词结束时间
-        boolean isThisSongFinished = time >= lrcEndTime;
-
-        if (notStarted || isThisLineJustFinished || isThisSongFinished || isLastWordForTheLine) {
-            if (!everyPitchList.isEmpty()) {
-                // 计算歌词当前句的分数 = 所有打分/分数个数
-                double tempTotalScore = 0;
-                int scoreCount = 0;
-
-                Double tempScore;
-                // 两种情况 1. 到了空档期 2. 到了下一句
-                Iterator<Long> iterator = everyPitchList.keySet().iterator();
-                int continuousZeroCount = 0;
-                while (iterator.hasNext()) {
-                    Long duration = iterator.next();
-                    if (notStarted || duration <= currentEntryEndTime) {
-                        tempScore = everyPitchList.get(duration);
-                        if (tempScore == null || tempScore.floatValue() == 0.f) {
-                            continuousZeroCount++;
-                            if (continuousZeroCount < 8) {
-                                tempScore = null; // Ignore it when not enough continuous zeros
-                            } else {
-                                continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
-                                forceStopPivotAnimationWhenReachingContinuousZeros();
-                            }
-                        } else {
-                            continuousZeroCount = 0;
-                        }
-                        iterator.remove();
-                        everyPitchList.remove(duration);
-                        if (tempScore != null && tempScore.floatValue() > 0) {
-                            tempTotalScore += tempScore.floatValue();
-                            scoreCount++;
-                        }
-                    }
+    public void forceStopPivotAnimationWhenFullLineFinished(double score) {
+        if (score == 0 && this.mLocalPitch != 0) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    assureAnimationForPitchPivot(0); // Force stop the animation when there is no new score for a long time(a full sentence)
+                    ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
                 }
-
-                scoreCount = Math.max(1, scoreCount);
-
-                double scoreThisTime = tempTotalScore / scoreCount;
-
-                // 统计到累计分数
-                cumulatedScore += scoreThisTime;
-                // 回调到上层
-                dispatchScore(scoreThisTime);
-
-                if (scoreThisTime == 0 && this.mLocalPitch != 0) {
-                    forceStopPivotAnimationWhenFullLineFinished();
-                }
-            }
+            });
         }
     }
 
     private boolean mInHighlightStatus;
 
-    /**
-     * 根据当前歌曲时间决定是否回调 {@link OnSingScoreListener#onScore(double, double, double)}
-     *
-     * @param score 本次算法返回的分数
-     */
-    private void dispatchScore(double score) {
-        if (onSingScoreListener != null) {
-            onSingScoreListener.onScore(score, cumulatedScore, totalScore);
-        }
-    }
-
-    /**
-     * 更新进度，单位毫秒
-     * 根据当前时间，决定是否回调 {@link OnSingScoreListener#onOriginalPitch(float, int)}
-     * 与打分逻辑无关
-     *
-     * @param time 当前播放时间，毫秒
-     */
-    public void updateTime(long time) {
-        if (lrcData == null) {
-            return;
-        }
-
-        if (this.mCurrentTime != 0 && Math.abs(time - this.mCurrentTime) >= 500) { // Workaround(We assume this as dragging happened)
-            for (int lineIndex = 0; lineIndex < lrcData.lines.size(); lineIndex++) {
-                LyricsLineModel line = lrcData.lines.get(lineIndex);
-                for (int toneIndex = 0; toneIndex < line.tones.size(); toneIndex++) {
-                    LyricsLineModel.Tone tone = line.tones.get(toneIndex);
-                    tone.resetHighlight();
-                }
-            }
-        }
-
-        this.mCurrentTime = time;
-        if (time < currentPitchStartTime || time > currentPitchEndTime) {
-            float currentOriginalPitch = findPitchByTime(time);
-            if (currentOriginalPitch > 0) {
-                onSingScoreListener.onOriginalPitch(currentOriginalPitch, totalPitch);
-            }
-        }
-        updateScore(time);
-
-        tryInvalidate();
-    }
-
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        if (onSingScoreListener != null) {
-            onSingScoreListener = null;
-        }
-    }
-
-    public static double pitchToTone(double pitch) {
-        double eps = 1e-6;
-        return (Math.max(0, Math.log(pitch / 55 + eps) / Math.log(2))) * 12;
-    }
-
-    public interface OnSingScoreListener {
-        /**
-         * 咪咕歌词原始参考 pitch 值回调, 用于开发者自行实现打分逻辑. 歌词每个 tone 回调一次
-         *
-         * @param pitch      当前 tone 的 pitch 值
-         * @param totalCount 整个 xml 的 tone 个数, 用于开发者方便自己在 app 层计算平均分.
-         */
-        void onOriginalPitch(float pitch, int totalCount);
-
-        /**
-         * 歌词组件内置的打分回调, 每句歌词结束的时候提供回调(句指 xml 中的 sentence 节点),
-         * 并提供 totalScore 参考值用于按照百分比方式显示分数
-         *
-         * @param score           这次回调的分数 0-10 之间
-         * @param cumulativeScore 累计的分数 初始分累计到当前的分数
-         * @param totalScore      总分 初始分(默认值 0 分) + xml 中 sentence 的个数 * 10
-         */
-        void onScore(double score, double cumulativeScore, double totalScore);
     }
 }
