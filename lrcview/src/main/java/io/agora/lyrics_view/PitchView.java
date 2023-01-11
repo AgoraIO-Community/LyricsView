@@ -60,8 +60,11 @@ public class PitchView extends View {
     private long currentPitchEndTime = -1;
     // 当前 Pitch 所在的句的结束时间
     private long currentEntryEndTime = -1;
-    // FIXME(HAI_GUO) Not very accurate for all the time
-    private boolean lastWord = false;
+    private int mScoringFiredIndexOfLine = -1; // Indicating that scoring just fired
+    // Delta of time between updates
+    private int mDeltaOfUpdate = 20;
+    // Index of current line
+    private int mIndexOfCurrentLine = -1;
     // 当前在打分的所在句的结束时间
     private long lrcEndTime = 0;
     // 当前 时间的 Pitch，不断变化
@@ -597,7 +600,7 @@ public class PitchView extends View {
                         currentPitchEndTime = tone.end;
 
                         currentEntryEndTime = entry.getEndTime();
-                        lastWord = (tone.end == currentEntryEndTime);
+                        mIndexOfCurrentLine = i;
                         break;
                     }
                 }
@@ -755,12 +758,15 @@ public class PitchView extends View {
         //  没有开始 || 在空档期
         boolean pushAll = currentEntryEndTime == -1;
         // 当前时间 >= 打分句结束时间
-        boolean isThisSentenceOver = time >= currentEntryEndTime;
+        boolean isThisSentenceOver = ((time >= currentEntryEndTime)|| (currentEntryEndTime - time) > 0 && (currentEntryEndTime - time) < mDeltaOfUpdate) && currentEntryEndTime > 0;;
         // 当前时间 >= 歌词结束时间
         boolean isThisSongOver = time >= lrcEndTime;
+        boolean scoringNotFiredBefore = (mScoringFiredIndexOfLine != mIndexOfCurrentLine);
 
-        if (pushAll || isThisSentenceOver || isThisSongOver || lastWord) {
+        if (scoringNotFiredBefore && (pushAll || isThisSentenceOver || isThisSongOver)) {
             if (!everyPitchList.isEmpty()) {
+                mScoringFiredIndexOfLine = mIndexOfCurrentLine;
+
                 // 计算歌词当前句的分数 = 所有打分/分数个数
                 double tempTotalScore = 0;
                 int scoreCount = 0;
