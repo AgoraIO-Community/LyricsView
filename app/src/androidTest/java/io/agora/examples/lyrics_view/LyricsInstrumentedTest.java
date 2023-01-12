@@ -14,7 +14,6 @@ import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -117,11 +116,14 @@ public class LyricsInstrumentedTest {
             Log.d(TAG, "Line summary: " + line.getStartTime() + " ~ " + line.getEndTime() + " " + line.tones.size());
         }
 
+        mNumberOfScoringLines = 0;
+        mLatestIndexOfScoringLines = 0;
         ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, double score, double cumulativeScore, double perfectScore, int index, int numberOfLines) {
                 Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
-                mNumberOfScoringLines = index;
+                mNumberOfScoringLines++;
+                mLatestIndexOfScoringLines = index;
             }
 
             @Override
@@ -151,16 +153,19 @@ public class LyricsInstrumentedTest {
         Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", takes " + (System.currentTimeMillis() - startTsOfTest) + " ms");
 
         // 825003.xml has 30 lines
-        assertTrue(parsedLyrics.lines.size() == 30);
+        int lineCount = parsedLyrics.lines.size();
+        assertTrue(lineCount == 30);
 
         // Check if `onLineFinished` working as expected
-        assertTrue(mNumberOfScoringLines + 1 == parsedLyrics.lines.size());
+        assertTrue(mNumberOfScoringLines == lineCount);
+        assertTrue(mLatestIndexOfScoringLines + 1 == lineCount);
     }
 
     private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
 
     private long mCurrentPosition = 0;
     private int mNumberOfScoringLines = 0;
+    private int mLatestIndexOfScoringLines = 0;
     private ScheduledFuture mFuture;
 
     private void mockPlay(final LyricsModel model, final ScoringMachine scoringMachine) {
