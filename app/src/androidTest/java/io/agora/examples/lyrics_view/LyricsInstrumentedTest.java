@@ -99,9 +99,10 @@ public class LyricsInstrumentedTest {
     @Test
     public void parseSameTimestampForStartAndPreviousEndXmlFile() {
         // specified to 825003.xml
-
+        // 825003.xml has 30 lines
         String fileNameOfSong = "825003.xml";
         String songTitle = "净化空间";
+        int expectedNumberOfLines = 30;
 
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         String sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
@@ -150,11 +151,10 @@ public class LyricsInstrumentedTest {
         long startTsOfTest = System.currentTimeMillis();
         scoringMachine.prepare(parsedLyrics);
         mockPlay(parsedLyrics, scoringMachine);
-        Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", takes " + (System.currentTimeMillis() - startTsOfTest) + " ms");
+        Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");
 
-        // 825003.xml has 30 lines
         int lineCount = parsedLyrics.lines.size();
-        assertTrue(lineCount == 30);
+        assertTrue(lineCount == expectedNumberOfLines);
 
         // Check if `onLineFinished` working as expected
         assertTrue(mNumberOfScoringLines == lineCount);
@@ -223,4 +223,65 @@ public class LyricsInstrumentedTest {
         }
         Log.d(PLAYER_TAG, "Song finished");
     }
+
+    @Test
+    public void parseTimestampOverlapForStartAndPreviousEndXmlFile() {
+        // specified to 147383.xml
+        // 147383.xml has 48 lines
+
+//      String fileNameOfSong = "147383.xml";
+//      String songTitle = "光辉岁月";
+//      int expectedNumberOfLines = 48;
+
+//      String fileNameOfSong = "660078.xml";
+//      String songTitle = "遇见";
+//      int expectedNumberOfLines = 25;
+
+//      String fileNameOfSong = "826125.xml";
+//      String songTitle = "恋歌";
+//      int expectedNumberOfLines = 26;
+
+        String fileNameOfSong = "793566.xml";
+        String songTitle = "感谢你曾来过";
+        int expectedNumberOfLines = 86;
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        String sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
+        assertEquals(true, sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
+
+        File target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        LyricsModel parsedLyrics = LyricsParser.parse(target);
+
+        Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
+
+        int indexOfLine = 0;
+        for (LyricsLineModel line : parsedLyrics.lines) {
+            for (int indexOfPitch = 0; indexOfPitch < line.tones.size(); indexOfPitch++) {
+                LyricsLineModel.Tone pitch = line.tones.get(indexOfPitch);
+                int indexOfPreviousPitch = indexOfPitch - 1;
+                LyricsLineModel.Tone previousPitch;
+                if (indexOfPreviousPitch >= 0) {
+                    previousPitch = line.tones.get(indexOfPreviousPitch);
+                    if (previousPitch.end >= pitch.begin) {
+                        Log.w(TAG, "Wrong begin/end for pitch " + indexOfPitch + " and " + indexOfPreviousPitch + " at line " + indexOfLine);
+                    }
+                }
+            }
+
+            int indexOfPreviousLine = indexOfLine - 1;
+            LyricsLineModel previousLine;
+            if (indexOfPreviousLine >= 0) {
+                previousLine = parsedLyrics.lines.get(indexOfPreviousLine);
+                if (previousLine.getEndTime() >= line.getStartTime()) {
+                    Log.w(TAG, "Wrong start/end for line " + indexOfLine + " and " + indexOfPreviousLine);
+                }
+            }
+            Log.d(TAG, "Line(" + indexOfLine + ")" + "summary: " + line.getStartTime() + " ~ " + line.getEndTime() + " " + line.tones.size());
+            indexOfLine++;
+        }
+
+        int lineCount = parsedLyrics.lines.size();
+        assertTrue(lineCount == expectedNumberOfLines);
+    }
+
 }

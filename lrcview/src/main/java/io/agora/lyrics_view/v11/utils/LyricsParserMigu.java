@@ -59,13 +59,13 @@ class LyricsParserMigu {
                 return null;
             }
 
-            LyricsModel mLrcData = new LyricsModel(LyricsModel.Type.Migu);
+            LyricsModel lyrics = new LyricsModel(LyricsModel.Type.Migu);
             List<LyricsLineModel> lines = new ArrayList<>();
             for (Paragraph paragraph : song.midi.paragraphs) {
                 lines.addAll(paragraph.lines);
             }
-            mLrcData.lines = lines;
-            return mLrcData;
+            lyrics.lines = lines;
+            return lyrics;
         } catch (Exception e) {
             e.printStackTrace();
         }

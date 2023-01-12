@@ -16,6 +16,8 @@ public class LyricsResourcePool {
 
     public static final String LRC_SAMPLE_LOCAL_FILE_825003 = "825003.xml"; // Start and end(previous line) may have same timestamp
 
+    public static final String LRC_SAMPLE_LOCAL_FILE_147383 = "147383.xml"; // Start and end(previous line) may overlap
+
     public static final List<String> asList() {
         ArrayList<String> list = new ArrayList<>();
         list.add(LRC_SAMPLE_1);
@@ -27,6 +29,7 @@ public class LyricsResourcePool {
         list.add(LRC_SAMPLE_7);
         list.add(LRC_SAMPLE_LOCAL_FILE_810507);
         list.add(LRC_SAMPLE_LOCAL_FILE_825003);
+        list.add(LRC_SAMPLE_LOCAL_FILE_147383);
         return list;
     }
 }

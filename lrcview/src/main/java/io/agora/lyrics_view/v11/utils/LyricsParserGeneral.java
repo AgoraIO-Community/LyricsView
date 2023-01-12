@@ -36,17 +36,17 @@ class LyricsParserGeneral {
             return null;
         }
 
-        LyricsModel mLrcData = new LyricsModel(LyricsModel.Type.General);
+        LyricsModel lyrics = new LyricsModel(LyricsModel.Type.General);
 
-        List<LyricsLineModel> entryList = new ArrayList<>();
-        mLrcData.lines = entryList;
+        List<LyricsLineModel> lines = new ArrayList<>();
+        lyrics.lines = lines;
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(lrcFile), StandardCharsets.UTF_8));
             String line;
             while ((line = br.readLine()) != null) {
                 List<LyricsLineModel> list = parseLine(line);
                 if (list != null && !list.isEmpty()) {
-                    entryList.addAll(list);
+                    lines.addAll(list);
                 }
             }
             br.close();
@@ -54,9 +54,9 @@ class LyricsParserGeneral {
             e.printStackTrace();
         }
 
-        for (int i = 0; i < entryList.size() - 1; i++) {
-            LyricsLineModel cur = entryList.get(i);
-            LyricsLineModel next = entryList.get(i + 1);
+        for (int i = 0; i < lines.size() - 1; i++) {
+            LyricsLineModel cur = lines.get(i);
+            LyricsLineModel next = lines.get(i + 1);
 
             if (cur.tones == null || cur.tones.size() <= 0) {
                 continue;
@@ -65,7 +65,7 @@ class LyricsParserGeneral {
             LyricsLineModel.Tone first = cur.tones.get(0);
             first.end = next.getStartTime();
         }
-        return mLrcData;
+        return lyrics;
     }
 
     /**

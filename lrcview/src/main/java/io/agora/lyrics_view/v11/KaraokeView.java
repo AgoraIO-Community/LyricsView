@@ -64,6 +64,10 @@ public class KaraokeView {
 
             public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
                 Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+
+                if (mKaraokeEvent != null) {
+                    mKaraokeEvent.onRefPitchUpdate(refPitch, numberOfRefPitches);
+                }
             }
 
             @Override

@@ -37,6 +37,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private int mCurrentIndex = 0;
 
+    private LyricsModel mLyricsModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +56,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             @Override
+            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
+                mKaraokeView.setPitch(refPitch);
+            }
+
+            @Override
             public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int index, int total) {
 
             }
@@ -67,14 +74,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (lrcSample.startsWith("https://") || lrcSample.startsWith("http://")) {
             DownloadManager.getInstance().download(this, lrcSample, file -> {
                 file = extractFromZipFileIfPossible(file);
-                LyricsModel model = KaraokeView.parseLyricsData(file);
-                mKaraokeView.setLyricsData(model);
+                mLyricsModel = KaraokeView.parseLyricsData(file);
+                mKaraokeView.setLyricsData(mLyricsModel);
             }, Throwable::printStackTrace);
         } else {
             File file = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcSample);
             file = extractFromZipFileIfPossible(file);
-            LyricsModel model = KaraokeView.parseLyricsData(file);
-            mKaraokeView.setLyricsData(model);
+            mLyricsModel = KaraokeView.parseLyricsData(file);
+            mKaraokeView.setLyricsData(mLyricsModel);
         }
     }
 
@@ -150,33 +157,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ScheduledFuture mFuture;
 
     private void doMockPlay() {
+        final long DURATION_OF_SONG = mLyricsModel.lines.get(mLyricsModel.lines.size() - 1).getEndTime();
         mCurrentPosition = 0;
+        final String PLAYER_TAG = TAG + "_MockPlayer";
+        Log.d(PLAYER_TAG, "duration: " + DURATION_OF_SONG + ", position: " + mCurrentPosition);
         if (mFuture != null) {
             mFuture.cancel(true);
         }
 
         mFuture = mExecutor.scheduleAtFixedRate(new Runnable() {
-
-            private static final int DURATION_FAKED = 120;
-
             @Override
             public void run() {
-                if (mCurrentPosition >= 0 && mCurrentPosition < (DURATION_FAKED) * 1000) {
+                if (mCurrentPosition >= 0 && mCurrentPosition < DURATION_OF_SONG) {
                     mKaraokeView.setProgress(mCurrentPosition);
-                    float pitch = (float) Math.random() * 200;
-                    mKaraokeView.setPitch(pitch);
-                    Log.d(TAG, "timer mCurrentPosition: " + mCurrentPosition + ", pitch: " + pitch);
-                } else if (mCurrentPosition >= (DURATION_FAKED) * 1000 && mCurrentPosition < (DURATION_FAKED + 1) * 1000) {
+                    Log.d(PLAYER_TAG, "timer mCurrentPosition: " + mCurrentPosition);
+                } else if (mCurrentPosition >= DURATION_OF_SONG && mCurrentPosition < (DURATION_OF_SONG + 1000)) {
                     long lastPosition = mCurrentPosition;
                     mKaraokeView.setProgress(0);
                     mKaraokeView.setPitch(0);
+                    Log.d(PLAYER_TAG, "put the pivot back in space");
                     // Put the pivot back in space
-                } else if (mCurrentPosition >= (DURATION_FAKED + 1) * 1000) {
+                } else if (mCurrentPosition >= (DURATION_OF_SONG + 1000)) {
                     if (mFuture != null) {
                         mFuture.cancel(true);
                     }
                     mCurrentPosition = 0;
-                    Log.d(TAG, "quit 20ms trigger");
+                    Log.d(PLAYER_TAG, "quit");
                     return;
                 }
                 mCurrentPosition += 20;
