@@ -14,9 +14,18 @@ import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import io.agora.examples.utils.ResourceHelper;
 
+import io.agora.lyrics_view.v11.VoicePitchChanger;
+import io.agora.lyrics_view.v11.internal.ScoringMachine;
 import io.agora.lyrics_view.v11.model.LyricsLineModel;
 import io.agora.lyrics_view.v11.model.LyricsModel;
 import io.agora.lyrics_view.v11.utils.LyricsParser;
@@ -108,7 +117,105 @@ public class LyricsInstrumentedTest {
             Log.d(TAG, "Line summary: " + line.getStartTime() + " ~ " + line.getEndTime() + " " + line.tones.size());
         }
 
+        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
+            @Override
+            public void onLineFinished(LyricsLineModel line, double score, double cumulativeScore, double perfectScore, int index, int numberOfLines) {
+                Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
+                mNumberOfScoringLines = index;
+            }
+
+            @Override
+            public void resetUi() {
+                Log.d(TAG, "resetUi");
+            }
+
+            @Override
+            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
+//                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+            }
+
+            @Override
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization) {
+//                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization);
+            }
+
+            @Override
+            public void requestRefreshUi() {
+                Log.d(TAG, "requestRefreshUi");
+            }
+        });
+
+        long startTsOfTest = System.currentTimeMillis();
+        scoringMachine.prepare(parsedLyrics);
+        mockPlay(parsedLyrics, scoringMachine);
+        Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", takes " + (System.currentTimeMillis() - startTsOfTest) + " ms");
+
         // 825003.xml has 30 lines
         assertTrue(parsedLyrics.lines.size() == 30);
+
+        // Check if `onLineFinished` working as expected
+        assertTrue(mNumberOfScoringLines + 1 == parsedLyrics.lines.size());
+    }
+
+    private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
+
+    private long mCurrentPosition = 0;
+    private int mNumberOfScoringLines = 0;
+    private ScheduledFuture mFuture;
+
+    private void mockPlay(final LyricsModel model, final ScoringMachine scoringMachine) {
+        // 01-12 11:03:00.029 29186 29227 D LyricsInstrumentedTest_MockPlayer: duration: 242051, position: 0
+        // 01-12 11:03:44.895 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.lyrics_view.v11.model.LyricsLineModel@a929307 55.4259650979513 145.58355316053687 3000.0 1 30
+        // 01-12 11:03:51.835 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.lyrics_view.v11.model.LyricsLineModel@79eec34 59.921391935944555 205.50494509648144 3000.0 2 30
+        // 01-12 11:04:08.953 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.lyrics_view.v11.model.LyricsLineModel@f0a3fd2 61.03482350600236 318.2838389210401 3000.0 4 30
+        // 01-12 11:07:02.073 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.lyrics_view.v11.model.LyricsLineModel@34e9f0b 55.14133207074234 1815.480908114657 3000.0 29 30
+        // 01-12 11:07:03.073 29186 29229 D LyricsInstrumentedTest_MockPlayer: put the pivot back in space
+        // 01-12 11:07:03.093 29186 29227 D LyricsInstrumentedTest_MockPlayer: Song finished
+        // 01-12 11:07:03.098 29186 29229 D LyricsInstrumentedTest_MockPlayer: quit
+        // 01-12 11:07:03.199 29186 29227 D LyricsInstrumentedTest: Started at Thu Jan 12 11:03:00 GMT+08:00 2023, takes 243170 ms
+
+        final long DURATION_OF_SONG = model.lines.get(model.lines.size() - 1).getEndTime();
+        mCurrentPosition = 0;
+        final String PLAYER_TAG = TAG + "_MockPlayer";
+        Log.d(PLAYER_TAG, "duration: " + DURATION_OF_SONG + ", position: " + mCurrentPosition);
+        if (mFuture != null) {
+            mFuture.cancel(true);
+        }
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        mFuture = mExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                if (mCurrentPosition >= 0 && mCurrentPosition < DURATION_OF_SONG) {
+                    scoringMachine.setProgress(mCurrentPosition);
+                    float pitch = (float) Math.random() * 200;
+                    scoringMachine.setPitch(pitch);
+                    Log.d(PLAYER_TAG, "mCurrentPosition: " + mCurrentPosition + ", pitch: " + pitch);
+                } else if (mCurrentPosition >= DURATION_OF_SONG && mCurrentPosition < (DURATION_OF_SONG + 1000)) {
+                    long lastPosition = mCurrentPosition;
+                    scoringMachine.setProgress(0);
+                    scoringMachine.setPitch(0);
+                    Log.d(PLAYER_TAG, "put the pivot back in space");
+                    // Put the pivot back in space
+                } else if (mCurrentPosition >= (DURATION_OF_SONG + 1000)) {
+                    if (mFuture != null) {
+                        mFuture.cancel(true);
+                    }
+                    mCurrentPosition = 0;
+                    latch.countDown();
+                    Log.d(PLAYER_TAG, "quit");
+                    return;
+                }
+                mCurrentPosition += 20;
+            }
+        }, 0, 20, TimeUnit.MILLISECONDS);
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Log.d(PLAYER_TAG, "Song finished");
     }
 }

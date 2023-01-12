@@ -257,7 +257,7 @@ public class ScoringMachine {
 
     /**
      * 更新进度，单位毫秒
-     * 根据当前时间，决定是否回调 {@link ScoringMachine.OnScoringListener#onRefPitch(float, int)}}
+     * 根据当前时间，决定是否回调 {@link ScoringMachine.OnScoringListener#onRefPitchUpdate(float, int)}}
      * 与打分逻辑无关
      *
      * @param progress 当前播放时间，毫秒

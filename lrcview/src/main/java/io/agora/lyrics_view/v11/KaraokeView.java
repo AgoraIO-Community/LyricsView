@@ -41,15 +41,15 @@ public class KaraokeView {
         mScoringAlgorithm = new DefaultScoringAlgorithm();
         mScoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
             @Override
-            public void onLineFinished(LyricsLineModel line, double score, double cumulativeScore, double perfectScore, int index, int total) {
-                Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + total);
+            public void onLineFinished(LyricsLineModel line, double score, double cumulativeScore, double perfectScore, int index, int numberOfLines) {
+                Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
 
                 if (mScoringView != null) {
                     mScoringView.forceStopPivotAnimationWhenFullLineFinished(score);
                 }
 
                 if (mKaraokeEvent != null) {
-                    mKaraokeEvent.onLineFinished(KaraokeView.this, line, (int) score, index, total);
+                    mKaraokeEvent.onLineFinished(KaraokeView.this, line, (int) score, index, numberOfLines);
                 }
             }
 
