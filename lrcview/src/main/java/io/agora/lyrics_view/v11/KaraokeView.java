@@ -27,8 +27,6 @@ public class KaraokeView {
 
     private ScoringMachine mScoringMachine;
 
-    private VoicePitchChanger mVoicePitchChanger;
-
     public KaraokeView(LyricsView lyricsView, ScoringView scoringView) {
         this.mLyricsView = lyricsView;
         this.mScoringView = scoringView;
@@ -41,8 +39,7 @@ public class KaraokeView {
 
     private void initialize() {
         mScoringAlgorithm = new DefaultScoringAlgorithm();
-        mVoicePitchChanger = new VoicePitchChanger();
-        mScoringMachine = new ScoringMachine(new ScoringMachine.OnScoringListener() {
+        mScoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, double score, double cumulativeScore, double perfectScore, int index, int total) {
                 Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + total);
@@ -65,8 +62,16 @@ public class KaraokeView {
                 }
             }
 
-            public void onRefPitch(float refPitch, int numberOfRefPitches) {
-                Log.d(TAG, "onRefPitch " + refPitch + " " + numberOfRefPitches);
+            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
+                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+            }
+
+            @Override
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization) {
+                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization);
+                if (mScoringView != null) {
+                    mScoringView.updatePitchAndScore(pitch, scoreAfterNormalization);
+                }
             }
 
             public void requestRefreshUi() {
@@ -103,7 +108,7 @@ public class KaraokeView {
         }
 
         if (mScoringView != null) {
-            mScoringView.attachToOngoingStats(mScoringMachine, mVoicePitchChanger);
+            mScoringView.attachToScoringMachine(mScoringMachine);
         }
     }
 
@@ -111,8 +116,9 @@ public class KaraokeView {
     public void setPitch(float pitch) {
         if (mLyricsView != null) {
         }
-        if (mScoringView != null) {
-            mScoringView.updateLocalPitch(pitch);
+
+        if (mScoringMachine != null) {
+            mScoringMachine.setPitch(pitch);
         }
     }
 

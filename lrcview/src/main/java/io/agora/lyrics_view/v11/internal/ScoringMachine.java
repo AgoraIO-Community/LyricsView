@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import io.agora.lyrics_view.v11.VoicePitchChanger;
 import io.agora.lyrics_view.v11.model.LyricsLineModel;
 import io.agora.lyrics_view.v11.model.LyricsModel;
 
@@ -52,6 +53,9 @@ public class ScoringMachine {
     // Initial score for the lyrics(can change by app)
     private float mInitialScore;
 
+    // Minimum score for each tone/pitch
+    private float mMinimumScorePerTone;
+
     // Cumulative score
     private double mCumulativeScore;
 
@@ -65,10 +69,13 @@ public class ScoringMachine {
     private float mScoreLevel = 10; // 0~100
     private float mCompensationOffset = 0; // -100~100
 
+    private VoicePitchChanger mVoicePitchChanger;
+
     private OnScoringListener mListener;
 
-    public ScoringMachine(OnScoringListener listener) {
+    public ScoringMachine(VoicePitchChanger changer, OnScoringListener listener) {
         reset();
+        this.mVoicePitchChanger = changer;
         this.mListener = listener;
     }
 
@@ -97,6 +104,10 @@ public class ScoringMachine {
         if (tone != null && !tone.isEmpty()) {
             mTimestampOfFirstRefPitch = tone.get(0).begin; // find the timestamp of first reference pitch
         }
+    }
+
+    public boolean isReady() {
+        return mLyricsModel != null && mTimestampOfFirstRefPitch > 0 && mNumberOfRefPitches > 0;
     }
 
     /**
@@ -152,7 +163,7 @@ public class ScoringMachine {
         return referencePitch;
     }
 
-    public final double calculateScore2(double minimumScore, double pitch, double refPitch) {
+    private double calculateScore2(double minimumScore, double pitch, double refPitch) {
         double tone = pitchToTone(pitch);
         double refTone = pitchToTone(refPitch);
 
@@ -280,7 +291,7 @@ public class ScoringMachine {
         if (progress < mStartTimeOfCurrentRefPitch || progress > mEndTimeOfCurrentRefPitch) {
             float currentRefPitch = findRefPitchByTime(progress);
             if (currentRefPitch > 0 && mListener != null) {
-                mListener.onRefPitch(currentRefPitch, mNumberOfRefPitches);
+                mListener.onRefPitchUpdate(currentRefPitch, mNumberOfRefPitches);
             }
         }
 
@@ -291,8 +302,31 @@ public class ScoringMachine {
         }
     }
 
+    public void setPitch(float pitch) {
+        if (mLyricsModel == null) {
+            return;
+        }
+
+        float currentRefPitch = mRefPitchForCurrentTimestamp;
+
+        if (mVoicePitchChanger != null) {
+            // Either no valid local pitch or ref pitch, we will treat the return value as 0
+            pitch = (float) mVoicePitchChanger.handlePitch(currentRefPitch, pitch, this.mMaximumRefPitch);
+        }
+
+        final double scoreAfterNormalization = this.calculateScore2(mMinimumScorePerTone, pitch, currentRefPitch);
+
+        if (mListener != null) {
+            mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization);
+        }
+    }
+
     public void setInitialScore(float initialScore) {
         this.mInitialScore = initialScore;
+    }
+
+    public void setMinimumScorePerTone(float minimumScore) {
+        this.mMinimumScorePerTone = minimumScore;
     }
 
     public void reset() {
@@ -354,7 +388,9 @@ public class ScoringMachine {
 
         public void resetUi();
 
-        public void onRefPitch(float refPitch, int numberOfRefPitches);
+        public void onRefPitchUpdate(float refPitch, int numberOfRefPitches);
+
+        public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization);
 
         public void requestRefreshUi();
     }

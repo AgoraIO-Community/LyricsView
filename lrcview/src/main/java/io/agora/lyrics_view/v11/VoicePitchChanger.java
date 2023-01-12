@@ -7,19 +7,19 @@ public class VoicePitchChanger {
 
     /// 处理 Pitch
     /// - Parameters:
-    ///   - wordPitch: 标准值 来自歌词文件
-    ///   - voicePitch: 实际值 来自 rtc 回调
+    ///   - refPitch: 标准值 来自歌词文件
+    ///   - pitch: 实际值 来自 rtc 回调
     ///   - wordMaxPitch: 最大值 来自标准值
     /// - Returns: 处理后的值
-    double handlePitch(double wordPitch,
-                       double voicePitch,
+    public double handlePitch(double refPitch,
+                       double pitch,
                        double wordMaxPitch) {
-        if (voicePitch <= 0) {
+        if (pitch <= 0 || refPitch <= 0) {
             return 0;
         }
 
         n += 1;
-        double gap = wordPitch - voicePitch;
+        double gap = refPitch - pitch;
 
         offset = offset * (n - 1) / n + gap / n;
 
@@ -29,7 +29,7 @@ public class VoicePitchChanger {
             offset = Math.min(offset, wordMaxPitch * 0.4);
         }
 
-        return Math.min(voicePitch + offset, wordMaxPitch);
+        return Math.min(pitch + offset, wordMaxPitch);
     }
 
     void reset() {

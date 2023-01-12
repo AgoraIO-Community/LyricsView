@@ -470,17 +470,19 @@ public class ScoringView extends View {
     private long mLastViewInvalidateTs;
 
     private ScoringMachine mScoringMachine;
-    private VoicePitchChanger mPitchChanger;
 
     private LyricsModel mLyricsModel;
 
-    public void attachToOngoingStats(ScoringMachine machine, VoicePitchChanger changer) {
+    public void attachToScoringMachine(ScoringMachine machine) {
+        if (!machine.isReady()) {
+            throw new IllegalStateException("Must call ScoringMachine.prepare before attaching");
+        }
         this.mScoringMachine = machine;
-        this.mPitchChanger = changer;
         this.mLyricsModel = machine.getLyricsModel();
 
         // Update values from UI view
         this.mScoringMachine.setInitialScore(mInitialScore);
+        this.mScoringMachine.setMinimumScorePerTone(minimumScorePerTone);
     }
 
     public void requestRefreshUi() {
@@ -494,8 +496,6 @@ public class ScoringView extends View {
         } else {
             tryInvalidate();
         }
-
-//        tryInvalidate();
     }
 
     private void tryInvalidate() {
@@ -515,12 +515,7 @@ public class ScoringView extends View {
         }
     };
 
-    /**
-     * 更新音调，更新分数，执行圆点动画
-     *
-     * @param pitch 单位 hz
-     */
-    public void updateLocalPitch(float pitch) {
+    public void updatePitchAndScore(final float pitch, final double scoreAfterNormalization) {
         if (this.mScoringMachine == null || this.mScoringMachine.getLyricsModel() == null) {
             return;
         }
@@ -531,31 +526,17 @@ public class ScoringView extends View {
             return;
         }
 
-        float currentRefPitch = this.mScoringMachine.getRefPitchForCurrentTimestamp();
-
-        if (currentRefPitch == 0) {
-            return;
-        }
-
         mHandler.removeCallbacks(mRemoveAnimationCallback);
-
-        if (mPitchChanger != null) {
-            pitch = (float) mPitchChanger.handlePitch(currentRefPitch, pitch, this.mScoringMachine.getMaximumRefPitch());
-        }
-
-        final float finalPitch = pitch;
-
-        final double scoreAfterNormalization = this.mScoringMachine.calculateScore2(minimumScorePerTone, pitch, currentRefPitch);
 
         if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    performPivotAnimationIfNecessary(finalPitch, scoreAfterNormalization);
+                    performPivotAnimationIfNecessary(pitch, scoreAfterNormalization);
                 }
             });
         } else {
-            performPivotAnimationIfNecessary(finalPitch, scoreAfterNormalization);
+            performPivotAnimationIfNecessary(pitch, scoreAfterNormalization);
         }
     }
 
