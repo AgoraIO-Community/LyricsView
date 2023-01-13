@@ -25,13 +25,14 @@ public class LyricsParser {
     private static final String TAG = "LyricsParser";
 
     private static void checkParameters(File file) {
-        if (file == null || !file.isFile() || !file.exists() || !file.canRead()) {
+        if (file == null || !file.isFile() || !file.exists() || !file.canRead() || file.length() == 0) {
             StringBuilder builder = new StringBuilder("Not a valid file for parser: " + file);
             if (file != null) {
                 builder.append("\n");
                 builder.append("{isFile: " + file.isFile() + ", ");
                 builder.append("exists: " + file.exists() + ", ");
-                builder.append("canRead: " + file.canRead() + "}");
+                builder.append("canRead: " + file.canRead() + ", ");
+                builder.append("length: " + file.length() + "}");
             }
             throw new IllegalArgumentException(builder.toString());
         }
