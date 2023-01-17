@@ -781,9 +781,7 @@ public class PitchView extends View {
                         tempScore = everyPitchList.get(duration);
                         if (tempScore == null || tempScore.floatValue() == 0.f) {
                             continuousZeroCount++;
-                            if (continuousZeroCount < 8) {
-                                tempScore = null; // Ignore it when not enough continuous zeros
-                            } else {
+                            if (continuousZeroCount >= 8) {
                                 continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
                                 assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
                                 ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
@@ -793,8 +791,16 @@ public class PitchView extends View {
                         }
                         iterator.remove();
                         everyPitchList.remove(duration);
-                        if (tempScore != null && tempScore.floatValue() > 0) {
-                            tempTotalScore += tempScore.floatValue();
+
+                        if (minimumScorePerTone > 0) {
+                            if (tempScore != null && tempScore.floatValue() >= minimumScorePerTone) {
+                                tempTotalScore += tempScore.floatValue();
+                                scoreCount++;
+                            }
+                        } else {
+                            if (tempScore != null) {
+                                tempTotalScore += tempScore.floatValue();
+                            }
                             scoreCount++;
                         }
                     }
