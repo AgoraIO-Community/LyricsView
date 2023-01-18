@@ -52,7 +52,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.AgoraIO-Community:LyricsView:1.0.24'
+    implementation 'com.github.AgoraIO-Community:LyricsView:1.0.25'
 }
 ```
 
@@ -133,6 +133,22 @@ public interface OnSingScoreListener {
     app:lrcEnableDrag="true"
     app:lrcScore="true"
  />
+```
+
+### 打分相关:
+
+```
+<io.agora.lyrics_view.PitchView
+    // 设定最小得分的标准，百分制，默认为 40，即得分小于 40 的不参与最终算分，这样在舍弃一些低分之后整句会相对来说会比较容易得高分
+    // 如果设定为 0，即所有得分都会参与最终算分，需要演唱者每个字都认真唱
+    // 另外单字得分相关的两个参数 PitchView#mScoreLevel(默认为 0，取值为 0~100) 以及 PitchView#mCompensationOffset(默认为 0，取值为 -100~100)，如需修改请参照对应 API
+    app:minimumScore="40"
+    // 控制游标的半径
+    app:pitchIndicatorRadius="6dp"
+    // 初始得分，如不需要可设置为 0
+    app:pitchInitialScore="0"
+    // 控制基准音条的高度
+    app:pitchStickHeight="6dp" />
 ```
 
 核心 API 参考如下：
