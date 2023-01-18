@@ -8,6 +8,8 @@ import android.util.Log;
 
 import java.io.File;
 
+import io.agora.lyrics_view.v11.VoicePitchChanger;
+import io.agora.lyrics_view.v11.internal.ScoringMachine;
 import io.agora.lyrics_view.v11.utils.LyricsParser;
 
 /**
@@ -17,6 +19,13 @@ import io.agora.lyrics_view.v11.utils.LyricsParser;
  */
 public class ExampleUnitTest {
     private static final String TAG = "ExampleUnitTest";
+
+    private void Logx(String msg) {
+        /**
+         * Log.d|e|w|i not supported by unit test
+         */
+        System.out.println(TAG + " " + msg);
+    }
 
     @Test
     public void addition_isCorrect() {
@@ -36,5 +45,60 @@ public class ExampleUnitTest {
             exception.printStackTrace();
         }
         assertTrue(exception instanceof IllegalArgumentException);
+    }
+
+    private VoicePitchChanger mVoicePitchChanger = new VoicePitchChanger();
+
+    @Test
+    public void testVoiceChanger() {
+        // TODO(Hai_Guo) Should figure out how to check the result if expected
+        Logx("handlePitch(300, 189, 500): " + mVoicePitchChanger.handlePitch(300, 189, 500));
+        Logx("handlePitch(310, 176, 500): " + mVoicePitchChanger.handlePitch(310, 176, 500));
+        Logx("handlePitch(320, 137, 500): " + mVoicePitchChanger.handlePitch(320, 137, 500));
+        Logx("handlePitch(390, 120, 500): " + mVoicePitchChanger.handlePitch(390, 120, 500));
+        Logx("handlePitch(430, 210, 500): " + mVoicePitchChanger.handlePitch(430, 210, 500));
+        Logx("handlePitch(460, 234, 500): " + mVoicePitchChanger.handlePitch(460, 234, 500));
+        Logx("handlePitch(490, 199, 500): " + mVoicePitchChanger.handlePitch(490, 199, 500));
+        Logx("handlePitch(300, 300, 500): " + mVoicePitchChanger.handlePitch(300, 300, 500));
+    }
+
+    @Test
+    public void testScoreCalculation2() {
+        // TODO(Hai_Guo) Should figure out how to check the result if expected
+        double scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10f, 0f, 500f, 300);
+        assertEquals(0.11564141395769778, scoreAfterNormalization, 0f);
+        Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 500f, 300): " + scoreAfterNormalization);
+
+        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10f, 0f, 400f, 300);
+        assertEquals(0.5019550802136014, scoreAfterNormalization, 0f);
+        Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 400f, 300): " + scoreAfterNormalization);
+
+        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10f, 0f, 301f, 300);
+        assertEquals(0.9942388175378764, scoreAfterNormalization, 0f);
+        Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 301f, 300): " + scoreAfterNormalization);
+
+        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10f, 0f, 300f, 300);
+        assertEquals(1.0, scoreAfterNormalization, 0f);
+        Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 300f, 300): " + scoreAfterNormalization);
+
+        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10f, 0f, 299f, 300);
+        assertEquals(0.9942195815041831, scoreAfterNormalization, 0f);
+        Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 299f, 300): " + scoreAfterNormalization);
+
+        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10f, 0f, 200f, 300);
+        assertEquals(0.2980451578310306, scoreAfterNormalization, 0f);
+        Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 200f, 300): " + ScoringMachine.calculateScore2(0f, 10f, 0f, 200f, 300));
+
+        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10f, 0f, 100f, 300);
+        assertEquals(0.0, scoreAfterNormalization, 0f);
+        Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 100f, 300): " + scoreAfterNormalization);
+
+        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10f, 0f, 50f, 300);
+        assertEquals(0.0, scoreAfterNormalization, 0f);
+        Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 50f, 300): " + scoreAfterNormalization);
+
+        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10f, 0f, 1f, 300);
+        assertEquals(0.0, scoreAfterNormalization, 0f);
+        Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 1f, 300): " + scoreAfterNormalization);
     }
 }

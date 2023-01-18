@@ -163,28 +163,21 @@ public class ScoringMachine {
         return referencePitch;
     }
 
-    private double calculateScore2(double minimumScore, double pitch, double refPitch) {
+    public static double calculateScore2(double minimumScore, float scoreLevel, float compensationOffset, double pitch, double refPitch) {
         double tone = pitchToTone(pitch);
         double refTone = pitchToTone(refPitch);
 
         double scoreAfterNormalization; // [0, 1]
-
-        double score = 1 - (mScoreLevel * Math.abs(tone - refTone)) / 100 + mCompensationOffset / 100;
+        scoreAfterNormalization = 1 - (scoreLevel * Math.abs(tone - refTone)) / 100 + compensationOffset / 100;
 
         // 得分线以下的分数归零
-        score = score >= minimumScore ? score : 0f;
+        scoreAfterNormalization = scoreAfterNormalization >= minimumScore ? scoreAfterNormalization : 0f;
         // 得分太大的置一
-        score = score > 1 ? 1 : score;
-
-        scoreAfterNormalization = score;
-        // 百分制分数 * 每句固定分数
-        score *= mMaximumScoreForLine;
-        mPitchesForLine.put(mCurrentTimestamp, score);
-
+        scoreAfterNormalization = scoreAfterNormalization > 1 ? 1 : scoreAfterNormalization;
         return scoreAfterNormalization;
     }
 
-    public static double pitchToTone(double pitch) {
+    static double pitchToTone(double pitch) {
         double eps = 1e-6;
         return (Math.max(0, Math.log(pitch / 55 + eps) / Math.log(2))) * 12;
     }
@@ -221,9 +214,7 @@ public class ScoringMachine {
                         tempScore = mPitchesForLine.get(myKeyTimestamp);
                         if (tempScore == null || tempScore.floatValue() == 0.f) {
                             continuousZeroCount++;
-                            if (continuousZeroCount < 8) {
-                                tempScore = null; // Ignore it when not enough continuous zeros
-                            } else {
+                            if (continuousZeroCount >= 8) {
                                 continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
                                 if (mListener != null) {
                                     mListener.resetUi();
@@ -234,8 +225,16 @@ public class ScoringMachine {
                         }
                         iterator.remove();
                         mPitchesForLine.remove(myKeyTimestamp);
-                        if (tempScore != null && tempScore.floatValue() > 0) {
-                            tempTotalScore += tempScore.floatValue();
+
+                        if (mMinimumScorePerTone > 0) {
+                            if (tempScore != null && tempScore.floatValue() >= mMinimumScorePerTone) {
+                                tempTotalScore += tempScore.floatValue();
+                                scoreCount++;
+                            }
+                        } else {
+                            if (tempScore != null) {
+                                tempTotalScore += tempScore.floatValue();
+                            }
                             scoreCount++;
                         }
                     }
@@ -308,13 +307,20 @@ public class ScoringMachine {
         }
 
         float currentRefPitch = mRefPitchForCurrentTimestamp;
+        long timestamp = mCurrentTimestamp;
 
         if (mVoicePitchChanger != null) {
             // Either no valid local pitch or ref pitch, we will treat the return value as 0
             pitch = (float) mVoicePitchChanger.handlePitch(currentRefPitch, pitch, this.mMaximumRefPitch);
         }
 
-        final double scoreAfterNormalization = this.calculateScore2(mMinimumScorePerTone, pitch, currentRefPitch);
+        final double scoreAfterNormalization = this.calculateScore2(mMinimumScorePerTone, mScoreLevel, mCompensationOffset, pitch, currentRefPitch);
+
+        double score = scoreAfterNormalization;
+        // 百分制分数 * 每句固定分数
+        score *= mMaximumScoreForLine;
+
+        mPitchesForLine.put(timestamp, score);
 
         if (mListener != null) {
             mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization);

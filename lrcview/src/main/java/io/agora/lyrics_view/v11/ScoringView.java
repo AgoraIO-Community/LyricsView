@@ -53,6 +53,7 @@ public class ScoringView extends View {
     private float mLocalPitchIndicatorRadius;
 
     // 分数阈值 大于此值计分 小于不计分
+    // TODO(Hai_Guo) rename minimumScorePerTone
     public float minimumScorePerTone;
 
     private final Paint mLocalPitchIndicatorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
