@@ -703,7 +703,7 @@ public class PitchView extends View {
         this.mCompensationOffset = offset;
     }
 
-    private double calculateScore2(long currentTime, double tone, double tone_ref) {
+    public double calculateScore2(long currentTime, double tone, double tone_ref) {
         double scoreAfterNormalization; // [0, 1]
 
         double score = 1 - (mScoreLevel * Math.abs(tone - tone_ref)) / 100 + mCompensationOffset / 100;
