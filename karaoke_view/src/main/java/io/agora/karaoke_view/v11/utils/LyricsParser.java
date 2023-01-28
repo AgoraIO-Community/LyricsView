@@ -1,4 +1,4 @@
-package io.agora.lyrics_view.v11.utils;
+package io.agora.karaoke_view.v11.utils;
 
 import android.util.Log;
 
@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import io.agora.lyrics_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.v11.model.LyricsModel;
 
 /**
  * 加载歌词

@@ -32,11 +32,11 @@ android {
         }
     }
 
-    namespace 'io.agora.lyrics_view'
+    namespace 'io.agora.karaoke_view'
 
     libraryVariants.all { variant ->
         variant.outputs.all {
-            outputFileName = "lyrics_view_v" +
+            outputFileName = "karaoke_view_v" +
                     defaultConfig.versionName + ".aar"
         }
     }

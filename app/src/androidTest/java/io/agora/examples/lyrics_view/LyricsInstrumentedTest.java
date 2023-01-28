@@ -23,11 +23,11 @@ import java.util.concurrent.TimeUnit;
 
 import io.agora.examples.utils.ResourceHelper;
 
-import io.agora.lyrics_view.v11.VoicePitchChanger;
-import io.agora.lyrics_view.v11.internal.ScoringMachine;
-import io.agora.lyrics_view.v11.model.LyricsLineModel;
-import io.agora.lyrics_view.v11.model.LyricsModel;
-import io.agora.lyrics_view.v11.utils.LyricsParser;
+import io.agora.karaoke_view.v11.VoicePitchChanger;
+import io.agora.karaoke_view.v11.internal.ScoringMachine;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
+import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.v11.utils.LyricsParser;
 
 /**
  * Instrumented test, which will execute on an Android device.

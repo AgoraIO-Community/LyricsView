@@ -1,4 +1,4 @@
-package io.agora.lyrics_view.v11;
+package io.agora.karaoke_view.v11;
 
 import android.util.Log;
 
@@ -6,10 +6,10 @@ import androidx.annotation.MainThread;
 
 import java.io.File;
 
-import io.agora.lyrics_view.v11.internal.ScoringMachine;
-import io.agora.lyrics_view.v11.model.LyricsLineModel;
-import io.agora.lyrics_view.v11.model.LyricsModel;
-import io.agora.lyrics_view.v11.utils.LyricsParser;
+import io.agora.karaoke_view.v11.internal.ScoringMachine;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
+import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.v11.utils.LyricsParser;
 
 public class KaraokeView {
 
@@ -49,7 +49,7 @@ public class KaraokeView {
                 }
 
                 if (mKaraokeEvent != null) {
-                    mKaraokeEvent.onLineFinished(KaraokeView.this, line, (int) score, index, numberOfLines);
+                    mKaraokeEvent.onLineFinished(KaraokeView.this, line, (int) score, (int) cumulativeScore, index, numberOfLines);
                 }
             }
 

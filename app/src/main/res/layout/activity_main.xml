@@ -7,7 +7,7 @@
     android:keepScreenOn="true"
     tools:context=".MainActivity">
 
-    <io.agora.lyrics_view.v11.ScoringView
+    <io.agora.karaoke_view.v11.ScoringView
         android:id="@+id/scoring_view"
         android:layout_width="match_parent"
         android:layout_height="120dp"
@@ -23,7 +23,7 @@
         app:pitchInitialScore="0"
         app:pitchStickHeight="6dp" />
 
-    <io.agora.lyrics_view.v11.LyricsView
+    <io.agora.karaoke_view.v11.LyricsView
         android:id="@+id/lrc_view"
         android:layout_width="match_parent"
         android:layout_height="200dp"

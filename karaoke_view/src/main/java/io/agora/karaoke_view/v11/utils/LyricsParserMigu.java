@@ -1,4 +1,4 @@
-package io.agora.lyrics_view.v11.utils;
+package io.agora.karaoke_view.v11.utils;
 
 import android.util.Xml;
 
@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.agora.lyrics_view.v11.model.LyricsLineModel;
-import io.agora.lyrics_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
+import io.agora.karaoke_view.v11.model.LyricsModel;
 
 /**
  * 咪咕加载 xml 歌词

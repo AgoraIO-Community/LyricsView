@@ -1,4 +1,4 @@
-package io.agora.lyrics_view.v11.utils;
+package io.agora.karaoke_view.v11.utils;
 
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.agora.lyrics_view.v11.model.LyricsLineModel;
-import io.agora.lyrics_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
+import io.agora.karaoke_view.v11.model.LyricsModel;
 
 /**
  * 通用歌词加载。

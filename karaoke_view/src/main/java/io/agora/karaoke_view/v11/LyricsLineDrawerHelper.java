@@ -1,4 +1,4 @@
-package io.agora.lyrics_view.v11;
+package io.agora.karaoke_view.v11;
 
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -11,7 +11,7 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 
-import io.agora.lyrics_view.v11.model.LyricsLineModel;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
 
 /**
  * 处理每一行歌词

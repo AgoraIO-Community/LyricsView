@@ -1,4 +1,4 @@
-package io.agora.lyrics_view.v11;
+package io.agora.karaoke_view.v11;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -21,9 +21,9 @@ import androidx.annotation.MainThread;
 
 import java.util.List;
 
-import io.agora.lyrics_view.R;
-import io.agora.lyrics_view.v11.model.LyricsLineModel;
-import io.agora.lyrics_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.R;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
+import io.agora.karaoke_view.v11.model.LyricsModel;
 
 /**
  * 歌词视图

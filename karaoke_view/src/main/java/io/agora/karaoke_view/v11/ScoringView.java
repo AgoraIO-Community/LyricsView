@@ -1,4 +1,4 @@
-package io.agora.lyrics_view.v11;
+package io.agora.karaoke_view.v11;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
@@ -25,10 +25,10 @@ import com.plattysoft.leonids.ParticleSystem;
 
 import java.util.List;
 
-import io.agora.lyrics_view.R;
-import io.agora.lyrics_view.v11.internal.ScoringMachine;
-import io.agora.lyrics_view.v11.model.LyricsLineModel;
-import io.agora.lyrics_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.R;
+import io.agora.karaoke_view.v11.internal.ScoringMachine;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
+import io.agora.karaoke_view.v11.model.LyricsModel;
 
 /**
  * 激励，互动视图

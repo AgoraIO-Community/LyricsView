@@ -1,4 +1,4 @@
-package io.agora.lyrics_view.v11.model;
+package io.agora.karaoke_view.v11.model;
 
 import java.util.ArrayList;
 import java.util.List;

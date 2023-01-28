@@ -1,4 +1,4 @@
-package io.agora.lyrics_view.v11;
+package io.agora.karaoke_view.v11;
 
 public interface IScoringAlgorithm {
 }

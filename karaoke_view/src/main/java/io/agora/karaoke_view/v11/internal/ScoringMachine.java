@@ -1,12 +1,12 @@
-package io.agora.lyrics_view.v11.internal;
+package io.agora.karaoke_view.v11.internal;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import io.agora.lyrics_view.v11.VoicePitchChanger;
-import io.agora.lyrics_view.v11.model.LyricsLineModel;
-import io.agora.lyrics_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.v11.VoicePitchChanger;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
+import io.agora.karaoke_view.v11.model.LyricsModel;
 
 /**
  * State/Information of playing/rendering/on-going lyrics

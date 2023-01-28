@@ -1,4 +1,4 @@
-package io.agora.lyrics_view;
+package io.agora.karaoke_view;
 
 import android.content.Context;
 import android.util.Log;

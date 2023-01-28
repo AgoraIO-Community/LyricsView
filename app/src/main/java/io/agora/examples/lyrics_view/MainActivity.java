@@ -20,15 +20,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import io.agora.examples.karaoke_view.R;
 import io.agora.examples.utils.ResourceHelper;
-import io.agora.lyrics_view.DownloadManager;
+import io.agora.karaoke_view.DownloadManager;
 
-import io.agora.lyrics_view.v11.KaraokeEvent;
-import io.agora.lyrics_view.v11.KaraokeView;
-import io.agora.lyrics_view.v11.LyricsView;
-import io.agora.lyrics_view.v11.ScoringView;
-import io.agora.lyrics_view.v11.model.LyricsLineModel;
-import io.agora.lyrics_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.v11.KaraokeEvent;
+import io.agora.karaoke_view.v11.KaraokeView;
+import io.agora.karaoke_view.v11.LyricsView;
+import io.agora.karaoke_view.v11.ScoringView;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
+import io.agora.karaoke_view.v11.model.LyricsModel;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity";
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             @Override
-            public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int index, int total) {
+            public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulatedScore, int index, int total) {
 
             }
         });

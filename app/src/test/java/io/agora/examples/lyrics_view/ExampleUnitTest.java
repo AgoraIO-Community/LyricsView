@@ -4,13 +4,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-import android.util.Log;
-
 import java.io.File;
 
-import io.agora.lyrics_view.v11.VoicePitchChanger;
-import io.agora.lyrics_view.v11.internal.ScoringMachine;
-import io.agora.lyrics_view.v11.utils.LyricsParser;
+import io.agora.karaoke_view.v11.VoicePitchChanger;
+import io.agora.karaoke_view.v11.internal.ScoringMachine;
+import io.agora.karaoke_view.v11.utils.LyricsParser;
 
 /**
  * Example local unit test, which will execute on the development machine (host).
