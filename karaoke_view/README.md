@@ -63,7 +63,7 @@ dependencies {
 ## 自定义 LyricsView 控件界面布局
 
 在项目的 Activity 中，自定义 LyricsView 控件的界面布局。示例代码如下：
-```
+```xml
 <io.agora.karaoke_view.v11.LyricsView
     android:id="@+id/lrc_view"
     android:layout_width="match_parent"
@@ -91,7 +91,7 @@ dependencies {
 ## 声明和初始化 LyricsView/ScoringView 控件对象
 
 在项目的 Activity 中，声明和初始化 LyricsView/ScoringView 等控件对象。示例代码如下：
-```
+```Java
 public class LiveActivity extends RtcBaseActivity {
     private LyricsView mLyricsView;
     private ScoringView mScoringView
@@ -146,7 +146,7 @@ public class LiveActivity extends RtcBaseActivity {
 
 ## 控件相关事件回调
 
-```
+```Java
 public interface KaraokeEvent {
     /**
      * 控件歌词部分拖动交互，拖动之后回调歌词当前位置，用于驱动播放器调整播放位置
@@ -182,11 +182,11 @@ public interface KaraokeEvent {
 
 ### 初始分默认为 0 分, 如果要重定义在下面:
 
-```
+```xml
 <io.agora.karaoke_view.v11.ScoringView
     android:id="@+id/scoring_view
     app:pitchInitialScore="0"
- />
+  />
 ```
 
 核心 API 参考如下：
