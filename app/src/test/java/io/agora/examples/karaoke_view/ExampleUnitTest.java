@@ -1,4 +1,4 @@
-package io.agora.examples.lyrics_view;
+package io.agora.examples.karaoke_view;
 
 import org.junit.Test;
 

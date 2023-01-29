@@ -1,4 +1,4 @@
-package io.agora.examples.lyrics_view;
+package io.agora.examples.karaoke_view;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -43,7 +43,7 @@ public class LyricsInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("io.agora.examples.lyrics_view", appContext.getPackageName());
+        assertEquals("io.agora.examples.karaoke_view", appContext.getPackageName());
     }
 
     @Test
@@ -55,7 +55,7 @@ public class LyricsInstrumentedTest {
 
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         String oneAndOnlyOneLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
-        assertEquals(true, oneAndOnlyOneLineXmlFileContent.contains(songArtist));
+        assertTrue(oneAndOnlyOneLineXmlFileContent.contains(songArtist));
 
         File target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
         LyricsModel parsedLyrics = LyricsParser.parse(target);
@@ -97,6 +97,34 @@ public class LyricsInstrumentedTest {
     }
 
     @Test
+    public void parseMetadataForThisLyrics() {
+        // specified to 825003.xml
+        // 825003.xml has 30 lines
+        String fileNameOfSong = "825003.xml";
+        String songTitle = "净化空间";
+        String songArtist = "张学友";
+        int expectedNumberOfLines = 30;
+        long expectedStartOfVerse = (long) (28.814 * 1000);
+        long expectedDuration = (long) (242.051 * 1000);
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        String oneAndOnlyOneLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
+        assertTrue(oneAndOnlyOneLineXmlFileContent.contains(songArtist));
+        assertTrue(oneAndOnlyOneLineXmlFileContent.contains(songTitle));
+
+        File target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        LyricsModel parsedLyrics = LyricsParser.parse(target);
+
+        assertEquals(songTitle, parsedLyrics.title);
+        assertEquals(songArtist, parsedLyrics.artist);
+        assertEquals(expectedStartOfVerse, parsedLyrics.startOfVerse);
+        assertEquals(expectedDuration, parsedLyrics.duration);
+        assertEquals(expectedNumberOfLines, parsedLyrics.lines.size());
+
+        Log.d(TAG, "Metadata for this lyrics, numberOfLines: " + parsedLyrics.lines.size() + ", title: " + parsedLyrics.title + ", artist: " + parsedLyrics.artist + ", startOfVerse: " + parsedLyrics.startOfVerse + ", duration: " + parsedLyrics.duration);
+    }
+
+    @Test
     public void parseSameTimestampForStartAndPreviousEndXmlFile() {
         // specified to 825003.xml
         // 825003.xml has 30 lines
@@ -106,7 +134,7 @@ public class LyricsInstrumentedTest {
 
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         String sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
-        assertEquals(true, sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
+        assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
 
         File target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
         LyricsModel parsedLyrics = LyricsParser.parse(target);
@@ -170,10 +198,10 @@ public class LyricsInstrumentedTest {
 
     private void mockPlay(final LyricsModel model, final ScoringMachine scoringMachine) {
         // 01-12 11:03:00.029 29186 29227 D LyricsInstrumentedTest_MockPlayer: duration: 242051, position: 0
-        // 01-12 11:03:44.895 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.lyrics_view.v11.model.LyricsLineModel@a929307 55.4259650979513 145.58355316053687 3000.0 1 30
-        // 01-12 11:03:51.835 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.lyrics_view.v11.model.LyricsLineModel@79eec34 59.921391935944555 205.50494509648144 3000.0 2 30
-        // 01-12 11:04:08.953 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.lyrics_view.v11.model.LyricsLineModel@f0a3fd2 61.03482350600236 318.2838389210401 3000.0 4 30
-        // 01-12 11:07:02.073 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.lyrics_view.v11.model.LyricsLineModel@34e9f0b 55.14133207074234 1815.480908114657 3000.0 29 30
+        // 01-12 11:03:44.895 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@a929307 55.4259650979513 145.58355316053687 3000.0 1 30
+        // 01-12 11:03:51.835 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@79eec34 59.921391935944555 205.50494509648144 3000.0 2 30
+        // 01-12 11:04:08.953 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@f0a3fd2 61.03482350600236 318.2838389210401 3000.0 4 30
+        // 01-12 11:07:02.073 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@34e9f0b 55.14133207074234 1815.480908114657 3000.0 29 30
         // 01-12 11:07:03.073 29186 29229 D LyricsInstrumentedTest_MockPlayer: put the pivot back in space
         // 01-12 11:07:03.093 29186 29227 D LyricsInstrumentedTest_MockPlayer: Song finished
         // 01-12 11:07:03.098 29186 29229 D LyricsInstrumentedTest_MockPlayer: quit
@@ -247,7 +275,7 @@ public class LyricsInstrumentedTest {
 
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         String sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
-        assertEquals(true, sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
+        assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
 
         File target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
         LyricsModel parsedLyrics = LyricsParser.parse(target);

@@ -116,20 +116,17 @@ public class KaraokeView {
         }
     }
 
-    @MainThread
-    public void setPitch(float pitch) {
-        if (mLyricsView != null) {
-        }
+    public final LyricsModel getLyricsData() {
+        return mScoringMachine.getLyricsModel();
+    }
 
-        if (mScoringMachine != null) {
-            mScoringMachine.setPitch(pitch);
-        }
+    public void setPitch(float pitch) {
+        mScoringMachine.setPitch(pitch);
     }
 
     public void setProgress(long progress) {
-        if (mScoringMachine != null) {
-            mScoringMachine.setProgress(progress);
-        }
+        mScoringMachine.setProgress(progress);
+
         if (mLyricsView != null) {
             mLyricsView.updateTime(progress);
         }

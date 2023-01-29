@@ -55,7 +55,7 @@ class LyricsParserMigu {
             parser.setInput(in, null);
             parser.nextTag();
             Song song = readLrc(parser);
-            if (song == null || song.midi == null || song.midi.paragraphs == null) {
+            if (song.midi == null || song.midi.paragraphs == null) {
                 return null;
             }
 
@@ -64,6 +64,10 @@ class LyricsParserMigu {
             for (Paragraph paragraph : song.midi.paragraphs) {
                 lines.addAll(paragraph.lines);
             }
+            lyrics.startOfVerse = lines.get(0).getStartTime(); // Always the first line of lyrics
+            lyrics.duration = lines.get(lines.size() - 1).getEndTime();
+            lyrics.title = song.general.name;
+            lyrics.artist = song.general.singer;
             lyrics.lines = lines;
             return lyrics;
         } catch (Exception e) {
@@ -104,9 +108,9 @@ class LyricsParserMigu {
             }
             String name = parser.getName();
             if (name.equals("name")) {
-                general.name = readText(parser);
+                general.name = readText(parser).trim(); // Trim blank chars starts or ends with the title
             } else if (name.equals("singer")) {
-                general.singer = readText(parser);
+                general.singer = readText(parser).trim(); // Trim blank chars starts or ends with the artist
 //            } else if (name.equals("type")) {
 //                general.type = Integer.parseInt(readText(parser));
             } else if (name.equals("mode_type")) {

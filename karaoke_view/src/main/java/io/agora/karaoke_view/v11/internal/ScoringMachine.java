@@ -100,10 +100,7 @@ public class ScoringMachine {
             }
         }
 
-        List<LyricsLineModel.Tone> tone = model.lines.get(0).tones;
-        if (tone != null && !tone.isEmpty()) {
-            mTimestampOfFirstRefPitch = tone.get(0).begin; // find the timestamp of first reference pitch
-        }
+        mTimestampOfFirstRefPitch = model.startOfVerse; // find the timestamp of first reference pitch
     }
 
     public boolean isReady() {
@@ -385,8 +382,8 @@ public class ScoringMachine {
         return this.mMaximumRefPitch;
     }
 
-    public float getRefPitchForCurrentTimestamp() {
-        return this.mRefPitchForCurrentTimestamp;
+    public long getTimestampOfFirstRefPitch() {
+        return this.mTimestampOfFirstRefPitch;
     }
 
     public interface OnScoringListener {

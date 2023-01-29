@@ -1,4 +1,4 @@
-package io.agora.examples.lyrics_view;
+package io.agora.examples.karaoke_view;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import io.agora.examples.karaoke_view.R;
 import io.agora.examples.utils.ResourceHelper;
 import io.agora.karaoke_view.DownloadManager;
 
