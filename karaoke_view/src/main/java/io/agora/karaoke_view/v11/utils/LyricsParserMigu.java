@@ -174,10 +174,6 @@ class LyricsParserMigu {
             }
         }
 
-        int tone_index = 0;
-
-        boolean isEnglish = false;
-
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
@@ -185,25 +181,13 @@ class LyricsParserMigu {
 
             String name = parser.getName();
             if (name.equals("tone")) {
-                tone_index++;
-                if ((isEnglish || isEnglishSong(parser)) && tone_index > 5) {
-                    line = new LyricsLineModel(new ArrayList<>());
-                    list.add(line);
-                    tone_index = 0;
-                }
                 LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
                 line.tones.add(tone);
-                isEnglish = readTone(parser, tone);
+                readTone(parser, tone);
             } else if (name.equals("monolog")) {
-                tone_index++;
-                if ((isEnglish || isEnglishSong(parser)) && tone_index > 5) {
-                    line = new LyricsLineModel(new ArrayList<>());
-                    list.add(line);
-                    tone_index = 0;
-                }
                 LyricsLineModel.Monolog monolog = new LyricsLineModel.Monolog();
                 line.tones.add(monolog);
-                isEnglish = readMonolog(parser, monolog);
+                readMonolog(parser, monolog);
             } else {
                 skip(parser);
             }

@@ -60,7 +60,7 @@ public class ScoringView extends View {
     private int mLocalPitchIndicatorColor;
 
     private final Paint mLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private LinearGradient linearGradient;
+    private LinearGradient mOverpastLinearGradient;
 
     private final Paint mPitchStickLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int mOriginPitchStickColor;
@@ -141,7 +141,7 @@ public class ScoringView extends View {
 
         int startColor = getResources().getColor(R.color.pitch_start);
         int endColor = getResources().getColor(R.color.pitch_end);
-        linearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
+        mOverpastLinearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
 
         mTailAnimationLinearGradient = new LinearGradient(dotPointX, 0, dotPointX - 12, 0, startColor, Color.YELLOW, Shader.TileMode.CLAMP);
     }
@@ -161,7 +161,7 @@ public class ScoringView extends View {
 
             int startColor = getResources().getColor(R.color.pitch_start);
             int endColor = getResources().getColor(R.color.pitch_end);
-            linearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
+            mOverpastLinearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
 
             mTailAnimationLinearGradient = new LinearGradient(dotPointX, 0, dotPointX - 12, 0, startColor, Color.YELLOW, Shader.TileMode.CLAMP);
 
@@ -169,7 +169,9 @@ public class ScoringView extends View {
 
             mHandler.postDelayed(() -> {
                 // Create a particle system and start emiting
-                mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), 4, getResources().getDrawable(R.drawable.pitch_indicator), 200);
+                if (mParticleSystem == null) {
+                    mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), 4, getResources().getDrawable(R.drawable.pitch_indicator), 200);
+                }
 
                 // It works with an emision range
                 int[] location = new int[2];
@@ -255,7 +257,7 @@ public class ScoringView extends View {
 
     private void drawStartLine(Canvas canvas) {
         mLinearGradientPaint.setShader(null);
-        mLinearGradientPaint.setShader(linearGradient);
+        mLinearGradientPaint.setShader(mOverpastLinearGradient);
         mLinearGradientPaint.setAntiAlias(true);
         canvas.drawRect(0, 0, dotPointX, getHeight(), mLinearGradientPaint);
 

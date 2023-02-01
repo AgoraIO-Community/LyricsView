@@ -98,14 +98,14 @@ public class LyricsInstrumentedTest {
 
     @Test
     public void parseMetadataForThisLyrics() {
-        // specified to 825003.xml
-        // 825003.xml has 30 lines
-        String fileNameOfSong = "825003.xml";
-        String songTitle = "净化空间";
-        String songArtist = "张学友";
-        int expectedNumberOfLines = 30;
-        long expectedStartOfVerse = (long) (28.814 * 1000);
-        long expectedDuration = (long) (242.051 * 1000);
+        // specified to
+        String fileNameOfSong = "c18228e223144247810ee511916e2207.xml";
+        String songTitle = "路边的野花不要采";
+        String songArtist = "邓丽君";
+        int expectedNumberOfLines = 20;
+
+        long expectedStartOfVerse = (long) (13.0600 * 1000);
+        long expectedDuration = (long) (113.0414 * 1000);
 
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         String oneAndOnlyOneLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
