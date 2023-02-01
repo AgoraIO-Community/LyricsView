@@ -172,10 +172,6 @@ class LrcLoadMiguUtils {
             }
         }
 
-        int tone_index = 0;
-
-        boolean isEnglish = false;
-
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
@@ -183,25 +179,13 @@ class LrcLoadMiguUtils {
 
             String name = parser.getName();
             if (name.equals("tone")) {
-                tone_index++;
-                if ((isEnglish || isEnglishSong(parser)) && tone_index > 5) {
-                    sentence = new LrcEntryData(new ArrayList<>());
-                    list.add(sentence);
-                    tone_index = 0;
-                }
                 LrcEntryData.Tone tone = new LrcEntryData.Tone();
                 sentence.tones.add(tone);
-                isEnglish = readTone(parser, tone);
+                readTone(parser, tone);
             } else if (name.equals("monolog")) {
-                tone_index++;
-                if ((isEnglish || isEnglishSong(parser)) && tone_index > 5) {
-                    sentence = new LrcEntryData(new ArrayList<>());
-                    list.add(sentence);
-                    tone_index = 0;
-                }
                 LrcEntryData.Monolog monolog = new LrcEntryData.Monolog();
                 sentence.tones.add(monolog);
-                isEnglish = readMonolog(parser, monolog);
+                readMonolog(parser, monolog);
             } else {
                 skip(parser);
             }
