@@ -90,7 +90,7 @@ public class ScoringMachine {
         mLyricsModel = model;
 
         mEndTimeOfThisLyrics = model.lines.get(model.lines.size() - 1).getEndTime();
-        mPerfectScore = mMaximumScoreForLine * model.lines.size() + mInitialScore;
+        mPerfectScore = mMaximumScoreForLine * model.lines.size();
 
         for (LyricsLineModel line : model.lines) {
             for (LyricsLineModel.Tone tone : line.tones) {
@@ -325,6 +325,7 @@ public class ScoringMachine {
     }
 
     public void setInitialScore(float initialScore) {
+        mPerfectScore += mInitialScore;
         this.mInitialScore = initialScore;
     }
 
@@ -384,6 +385,10 @@ public class ScoringMachine {
 
     public long getTimestampOfFirstRefPitch() {
         return this.mTimestampOfFirstRefPitch;
+    }
+
+    public double getPerfectScore() {
+        return this.mPerfectScore;
     }
 
     public interface OnScoringListener {

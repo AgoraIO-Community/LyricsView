@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -56,8 +57,10 @@ public class ScoringView extends View {
     // TODO(Hai_Guo) rename minimumScorePerTone
     public float minimumScorePerTone;
 
-    private final Paint mLocalPitchIndicatorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private int mLocalPitchIndicatorColor;
+    private final Paint mLocalPitchLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private int mLocalPitchPivotColor;
+
+    private final Paint mLocalPitchPivotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     private final Paint mLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private LinearGradient mOverpastLinearGradient;
@@ -66,9 +69,6 @@ public class ScoringView extends View {
     private int mOriginPitchStickColor;
     private final Paint mHighlightPitchStickLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int mHighlightPitchStickColor;
-
-    private final Paint mTailAnimationLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private LinearGradient mTailAnimationLinearGradient;
 
     private float dotPointX = 0F; // 亮点坐标
 
@@ -107,7 +107,7 @@ public class ScoringView extends View {
         this.mHandler = new Handler(Looper.myLooper());
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.ScoringView);
         mLocalPitchIndicatorRadius = ta.getDimension(R.styleable.ScoringView_pitchIndicatorRadius, getResources().getDimension(R.dimen.local_pitch_indicator_radius));
-        mLocalPitchIndicatorColor = ta.getColor(R.styleable.ScoringView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
+        mLocalPitchPivotColor = ta.getColor(R.styleable.ScoringView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
         mInitialScore = ta.getFloat(R.styleable.ScoringView_pitchInitialScore, 0f);
 
         if (mInitialScore < 0) {
@@ -142,8 +142,6 @@ public class ScoringView extends View {
         int startColor = getResources().getColor(R.color.pitch_start);
         int endColor = getResources().getColor(R.color.pitch_end);
         mOverpastLinearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
-
-        mTailAnimationLinearGradient = new LinearGradient(dotPointX, 0, dotPointX - 12, 0, startColor, Color.YELLOW, Shader.TileMode.CLAMP);
     }
 
     @Override
@@ -163,14 +161,17 @@ public class ScoringView extends View {
             int endColor = getResources().getColor(R.color.pitch_end);
             mOverpastLinearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
 
-            mTailAnimationLinearGradient = new LinearGradient(dotPointX, 0, dotPointX - 12, 0, startColor, Color.YELLOW, Shader.TileMode.CLAMP);
-
             tryInvalidate();
 
             mHandler.postDelayed(() -> {
                 // Create a particle system and start emiting
                 if (mParticleSystem == null) {
-                    mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), 4, getResources().getDrawable(R.drawable.pitch_indicator), 200);
+                    Drawable[] drawables = new Drawable[4];
+                    drawables[0] = getResources().getDrawable(R.drawable.star1);
+                    drawables[1] = getResources().getDrawable(R.drawable.star2);
+                    drawables[2] = getResources().getDrawable(R.drawable.star3);
+                    drawables[3] = getResources().getDrawable(R.drawable.star4);
+                    mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), 4, drawables, 200);
                 }
 
                 // It works with an emision range
@@ -199,36 +200,29 @@ public class ScoringView extends View {
 
         drawStartLine(canvas);
         drawPitchSticks(canvas);
-        drawLocalPitchStick(canvas);
+        drawLocalPitchPivot(canvas);
     }
     //</editor-fold>
 
     //<editor-fold desc="Draw Related">
-    private void drawLocalPitchStick(Canvas canvas) {
-        mLocalPitchIndicatorPaint.setShader(null);
-        mLocalPitchIndicatorPaint.setColor(mLocalPitchIndicatorColor);
-        mLocalPitchIndicatorPaint.setAntiAlias(true);
-
-        canvas.drawLine(dotPointX, 0, dotPointX, getHeight(), mLocalPitchIndicatorPaint);
+    private void drawLocalPitchPivot(Canvas canvas) {
+        mLocalPitchLinePaint.setShader(null);
+        mLocalPitchLinePaint.setColor(mLocalPitchPivotColor);
+        mLocalPitchLinePaint.setAntiAlias(true);
+        canvas.drawLine(dotPointX, 0, dotPointX, getHeight(), mLocalPitchLinePaint);
 
         float value = getYForPitchPivot();
         if (value >= 0) {
-            if (mInHighlightStatus) {
-                // Perform the tail animation if in highlight status
-                mTailAnimationLinearGradientPaint.setShader(null);
-                mTailAnimationLinearGradientPaint.setShader(mTailAnimationLinearGradient);
-                mTailAnimationLinearGradientPaint.setStyle(Paint.Style.FILL_AND_STROKE);
-                mTailAnimationLinearGradientPaint.setAntiAlias(true);
+            mLocalPitchPivotPaint.setColor(mLocalPitchPivotColor);
+            mLocalPitchPivotPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+            mLocalPitchPivotPaint.setAntiAlias(true);
 
-                Path path = new Path();
-                path.moveTo(dotPointX, value - 6);
-                path.lineTo(dotPointX, value + 6);
-                path.lineTo(dotPointX - 100, value);
-                path.close();
-                canvas.drawPath(path, mTailAnimationLinearGradientPaint);
-            }
-
-            canvas.drawCircle(dotPointX, value, mLocalPitchIndicatorRadius, mLocalPitchIndicatorPaint);
+            Path path = new Path();
+            path.moveTo(dotPointX, value);
+            path.lineTo(dotPointX - 26, value - 20);
+            path.lineTo(dotPointX - 26, value + 20);
+            path.close();
+            canvas.drawPath(path, mLocalPitchPivotPaint);
         }
     }
 
