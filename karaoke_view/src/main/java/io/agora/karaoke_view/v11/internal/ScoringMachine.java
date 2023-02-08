@@ -1,5 +1,7 @@
 package io.agora.karaoke_view.v11.internal;
 
+import android.util.Log;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
@@ -14,6 +16,8 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  */
 public class ScoringMachine {
     private static final String TAG = "ScoringMachine";
+
+    private static final boolean DEBUG = false;
 
     private LyricsModel mLyricsModel;
 
@@ -204,6 +208,10 @@ public class ScoringMachine {
                 Iterator<Long> iterator = mPitchesForLine.keySet().iterator();
                 int continuousZeroCount = 0;
 
+                if (DEBUG) {
+                    debugScoringAlgo();
+                }
+
                 while (iterator.hasNext()) {
                     Long myKeyTimestamp = iterator.next();
                     if (notStarted || myKeyTimestamp <= mEndTimeOfCurrentLine) {
@@ -248,6 +256,18 @@ public class ScoringMachine {
                 }
             }
         }
+    }
+
+    private void debugScoringAlgo() {
+        Iterator<Long> iterator = mPitchesForLine.keySet().iterator();
+        double cumulativeScoreForLine = 0;
+        while (iterator.hasNext()) {
+            Long myKeyTimestamp = iterator.next();
+            Double score = mPitchesForLine.get(myKeyTimestamp);
+            cumulativeScoreForLine += (score != null ? score : 0);
+            Log.d(TAG, "debugScoringAlgo/mPitchesForLine: timestamp=" + myKeyTimestamp + ", scoreForPitch=" + score);
+        }
+        Log.d(TAG, "debugScoringAlgo/mPitchesForLine: numberOfPitches=" + mPitchesForLine.size() + ", cumulativeScoreForLine=" + cumulativeScoreForLine);
     }
 
     /**
@@ -303,6 +323,12 @@ public class ScoringMachine {
         }
 
         float currentRefPitch = mRefPitchForCurrentTimestamp;
+        if (currentRefPitch == 0) { // No ref pitch, just ignore this time
+            if (mListener != null) {
+                mListener.resetUi();
+            }
+            return;
+        }
         long timestamp = mCurrentTimestamp;
 
         if (mVoicePitchChanger != null) {
