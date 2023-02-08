@@ -2,8 +2,6 @@ package io.agora.karaoke_view.v11;
 
 import android.util.Log;
 
-import androidx.annotation.MainThread;
-
 import java.io.File;
 
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
@@ -16,9 +14,6 @@ public class KaraokeView {
     private static final String TAG = "KaraokeView";
 
     private IScoringAlgorithm mScoringAlgorithm;
-
-    private int mScoreLevel = 10;
-    private int mScoreCompensationOffset = 0;
 
     private KaraokeEvent mKaraokeEvent;
 
@@ -162,10 +157,10 @@ public class KaraokeView {
     }
 
     public void setScoreLevel(int level) {
-        this.mScoreLevel = level;
+        mScoringMachine.setScoreLevel(level);
     }
 
     public void setScoreCompensationOffset(int offset) {
-        this.mScoreCompensationOffset = offset;
+        mScoringMachine.setScoreCompensationOffset(offset);
     }
 }

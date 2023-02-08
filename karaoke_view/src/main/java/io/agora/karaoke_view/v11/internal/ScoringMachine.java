@@ -2,7 +2,6 @@ package io.agora.karaoke_view.v11.internal;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 import io.agora.karaoke_view.v11.VoicePitchChanger;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
@@ -66,8 +65,8 @@ public class ScoringMachine {
     private double mPerfectScore;
 
     // Indicating the difficulty in scoring(can change by app)
-    private float mScoreLevel = 10; // 0~100
-    private float mCompensationOffset = 0; // -100~100
+    private int mScoreLevel = 10; // 0~100
+    private int mCompensationOffset = 0; // -100~100
 
     private VoicePitchChanger mVoicePitchChanger;
 
@@ -160,7 +159,7 @@ public class ScoringMachine {
         return referencePitch;
     }
 
-    public static double calculateScore2(double minimumScore, float scoreLevel, float compensationOffset, double pitch, double refPitch) {
+    public static double calculateScore2(double minimumScore, int scoreLevel, int compensationOffset, double pitch, double refPitch) {
         double tone = pitchToTone(pitch);
         double refTone = pitchToTone(refPitch);
 
@@ -331,6 +330,14 @@ public class ScoringMachine {
 
     public void setMinimumScorePerTone(float minimumScore) {
         this.mMinimumScorePerTone = minimumScore;
+    }
+
+    public void setScoreLevel(int scoreLevel) {
+        this.mScoreLevel = scoreLevel;
+    }
+
+    public void setScoreCompensationOffset(int scoreCompensationOffset) {
+        this.mCompensationOffset = scoreCompensationOffset;
     }
 
     public void reset() {
