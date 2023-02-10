@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -43,9 +44,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        findViewById(R.id.clear_cache).setOnClickListener(this);
+        findViewById(R.id.switch_to_next).setOnClickListener(this);
         findViewById(R.id.play).setOnClickListener(this);
-        LyricsView lyricsView = findViewById(R.id.lrc_view);
+        LyricsView lyricsView = findViewById(R.id.lyrics_view);
         ScoringView scoringView = findViewById(R.id.scoring_view);
         mKaraokeView = new KaraokeView(lyricsView, scoringView);
 
@@ -76,13 +77,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 file = extractFromZipFileIfPossible(file);
                 mLyricsModel = KaraokeView.parseLyricsData(file);
                 mKaraokeView.setLyricsData(mLyricsModel);
+
+                updateLyricsDescription();
             }, Throwable::printStackTrace);
         } else {
             File file = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcSample);
             file = extractFromZipFileIfPossible(file);
             mLyricsModel = KaraokeView.parseLyricsData(file);
             mKaraokeView.setLyricsData(mLyricsModel);
+
+            updateLyricsDescription();
         }
+    }
+
+    private void updateLyricsDescription() {
+        final String description = mLyricsModel.title + ": " + mLyricsModel.startOfVerse + " " + mLyricsModel.artist + " " + mLyricsModel.lines.size() + " " + mLyricsModel.duration + " " + LyricsResourcePool.asList().get(mCurrentIndex).description;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                TextView tvDescription = findViewById(R.id.lyrics_description);
+                tvDescription.setText(description);
+            }
+        });
     }
 
     private static File extractFromZipFileIfPossible(File file) {
@@ -142,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void doClearCacheAndLoadTheLyrics() {
         DownloadManager.getInstance().clearCache(this);
 
-        loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex));
+        loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
 
         mCurrentIndex++;
 
@@ -153,14 +169,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
 
-    private long mCurrentPosition = 0;
+    private long mLyricsCurrentProgress = 0;
     private ScheduledFuture mFuture;
 
     private void doMockPlay() {
         final long DURATION_OF_SONG = mLyricsModel.lines.get(mLyricsModel.lines.size() - 1).getEndTime();
-        mCurrentPosition = 0;
+        mLyricsCurrentProgress = 0;
         final String PLAYER_TAG = TAG + "_MockPlayer";
-        Log.d(PLAYER_TAG, "duration: " + DURATION_OF_SONG + ", position: " + mCurrentPosition);
+        Log.d(PLAYER_TAG, "duration: " + DURATION_OF_SONG + ", progress: " + mLyricsCurrentProgress);
         if (mFuture != null) {
             mFuture.cancel(true);
         }
@@ -168,24 +184,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mFuture = mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                if (mCurrentPosition >= 0 && mCurrentPosition < DURATION_OF_SONG) {
-                    mKaraokeView.setProgress(mCurrentPosition);
-                    Log.d(PLAYER_TAG, "timer mCurrentPosition: " + mCurrentPosition);
-                } else if (mCurrentPosition >= DURATION_OF_SONG && mCurrentPosition < (DURATION_OF_SONG + 1000)) {
-                    long lastPosition = mCurrentPosition;
+                if (mLyricsCurrentProgress >= 0 && mLyricsCurrentProgress < DURATION_OF_SONG) {
+                    mKaraokeView.setProgress(mLyricsCurrentProgress);
+                    Log.d(PLAYER_TAG, "timer mCurrentPosition: " + mLyricsCurrentProgress);
+                } else if (mLyricsCurrentProgress >= DURATION_OF_SONG && mLyricsCurrentProgress < (DURATION_OF_SONG + 1000)) {
+                    long lastPosition = mLyricsCurrentProgress;
                     mKaraokeView.setProgress(0);
                     mKaraokeView.setPitch(0);
                     Log.d(PLAYER_TAG, "put the pivot back in space");
                     // Put the pivot back in space
-                } else if (mCurrentPosition >= (DURATION_OF_SONG + 1000)) {
+                } else if (mLyricsCurrentProgress >= (DURATION_OF_SONG + 1000)) {
                     if (mFuture != null) {
                         mFuture.cancel(true);
                     }
-                    mCurrentPosition = 0;
+                    mLyricsCurrentProgress = 0;
                     Log.d(PLAYER_TAG, "quit");
                     return;
                 }
-                mCurrentPosition += 20;
+                mLyricsCurrentProgress += 20;
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
     }
@@ -193,8 +209,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.clear_cache:
-                mCurrentPosition = 0; // Replay if already playing
+            case R.id.switch_to_next:
+                mLyricsCurrentProgress = 0; // Replay if already playing
                 doClearCacheAndLoadTheLyrics();
                 break;
             case R.id.play:

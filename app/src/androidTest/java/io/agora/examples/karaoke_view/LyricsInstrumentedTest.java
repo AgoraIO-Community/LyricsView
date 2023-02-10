@@ -149,7 +149,7 @@ public class LyricsInstrumentedTest {
         mLatestIndexOfScoringLines = 0;
         ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
             @Override
-            public void onLineFinished(LyricsLineModel line, double score, double cumulativeScore, double perfectScore, int index, int numberOfLines) {
+            public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
                 Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
                 mNumberOfScoringLines++;
                 mLatestIndexOfScoringLines = index;
@@ -189,6 +189,83 @@ public class LyricsInstrumentedTest {
         assertTrue(mLatestIndexOfScoringLines + 1 == lineCount);
     }
 
+    @Test
+    public void testFirst5Lines() {
+        // specified to 825003.xml
+        // 825003.xml has 30 lines
+        String fileNameOfSong = "825003.xml";
+        String songTitle = "净化空间";
+        int expectedNumberOfLines = 30;
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        String sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
+        assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
+
+        File target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        LyricsModel parsedLyrics = LyricsParser.parse(target);
+
+        Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
+
+        for (LyricsLineModel line : parsedLyrics.lines) {
+            Log.d(TAG, "Line summary: " + line.getStartTime() + " ~ " + line.getEndTime() + " " + line.tones.size());
+        }
+
+        mNumberOfScoringLines = 0;
+        mLatestIndexOfScoringLines = 0;
+        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
+            @Override
+            public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
+                Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
+                mNumberOfScoringLines++;
+                mLatestIndexOfScoringLines = index;
+            }
+
+            @Override
+            public void resetUi() {
+                Log.d(TAG, "resetUi");
+            }
+
+            @Override
+            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
+                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+            }
+
+            @Override
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization) {
+                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization);
+            }
+
+            @Override
+            public void requestRefreshUi() {
+                Log.d(TAG, "requestRefreshUi");
+            }
+        });
+
+        long startTsOfTest = System.currentTimeMillis();
+        scoringMachine.prepare(parsedLyrics);
+
+        // Only first 5 lines
+        for (LyricsLineModel line : parsedLyrics.lines) {
+            for (LyricsLineModel.Tone tone : line.tones) {
+                scoringMachine.setProgress(tone.begin + tone.getDuration() / 2);
+                scoringMachine.setPitch(tone.pitch - 1);
+            }
+
+            if (mLatestIndexOfScoringLines >= 4) {
+                break;
+            }
+        }
+
+        Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");
+
+        int lineCount = parsedLyrics.lines.size();
+        assertTrue(lineCount == expectedNumberOfLines);
+
+        // Check if `onLineFinished` working as expected
+        assertTrue(mNumberOfScoringLines == 5);
+        assertTrue(mLatestIndexOfScoringLines + 1 == 5);
+    }
+
     private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
 
     private long mCurrentPosition = 0;
@@ -198,10 +275,10 @@ public class LyricsInstrumentedTest {
 
     private void mockPlay(final LyricsModel model, final ScoringMachine scoringMachine) {
         // 01-12 11:03:00.029 29186 29227 D LyricsInstrumentedTest_MockPlayer: duration: 242051, position: 0
-        // 01-12 11:03:44.895 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@a929307 55.4259650979513 145.58355316053687 3000.0 1 30
-        // 01-12 11:03:51.835 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@79eec34 59.921391935944555 205.50494509648144 3000.0 2 30
-        // 01-12 11:04:08.953 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@f0a3fd2 61.03482350600236 318.2838389210401 3000.0 4 30
-        // 01-12 11:07:02.073 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@34e9f0b 55.14133207074234 1815.480908114657 3000.0 29 30
+        // 01-12 11:03:44.895 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@a929307 55 145 3000 1 30
+        // 01-12 11:03:51.835 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@79eec34 60 205 3000 2 30
+        // 01-12 11:04:08.953 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@f0a3fd2 61 318 3000 4 30
+        // 01-12 11:07:02.073 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@34e9f0b 55 1815 3000 29 30
         // 01-12 11:07:03.073 29186 29229 D LyricsInstrumentedTest_MockPlayer: put the pivot back in space
         // 01-12 11:07:03.093 29186 29227 D LyricsInstrumentedTest_MockPlayer: Song finished
         // 01-12 11:07:03.098 29186 29229 D LyricsInstrumentedTest_MockPlayer: quit
@@ -227,7 +304,7 @@ public class LyricsInstrumentedTest {
                     Log.d(PLAYER_TAG, "mCurrentPosition: " + mCurrentPosition + ", pitch: " + pitch);
                 } else if (mCurrentPosition >= DURATION_OF_SONG && mCurrentPosition < (DURATION_OF_SONG + 1000)) {
                     long lastPosition = mCurrentPosition;
-                    scoringMachine.setProgress(0);
+                    scoringMachine.setProgress(mCurrentPosition);
                     scoringMachine.setPitch(0);
                     Log.d(PLAYER_TAG, "put the pivot back in space");
                     // Put the pivot back in space
@@ -236,6 +313,7 @@ public class LyricsInstrumentedTest {
                         mFuture.cancel(true);
                     }
                     mCurrentPosition = 0;
+                    scoringMachine.reset();
                     latch.countDown();
                     Log.d(PLAYER_TAG, "quit");
                     return;

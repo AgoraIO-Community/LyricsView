@@ -4,6 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LyricsResourcePool {
+
+    protected static class LyricsResource {
+        public final int index;
+
+        public final String uri;
+
+        public final String description;
+
+        LyricsResource(int index, String uri, String description) {
+            this.index = index;
+            this.uri = uri;
+            this.description = description;
+        }
+    }
+
     public static final String LRC_SAMPLE_1 = "https://webdemo.agora.io/ktv/chocolateice.xml";
     public static final String LRC_SAMPLE_2 = "https://webdemo.agora.io/ktv/001.xml";
     public static final String LRC_SAMPLE_3 = "https://solutions-apaas.agora.io/rte-ktv/0609f0627e114a669008d26e312f7613.zip";
@@ -18,18 +33,30 @@ public class LyricsResourcePool {
 
     public static final String LRC_SAMPLE_LOCAL_FILE_147383 = "147383.xml"; // Start and end(previous line) may overlap
 
-    public static final List<String> asList() {
-        ArrayList<String> list = new ArrayList<>();
-        list.add(LRC_SAMPLE_1);
-        list.add(LRC_SAMPLE_2);
-        list.add(LRC_SAMPLE_3);
-        list.add(LRC_SAMPLE_4);
-        list.add(LRC_SAMPLE_5);
-        list.add(LRC_SAMPLE_6);
-        list.add(LRC_SAMPLE_7);
-        list.add(LRC_SAMPLE_LOCAL_FILE_810507);
-        list.add(LRC_SAMPLE_LOCAL_FILE_825003);
-        list.add(LRC_SAMPLE_LOCAL_FILE_147383);
+    public static final String LRC_SAMPLE_LOCAL_FILE_151675 = "151675.xml";
+
+    public static final String LRC_SAMPLE_LOCAL_FILE_141466 = "141466.xml";
+
+    public static final String LRC_SAMPLE_LOCAL_FILE_140778 = "140778.xml";
+
+    public static final String LRC_SAMPLE_LOCAL_FILE_140017 = "140017.xml";
+
+    public static final String LRC_SAMPLE_LOCAL_FILE_108700 = "108700.xml";
+
+    public static final String LRC_SAMPLE_LOCAL_FILE_793566 = "793566.xml";
+
+    public static final List<LyricsResource> asList() {
+        ArrayList<LyricsResource> list = new ArrayList<>();
+        list.add(new LyricsResource(0, LRC_SAMPLE_1, "NORMAL"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_2, "NORMAL"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_3, "ZIP"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_4, "EMPTY_PITCH"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_5, "403/INVALID_REQUEST"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_6, "NON_PERFECT_XML"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_7, "404/NOT_FOUND"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_810507, "ONE_LINE"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_825003, "TS_PITCH_SAME"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_147383, "TS_PITCH_OVERLAP"));
         return list;
     }
 }

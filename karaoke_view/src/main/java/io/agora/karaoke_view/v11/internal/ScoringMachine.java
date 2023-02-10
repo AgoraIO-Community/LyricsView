@@ -37,7 +37,6 @@ public class ScoringMachine {
     private long mEndTimeOfThisLyrics = 0;
     // Index of current line
     private int mIndexOfCurrentLine = -1;
-    private int mScoringFiredIndexOfLine = -1; // Indicating that scoring just fired
 
     // Current timestamp for this lyrics
     private long mCurrentTimestamp = 0;
@@ -48,7 +47,7 @@ public class ScoringMachine {
     private float mRefPitchForCurrentTimestamp = 0f;
 
     // Pitches for every line, we will reset every new line
-    public final LinkedHashMap<Long, Double> mPitchesForLine = new LinkedHashMap<>();
+    public final LinkedHashMap<Long, Float> mPitchesForLine = new LinkedHashMap<>();
 
     // In highlighting status, always with some shiny animations
     private boolean mInHighlightingStatus;
@@ -60,13 +59,13 @@ public class ScoringMachine {
     private float mMinimumScorePerTone;
 
     // Cumulative score
-    private double mCumulativeScore;
+    private float mCumulativeScore;
 
     // Maximum score for one line, 100 for maximum and 0 for minimum
     private int mMaximumScoreForLine = 100;
 
     // Full marks/perfect for the lyrics
-    private double mPerfectScore;
+    private float mPerfectScore;
 
     // Indicating the difficulty in scoring(can change by app)
     private int mScoreLevel = 10; // 0~100
@@ -117,9 +116,9 @@ public class ScoringMachine {
      * {@link this#mEndTimeOfCurrentRefPitch}
      * {@link this#mEndTimeOfCurrentLine}
      *
-     * @return 当前时间歌词的 Pitch
+     * @return 当前时间歌词的 Pitch 以及是否换行 returnNewLine 和 returnIndexOfLastLine
      */
-    private float findRefPitchByTime(long timestamp) {
+    private float findRefPitchByTime(long timestamp, final boolean[] returnNewLine, final int[] returnIndexOfLastLine) {
         if (mLyricsModel == null) {
             return 0;
         }
@@ -138,6 +137,10 @@ public class ScoringMachine {
                         mEndTimeOfCurrentRefPitch = tone.end;
 
                         mEndTimeOfCurrentLine = line.getEndTime();
+                        if (mIndexOfCurrentLine != i && i >= 1) { // Line switch
+                            returnIndexOfLastLine[0] = i - 1;
+                            returnNewLine[0] = true;
+                        }
                         mIndexOfCurrentLine = i;
                         break;
                     }
@@ -145,6 +148,8 @@ public class ScoringMachine {
                 break;
             }
         }
+
+        long latestEndTimeOfLastLine = mEndTimeOfCurrentLine;
 
         if (referencePitch == 0) { // Clear current line stats data if goes into another line
             mStartTimeOfCurrentRefPitch = -1;
@@ -157,18 +162,28 @@ public class ScoringMachine {
             // 进入此行代码条件 ： 所唱歌词句开始时间 <= 当前时间 >= 所唱歌词句结束时间
             // 强行加上一个　0 分 ，标识此为可打分句
             // 相当于歌词当中预期有 pitch，所以需要做好占位
-            mPitchesForLine.put(timestamp, 0d);
+            mPitchesForLine.put(timestamp, 0f);
+            if (DEBUG) {
+                Log.d(TAG, "debugScoringAlgo/mPitchesForLine/STUB: timestamp=" + timestamp + ", scoreForPitch=" + 0d);
+            }
         }
         mRefPitchForCurrentTimestamp = referencePitch;
+
+        // Last line(No line switch any more), should do extra check
+        if (timestamp > mEndTimeOfThisLyrics && latestEndTimeOfLastLine == mEndTimeOfThisLyrics) {
+            returnIndexOfLastLine[0] = mIndexOfCurrentLine;
+            returnNewLine[0] = true;
+        }
+
         return referencePitch;
     }
 
-    public static double calculateScore2(double minimumScore, int scoreLevel, int compensationOffset, double pitch, double refPitch) {
-        double tone = pitchToTone(pitch);
-        double refTone = pitchToTone(refPitch);
+    public static float calculateScore2(double minimumScore, int scoreLevel, int compensationOffset, double pitch, double refPitch) {
+        float tone = (float) pitchToTone(pitch);
+        float refTone = (float) pitchToTone(refPitch);
 
-        double scoreAfterNormalization; // [0, 1]
-        scoreAfterNormalization = 1 - (scoreLevel * Math.abs(tone - refTone)) / 100 + compensationOffset / 100;
+        float scoreAfterNormalization; // [0, 1]
+        scoreAfterNormalization = (float) (1.f - (scoreLevel * Math.abs(tone - refTone)) / 100.f + compensationOffset * 1.0 / 100.f);
 
         // 得分线以下的分数归零
         scoreAfterNormalization = scoreAfterNormalization >= minimumScore ? scoreAfterNormalization : 0f;
@@ -177,83 +192,87 @@ public class ScoringMachine {
         return scoreAfterNormalization;
     }
 
-    static double pitchToTone(double pitch) {
+    public static double pitchToTone(double pitch) {
         double eps = 1e-6;
         return (Math.max(0, Math.log(pitch / 55 + eps) / Math.log(2))) * 12;
     }
 
-    private void updateScoreForCurrentLine(long timestamp) {
+    private void updateScoreForCurrentLine(long timestamp, boolean newLine, int indexOfLineJustFinished) {
         if (timestamp < mTimestampOfFirstRefPitch) { // Not started
             return;
         }
 
-        //  没有开始 || 在空档期
-        boolean notStarted = mEndTimeOfCurrentLine == -1;
-        // Let it more looser, and we do not fire the duplicated callback later
-        boolean isThisLineJustFinished = ((timestamp >= mEndTimeOfCurrentLine) || (mEndTimeOfCurrentLine - timestamp) > 0 && (mEndTimeOfCurrentLine - timestamp) < mDeltaOfUpdate) && mEndTimeOfCurrentLine > 0;
-        // 当前时间 >= 歌词结束时间
-        boolean isThisSongFinished = timestamp >= mEndTimeOfThisLyrics;
-        boolean scoringNotFiredBefore = (mScoringFiredIndexOfLine != mIndexOfCurrentLine);
+        if (timestamp > mEndTimeOfThisLyrics + (2l * mDeltaOfUpdate)) { // After lyrics ended, do not need to update again
+            return;
+        }
 
-        if (scoringNotFiredBefore && (notStarted || isThisLineJustFinished || isThisSongFinished)) {
-            if (!mPitchesForLine.isEmpty()) {
-                mScoringFiredIndexOfLine = mIndexOfCurrentLine;
+        if (DEBUG) {
+            Log.d(TAG, "updateScoreForCurrentLine: mEndTimeOfCurrentLine=" + mEndTimeOfCurrentLine + ", timestamp=" + timestamp + ", mEndTimeOfThisLyrics=" + mEndTimeOfThisLyrics + ", numberOfPitchScores=" + mPitchesForLine.size()
+                    + "\n" + newLine + "(" + indexOfLineJustFinished + ")"
+                    + "\n indexOfLineJustFinished=" + indexOfLineJustFinished + ":mIndexOfCurrentLine=" + mIndexOfCurrentLine + " delta: " + mDeltaOfUpdate);
+        }
 
-                // 计算歌词当前句的分数 = 所有打分/分数个数
-                double tempTotalScore = 0;
-                int scoreCount = 0;
+        if (newLine && !mPitchesForLine.isEmpty()) {
+            LyricsLineModel lineJustFinished = mLyricsModel.lines.get(indexOfLineJustFinished);
 
-                Double tempScore;
-                // 两种情况 1. 到了空档期 2. 到了下一句
-                Iterator<Long> iterator = mPitchesForLine.keySet().iterator();
-                int continuousZeroCount = 0;
+            // 计算歌词当前句的分数 = 所有打分/分数个数
+            float totalScoreForThisLine = 0;
+            int scoreCount = 0;
 
-                if (DEBUG) {
-                    debugScoringAlgo();
-                }
+            Float scoreForOnePitch;
+            // 两种情况 1. 到了空档期 2. 到了下一句
+            Iterator<Long> iterator = mPitchesForLine.keySet().iterator();
+            int continuousZeroCount = 0;
 
-                while (iterator.hasNext()) {
-                    Long myKeyTimestamp = iterator.next();
-                    if (notStarted || myKeyTimestamp <= mEndTimeOfCurrentLine) {
-                        tempScore = mPitchesForLine.get(myKeyTimestamp);
-                        if (tempScore == null || tempScore.floatValue() == 0.f) {
-                            continuousZeroCount++;
-                            if (continuousZeroCount >= 8) {
-                                continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
-                                if (mListener != null) {
-                                    mListener.resetUi();
-                                }
+            if (DEBUG) {
+                debugScoringAlgo();
+            }
+
+            while (iterator.hasNext()) {
+                Long myKeyTimestamp = iterator.next();
+                if (myKeyTimestamp <= lineJustFinished.getEndTime()) {
+                    scoreForOnePitch = mPitchesForLine.get(myKeyTimestamp);
+                    if (scoreForOnePitch == null || scoreForOnePitch == 0.f) {
+                        continuousZeroCount++;
+                        if (continuousZeroCount >= 8) {
+                            continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
+                            if (mListener != null) {
+                                mListener.resetUi();
                             }
-                        } else {
-                            continuousZeroCount = 0;
                         }
-                        iterator.remove();
-                        mPitchesForLine.remove(myKeyTimestamp);
+                    } else {
+                        continuousZeroCount = 0;
+                    }
+                    iterator.remove();
+                    mPitchesForLine.remove(myKeyTimestamp);
 
-                        if (mMinimumScorePerTone > 0) {
-                            if (tempScore != null && tempScore.floatValue() >= mMinimumScorePerTone) {
-                                tempTotalScore += tempScore.floatValue();
-                                scoreCount++;
-                            }
-                        } else {
-                            if (tempScore != null) {
-                                tempTotalScore += tempScore.floatValue();
-                            }
+                    if (mMinimumScorePerTone > 0) {
+                        if (scoreForOnePitch != null && scoreForOnePitch >= mMinimumScorePerTone) {
+                            totalScoreForThisLine += scoreForOnePitch;
                             scoreCount++;
                         }
+                    } else {
+                        if (scoreForOnePitch != null) {
+                            totalScoreForThisLine += scoreForOnePitch;
+                        }
+                        scoreCount++;
                     }
                 }
+            }
 
-                scoreCount = Math.max(1, scoreCount);
+            scoreCount = Math.max(1, scoreCount);
 
-                double scoreThisTime = tempTotalScore / scoreCount;
+            int scoreThisTime = (int) totalScoreForThisLine / scoreCount;
 
-                // 统计到累计分数
-                mCumulativeScore += scoreThisTime;
+            // 统计到累计分数
+            mCumulativeScore += scoreThisTime;
 
-                if (mListener != null) {
-                    mListener.onLineFinished(mLyricsModel.lines.get(mIndexOfCurrentLine), scoreThisTime, mCumulativeScore, mPerfectScore, mIndexOfCurrentLine, mLyricsModel.lines.size());
-                }
+            if (DEBUG) {
+                Log.d(TAG, "debugScoringAlgo/mPitchesForLine/CALC: timestamp=" + timestamp + ", totalScoreForThisLine=" + totalScoreForThisLine + ", scoreCount=" + scoreCount + ", scoreThisTime=" + scoreThisTime);
+            }
+
+            if (mListener != null) {
+                mListener.onLineFinished(lineJustFinished, scoreThisTime, (int) mCumulativeScore, (int) mPerfectScore, indexOfLineJustFinished, mLyricsModel.lines.size());
             }
         }
     }
@@ -263,33 +282,25 @@ public class ScoringMachine {
         double cumulativeScoreForLine = 0;
         while (iterator.hasNext()) {
             Long myKeyTimestamp = iterator.next();
-            Double score = mPitchesForLine.get(myKeyTimestamp);
+            Float score = mPitchesForLine.get(myKeyTimestamp);
             cumulativeScoreForLine += (score != null ? score : 0);
             Log.d(TAG, "debugScoringAlgo/mPitchesForLine: timestamp=" + myKeyTimestamp + ", scoreForPitch=" + score);
         }
-        Log.d(TAG, "debugScoringAlgo/mPitchesForLine: numberOfPitches=" + mPitchesForLine.size() + ", cumulativeScoreForLine=" + cumulativeScoreForLine);
+        Log.d(TAG, "debugScoringAlgo/mPitchesForLine: numberOfPitches=" + mPitchesForLine.size() + ", cumulativeScoreForLine=" + cumulativeScoreForLine + ", mIndexOfCurrentLine=" + mIndexOfCurrentLine);
     }
 
     /**
-     * 更新进度，单位毫秒
+     * 更新歌词进度，单位毫秒
      * 根据当前时间，决定是否回调 {@link ScoringMachine.OnScoringListener#onRefPitchUpdate(float, int)}}
-     * 与打分逻辑无关
+     * 并驱动打分
      *
      * @param progress 当前播放时间，毫秒
+     *                 progress 一定要大于歌词结束时间才可以触发最后一句的回调
+     *                 {@link ScoringMachine.OnScoringListener#onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines)}
      */
     public void setProgress(long progress) {
         if (mLyricsModel == null) {
             return;
-        }
-
-        if (this.mCurrentTimestamp != 0 && Math.abs(progress - this.mCurrentTimestamp) >= 500) { // Workaround(We assume this as dragging happened)
-            for (int lineIndex = 0; lineIndex < mLyricsModel.lines.size(); lineIndex++) {
-                LyricsLineModel line = mLyricsModel.lines.get(lineIndex);
-                for (int toneIndex = 0; toneIndex < line.tones.size(); toneIndex++) {
-                    LyricsLineModel.Tone tone = line.tones.get(toneIndex);
-                    tone.resetHighlight();
-                }
-            }
         }
 
         if (this.mCurrentTimestamp >= 0 && progress > 0) {
@@ -303,14 +314,16 @@ public class ScoringMachine {
             resetStats();
         }
 
+        boolean[] newLine = new boolean[1];
+        int[] indexOfLastLine = new int[]{-1};
         if (progress < mStartTimeOfCurrentRefPitch || progress > mEndTimeOfCurrentRefPitch) {
-            float currentRefPitch = findRefPitchByTime(progress);
+            float currentRefPitch = findRefPitchByTime(progress, newLine, indexOfLastLine);
             if (currentRefPitch > 0 && mListener != null) {
                 mListener.onRefPitchUpdate(currentRefPitch, mNumberOfRefPitches);
             }
         }
 
-        updateScoreForCurrentLine(progress);
+        updateScoreForCurrentLine(progress, newLine[0], indexOfLastLine[0]);
 
         if (mListener != null) {
             mListener.requestRefreshUi();
@@ -322,8 +335,8 @@ public class ScoringMachine {
             return;
         }
 
-        float currentRefPitch = mRefPitchForCurrentTimestamp;
-        if (currentRefPitch == 0) { // No ref pitch, just ignore this time
+        float currentRefPitch = mRefPitchForCurrentTimestamp; // Not started or ended
+        if (currentRefPitch == 0 || pitch == 0) { // No ref pitch, just ignore this time
             if (mListener != null) {
                 mListener.resetUi();
             }
@@ -331,21 +344,42 @@ public class ScoringMachine {
         }
         long timestamp = mCurrentTimestamp;
 
+        float rawPitch = pitch;
+        float pitchAfterProcess = 0;
+
         if (mVoicePitchChanger != null) {
             // Either no valid local pitch or ref pitch, we will treat the return value as 0
             pitch = (float) mVoicePitchChanger.handlePitch(currentRefPitch, pitch, this.mMaximumRefPitch);
+            pitchAfterProcess = pitch;
         }
 
-        final double scoreAfterNormalization = this.calculateScore2(mMinimumScorePerTone, mScoreLevel, mCompensationOffset, pitch, currentRefPitch);
+        final float scoreAfterNormalization = this.calculateScore2(mMinimumScorePerTone, mScoreLevel, mCompensationOffset, pitch, currentRefPitch);
 
-        double score = scoreAfterNormalization;
+        float score = scoreAfterNormalization;
         // 百分制分数 * 每句固定分数
         score *= mMaximumScoreForLine;
 
         mPitchesForLine.put(timestamp, score);
+        if (DEBUG) {
+            Log.d(TAG, "debugScoringAlgo/mPitchesForLine/REAL: timestamp=" + timestamp +
+                    ", scoreForPitch=" + score + ", rawPitch=" + rawPitch + ", pitchAfterProcess=" + pitchAfterProcess + ", currentRefPitch=" + currentRefPitch);
+        }
 
         if (mListener != null) {
             mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization);
+        }
+    }
+
+    public void whenDraggingHappen(int progress) {
+        if (this.mCurrentTimestamp != 0 && Math.abs(progress - this.mCurrentTimestamp) >= 500) { // Workaround(We assume this as dragging happened)
+            for (int lineIndex = 0; lineIndex < mLyricsModel.lines.size(); lineIndex++) {
+                LyricsLineModel line = mLyricsModel.lines.get(lineIndex);
+                for (int toneIndex = 0; toneIndex < line.tones.size(); toneIndex++) {
+                    LyricsLineModel.Tone tone = line.tones.get(toneIndex);
+                    tone.resetHighlight();
+                }
+            }
+            mPitchesForLine.clear();
         }
     }
 
@@ -425,7 +459,7 @@ public class ScoringMachine {
     }
 
     public interface OnScoringListener {
-        public void onLineFinished(LyricsLineModel line, double score, double cumulativeScore, double perfectScore, int index, int numberOfLines);
+        public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines);
 
         public void resetUi();
 

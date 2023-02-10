@@ -61,6 +61,21 @@ public class ExampleUnitTest {
     }
 
     @Test
+    public void testVoiceChanger2() {
+        assertEquals(mVoicePitchChanger.handlePitch(0, 0, 400), 0d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(1, 0, 400), 0d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(1, 1, 400), 1d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(100, 90, 400), 95d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(100, 80, 400), 90d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(200, 80, 400), 117.5d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(400, 80, 400), 174.0d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(400, 200, 400), 311.66666666666663d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(400, 400, 400), 400d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(400, 500, 400), 400d, 0d);
+        assertEquals(mVoicePitchChanger.handlePitch(400, 600, 400), 400d, 0d);
+    }
+
+    @Test
     public void testScoreCalculation2() {
         // TODO(Hai_Guo) Should figure out how to check the result if expected
         double scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 500f, 300);
