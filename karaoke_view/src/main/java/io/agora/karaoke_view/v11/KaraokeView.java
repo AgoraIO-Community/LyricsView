@@ -66,8 +66,8 @@ public class KaraokeView {
             }
 
             @Override
-            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization) {
-                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization);
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit) {
+                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
                 if (mScoringView != null) {
                     mScoringView.updatePitchAndScore(pitch, scoreAfterNormalization);
                 }

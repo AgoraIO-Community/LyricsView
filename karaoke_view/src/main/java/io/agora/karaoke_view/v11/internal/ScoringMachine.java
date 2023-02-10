@@ -164,7 +164,7 @@ public class ScoringMachine {
             // 相当于歌词当中预期有 pitch，所以需要做好占位
             mPitchesForLine.put(timestamp, 0f);
             if (DEBUG) {
-                Log.d(TAG, "debugScoringAlgo/mPitchesForLine/STUB: timestamp=" + timestamp + ", scoreForPitch=" + 0d);
+                Log.d(TAG, "debugScoringAlgo/mPitchesForLine/STUB: timestamp=" + timestamp + ", referencePitch=" + referencePitch + ", scoreForPitch=" + 0d);
             }
         }
         mRefPitchForCurrentTimestamp = referencePitch;
@@ -342,7 +342,10 @@ public class ScoringMachine {
             }
             return;
         }
+
         long timestamp = mCurrentTimestamp;
+
+        boolean onHit = checkHitEvent();
 
         float rawPitch = pitch;
         float pitchAfterProcess = 0;
@@ -366,8 +369,17 @@ public class ScoringMachine {
         }
 
         if (mListener != null) {
-            mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization);
+            mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization, onHit);
         }
+    }
+
+    private boolean checkHitEvent() {
+        boolean onHit = mStartTimeOfCurrentRefPitch > 0 && mEndTimeOfCurrentRefPitch > 0
+                && mCurrentTimestamp >= mTimestampOfFirstRefPitch
+                && mCurrentTimestamp <= mEndTimeOfThisLyrics
+                && mCurrentTimestamp >= mStartTimeOfCurrentRefPitch
+                && mCurrentTimestamp <= mEndTimeOfCurrentRefPitch;
+        return onHit;
     }
 
     public void whenDraggingHappen(int progress) {
@@ -465,7 +477,7 @@ public class ScoringMachine {
 
         public void onRefPitchUpdate(float refPitch, int numberOfRefPitches);
 
-        public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization);
+        public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit);
 
         public void requestRefreshUi();
     }
