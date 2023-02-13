@@ -374,7 +374,8 @@ public class LyricsInstrumentedTest {
             Log.d(TAG, "Line summary: " + line.getStartTime() + " ~ " + line.getEndTime() + " " + line.tones.size());
         }
 
-        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
+        VoicePitchChanger changer = new VoicePitchChanger();
+        ScoringMachine scoringMachine = new ScoringMachine(changer, new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
                 Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
@@ -440,6 +441,14 @@ public class LyricsInstrumentedTest {
         scoringMachine.setProgress(185161);
         scoringMachine.setPitch(213);
         assertEquals(mPitchHit, 213, 0d);
+        assertTrue(mHit);
+
+        mPitchHit = -1;
+        scoringMachine.setProgress(187238);
+        scoringMachine.setPitch(100);
+        double processedPitch = changer.handlePitch(213, 100, scoringMachine.getMaximumRefPitch());
+        assertEquals(processedPitch, 137.66666666666666, 0);
+        assertEquals(mPitchHit, 122.5999984741211, 0d); // 122.5999984741211
         assertTrue(mHit);
 
         Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");

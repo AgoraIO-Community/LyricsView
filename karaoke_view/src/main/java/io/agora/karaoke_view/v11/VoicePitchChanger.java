@@ -7,7 +7,7 @@ public class VoicePitchChanger {
     double offset = 0.0F;
     int n = 0;
 
-    /// 处理 Pitch
+    /// 处理 Pitch(该方法不是幂等的，使用时候要特别注意)
     /// - Parameters:
     ///   - refPitch: 标准值 来自歌词文件
     ///   - pitch: 实际值 来自 rtc 回调
