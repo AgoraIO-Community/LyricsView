@@ -61,7 +61,7 @@ public class LyricsParser {
                 inputStreamReader = new InputStreamReader(inputStream);
                 bufferedReader = new BufferedReader(inputStreamReader);
                 String line = bufferedReader.readLine();
-                if (line.contains("xml") || line.contains("<song>")) {
+                if (line != null && (line.contains("xml") || line.contains("<song>"))) {
                     type = LyricsModel.Type.Migu;
                 } else {
                     type = LyricsModel.Type.General;

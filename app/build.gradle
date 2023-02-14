@@ -28,6 +28,10 @@ android {
     }
 
     namespace 'io.agora.examples.karaoke_view'
+
+    buildFeatures {
+        viewBinding true
+    }
 }
 
 dependencies {

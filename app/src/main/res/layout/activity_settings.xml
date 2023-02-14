@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true"
+    tools:context=".SettingsActivity">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/karaoke_properties"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="10dp"
+        app:cardCornerRadius="4dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/karaoke_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Karaoke"
+                android:textStyle="bold|italic"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/scoring_level_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Scoring Level"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/karaoke_text" />
+
+            <androidx.appcompat.widget.AppCompatSeekBar
+                android:id="@+id/scoring_level_tune"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:max="100"
+                android:min="0"
+                android:progress="10"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@+id/scoring_level_title"
+                app:layout_constraintTop_toTopOf="@id/scoring_level_title" />
+
+            <TextView
+                android:id="@+id/compensation_offset_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Compensation Offset"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/scoring_level_title" />
+
+            <androidx.appcompat.widget.AppCompatSeekBar
+                android:id="@+id/compensation_offset_tune"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:max="100"
+                android:min="-100"
+                android:progress="0"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@id/compensation_offset_title"
+                app:layout_constraintTop_toTopOf="@id/compensation_offset_title" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/lyrics_properties"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="10dp"
+        app:cardCornerRadius="4dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/karaoke_properties">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/lyrics_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Lyrics"
+                android:textStyle="bold|italic"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/show_lyrics_start_of_verse_indicator_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Show Start-of-Verse Indicator"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/lyrics_text" />
+
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/show_lyrics_start_of_verse_indicator"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@+id/show_lyrics_start_of_verse_indicator_title"
+                app:layout_constraintTop_toTopOf="@id/show_lyrics_start_of_verse_indicator_title" />
+
+            <TextView
+                android:id="@+id/start_of_verse_indicator_color_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Color"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/show_lyrics_start_of_verse_indicator_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/start_of_verse_indicator_color_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_indicator_colors"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@id/start_of_verse_indicator_color_title"
+                app:layout_constraintTop_toTopOf="@id/start_of_verse_indicator_color_title" />
+
+            <TextView
+                android:id="@+id/radius_of_indicator_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Radius"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/start_of_verse_indicator_color_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/start_of_verse_indicator_radius_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_indicator_radius"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@id/radius_of_indicator_title"
+                app:layout_constraintTop_toTopOf="@id/radius_of_indicator_title" />
+
+            <TextView
+                android:id="@+id/margin_top_of_indicator_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Margin Top"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/radius_of_indicator_title" />
+
+            <androidx.appcompat.widget.AppCompatSeekBar
+                android:id="@+id/margin_top_of_indicator_tune"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:max="40"
+                android:min="2"
+                android:progress="6"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@id/margin_top_of_indicator_title"
+                app:layout_constraintTop_toTopOf="@id/margin_top_of_indicator_title" />
+
+
+            <TextView
+                android:id="@+id/default_line_color_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:lines="1"
+                android:text="Default Line Color"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/margin_top_of_indicator_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/default_line_color_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_default_line_colors"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@id/default_line_color_title"
+                app:layout_constraintTop_toTopOf="@id/default_line_color_title" />
+
+            <TextView
+                android:id="@+id/size_of_default_text_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Default Text Size"
+                app:layout_constraintHorizontal_bias="0.6"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/default_line_color_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/size_of_default_text_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_text_size"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintStart_toEndOf="@id/size_of_default_text_title"
+                app:layout_constraintTop_toTopOf="@id/size_of_default_text_title" />
+
+            <TextView
+                android:id="@+id/highlighted_line_color_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Highlighted Line Color"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/size_of_default_text_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/highlighted_line_color_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_highlighted_line_colors"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@id/highlighted_line_color_title"
+                app:layout_constraintTop_toTopOf="@id/highlighted_line_color_title" />
+
+            <TextView
+                android:id="@+id/size_of_highlighted_text_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Highlighted Text Size"
+                app:layout_constraintHorizontal_bias="0.6"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/highlighted_line_color_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/size_of_highlighted_text_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_text_size"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintStart_toEndOf="@id/size_of_highlighted_text_title"
+                app:layout_constraintTop_toTopOf="@id/size_of_highlighted_text_title" />
+
+            <TextView
+                android:id="@+id/margin_between_lines_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:lines="1"
+                android:text="Margin between lines"
+                app:layout_constraintHorizontal_bias="0.6"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/size_of_highlighted_text_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/margin_between_lines_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_margin_lines"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintStart_toEndOf="@id/margin_between_lines_title"
+                app:layout_constraintTop_toTopOf="@id/margin_between_lines_title" />
+
+            <TextView
+                android:id="@+id/enable_dragging_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:lines="1"
+                android:text="Dragging enabled"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/margin_between_lines_title" />
+
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/enable_dragging"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@+id/enable_dragging_title"
+                app:layout_constraintTop_toTopOf="@id/enable_dragging_title" />
+
+
+            <TextView
+                android:id="@+id/lyrics_not_available_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="8dp"
+                android:lines="1"
+                android:text="When no lyrics"
+                app:layout_constraintHorizontal_bias="0.6"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/enable_dragging_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/lyrics_not_available_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/text_when_no_lyrics_available"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintStart_toEndOf="@id/lyrics_not_available_title"
+                app:layout_constraintTop_toTopOf="@id/lyrics_not_available_title" />
+
+            <TextView
+                android:id="@+id/lyrics_not_available_color_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Color"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/lyrics_not_available_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/lyrics_not_available_color_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_default_line_colors"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@id/lyrics_not_available_color_title"
+                app:layout_constraintTop_toTopOf="@id/lyrics_not_available_color_title" />
+
+            <TextView
+                android:id="@+id/lyrics_not_available_size_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Size"
+                app:layout_constraintHorizontal_bias="0.6"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/lyrics_not_available_color_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/lyrics_not_available_size_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_text_size"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintStart_toEndOf="@id/lyrics_not_available_size_title"
+                app:layout_constraintTop_toTopOf="@id/lyrics_not_available_size_title" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/scoring_properties"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="10dp"
+        app:cardCornerRadius="4dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/lyrics_properties">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/scoring_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Scoring"
+                android:textStyle="bold|italic"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/color_of_default_ref_pitch_stick_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Color of Ref Pitch Stick"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/scoring_text" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/color_of_default_ref_pitch_stick_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_default_line_colors"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintStart_toEndOf="@id/color_of_default_ref_pitch_stick_title"
+                app:layout_constraintTop_toTopOf="@id/color_of_default_ref_pitch_stick_title" />
+
+            <TextView
+                android:id="@+id/color_of_highlighted_ref_pitch_stick_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Color of Highlighted Ref Pitch Stick"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/color_of_default_ref_pitch_stick_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/color_of_highlighted_ref_pitch_stick_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_highlighted_line_colors"
+                android:progress="0"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintStart_toEndOf="@id/color_of_highlighted_ref_pitch_stick_title"
+                app:layout_constraintTop_toTopOf="@id/color_of_highlighted_ref_pitch_stick_title" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

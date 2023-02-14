@@ -1,3 +1,50 @@
 <resources>
     <string name="app_name">Karaoke View Example</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <string-array name="available_indicator_colors">
+        <item>Default</item>
+        <item>Red</item>
+        <item>Yellow</item>
+        <item>Green</item>
+    </string-array>
+
+    <string-array name="available_indicator_radius">
+        <item>8</item>
+        <item>16</item>
+        <item>20</item>
+    </string-array>
+
+    <string-array name="available_text_size">
+        <item>12</item>
+        <item>18</item>
+        <item>26</item>
+    </string-array>
+
+    <string-array name="available_margin_lines">
+        <item>2</item>
+        <item>8</item>
+        <item>24</item>
+    </string-array>
+
+    <string-array name="available_default_line_colors">
+        <item>Default</item>
+        <item>Yellow</item>
+        <item>Gray</item>
+        <item>Brown</item>
+    </string-array>
+
+    <string-array name="available_highlighted_line_colors">
+        <item>Default</item>
+        <item>Orange</item>
+        <item>Red</item>
+        <item>Blue</item>
+    </string-array>
+
+    <string-array name="text_when_no_lyrics_available">
+        <item>No Lyrics Available</item>
+        <item>无歌词</item>
+        <item>歌詞なし</item>
+    </string-array>
+
 </resources>

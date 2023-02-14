@@ -11,7 +11,8 @@
         android:id="@+id/lyrics_description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="2dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -51,6 +52,14 @@
         app:lrcPastTextColor="#99FFFFFF"
         app:lrcTextGravity="center"
         app:lrcTextSize="20sp" />
+
+    <TextView
+        android:id="@+id/playing_progress"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/lyrics_view" />
 
     <Button
         android:id="@+id/play"

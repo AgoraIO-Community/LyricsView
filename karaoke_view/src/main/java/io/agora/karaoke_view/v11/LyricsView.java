@@ -395,7 +395,7 @@ public class LyricsView extends View {
             mBitmapFG.eraseColor(0);
             mPaintBG.setColor(mNormalTextColor);
 
-            LyricsLineDrawerHelper mLrcEntry;
+            LyricsLineDrawerHelper mLyricsLineDrawerHelper;
             float y = 0;
             float yReal;
             for (int i = 0; i < lrcData.lines.size(); i++) {
@@ -410,27 +410,27 @@ public class LyricsView extends View {
                 }
 
                 LyricsLineModel mIEntry = lrcData.lines.get(i);
-                mLrcEntry = new LyricsLineDrawerHelper(mIEntry, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
+                mLyricsLineDrawerHelper = new LyricsLineDrawerHelper(mIEntry, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
 
                 yReal = y + mOffset;
-                if (i == 0 && yReal > (centerY - getPaddingTop() - (mLrcEntry.getHeight() / 2F))) {
+                if (i == 0 && yReal > (centerY - getPaddingTop() - (mLyricsLineDrawerHelper.getHeight() / 2F))) {
                     // 顶部限制
-                    mOffset = centerY - getPaddingTop() - (mLrcEntry.getHeight() / 2F);
+                    mOffset = centerY - getPaddingTop() - (mLyricsLineDrawerHelper.getHeight() / 2F);
                     yReal = y + mOffset;
                 }
 
-                if (yReal + mLrcEntry.getHeight() < 0) {
-                    y = y + mLrcEntry.getHeight() + mDividerHeight;
+                if (yReal + mLyricsLineDrawerHelper.getHeight() < 0) {
+                    y = y + mLyricsLineDrawerHelper.getHeight() + mDividerHeight;
                     continue;
                 }
 
                 mCanvasBG.save();
                 mCanvasBG.translate(0, yReal);
-                mLrcEntry.draw(mCanvasBG);
+                mLyricsLineDrawerHelper.draw(mCanvasBG);
                 mCanvasBG.restore();
 
                 if (i == mCurrentLine) {
-                    Rect[] drawRects = mLrcEntry.getDrawRectByTime(mCurrentTime);
+                    Rect[] drawRects = mLyricsLineDrawerHelper.getDrawRectByTime(mCurrentTime);
 
                     for (Rect dr : drawRects) {
                         if (dr.left == dr.right)
@@ -444,17 +444,17 @@ public class LyricsView extends View {
                         mCanvasFG.save();
                         mCanvasFG.clipRect(mRectClip);
                         mCanvasFG.translate(0, yReal);
-                        mLrcEntry.drawFG(mCanvasFG);
+                        mLyricsLineDrawerHelper.drawFG(mCanvasFG);
                         mCanvasFG.restore();
                     }
                 }
 
                 if ((y - mDividerHeight + getPaddingTop() + mOffset) <= centerY
-                        && centerY <= (y + mLrcEntry.getHeight() + getPaddingTop() + mOffset)) {
+                        && centerY <= (y + mLyricsLineDrawerHelper.getHeight() + getPaddingTop() + mOffset)) {
                     targetIndex = i;
                 }
 
-                y = y + mLrcEntry.getHeight() + mDividerHeight;
+                y = y + mLyricsLineDrawerHelper.getHeight() + mDividerHeight;
                 if (y + mOffset > getLrcHeight()) {
                     break;
                 }

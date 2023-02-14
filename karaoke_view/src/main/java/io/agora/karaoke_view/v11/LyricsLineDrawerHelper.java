@@ -88,7 +88,10 @@ class LyricsLineDrawerHelper {
             Rect rectTotal = new Rect();
             textRectTotalWords[i] = rectTotal;
             String s = tone.word;
-            if (tone.lang != LyricsLineModel.Lang.Chinese) {
+            if (s == null) { // Sometimes, lyrics/sentence contains no word-tag
+                s = "";
+            }
+            if (tone.lang == LyricsLineModel.Lang.English) {
                 s = s + " ";
             }
             sb.append(s);
