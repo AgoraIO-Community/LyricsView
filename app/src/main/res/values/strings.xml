@@ -2,6 +2,10 @@
     <string name="app_name">Karaoke View Example</string>
     <string name="title_activity_settings">SettingsActivity</string>
 
+    <string name="prefs_key_scoring_level" translatable="false">prefs_key_scoring_level</string>
+    <string name="prefs_key_scoring_compensation_offset" translatable="false">prefs_key_scoring_compensation_offset</string>
+    <string name="prefs_key_enable_indicator_before_start_of_verse" translatable="false">prefs_key_enable_indicator_before_start_of_verse</string>
+
     <string-array name="available_indicator_colors">
         <item>Default</item>
         <item>Red</item>

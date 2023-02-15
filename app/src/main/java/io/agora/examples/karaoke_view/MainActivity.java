@@ -1,8 +1,14 @@
 package io.agora.examples.karaoke_view;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
@@ -23,17 +29,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import io.agora.examples.karaoke_view.databinding.ActivityMainBinding;
 import io.agora.examples.utils.ResourceHelper;
 import io.agora.karaoke_view.DownloadManager;
 
 import io.agora.karaoke_view.v11.KaraokeEvent;
 import io.agora.karaoke_view.v11.KaraokeView;
-import io.agora.karaoke_view.v11.LyricsView;
-import io.agora.karaoke_view.v11.ScoringView;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private ActivityMainBinding binding;
+
     private static final String TAG = "MainActivity";
 
     private KaraokeView mKaraokeView;
@@ -42,20 +50,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private LyricsModel mLyricsModel;
 
-    private TextView mCurrentPlayingProgress;
+    ActivityResultLauncher mLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        findViewById(R.id.switch_to_next).setOnClickListener(this);
-        findViewById(R.id.play).setOnClickListener(this);
-        findViewById(R.id.skip_the_intro).setOnClickListener(this);
-        findViewById(R.id.settings).setOnClickListener(this);
-        LyricsView lyricsView = findViewById(R.id.lyrics_view);
-        ScoringView scoringView = findViewById(R.id.scoring_view);
-        mCurrentPlayingProgress = findViewById(R.id.playing_progress);
-        mKaraokeView = new KaraokeView(lyricsView, scoringView);
+
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
+        binding.switchToNext.setOnClickListener(this);
+        binding.play.setOnClickListener(this);
+        binding.skipTheIntro.setOnClickListener(this);
+        binding.settings.setOnClickListener(this);
+
+        mKaraokeView = new KaraokeView(binding.lyricsView, binding.scoringView);
 
         mKaraokeView.setKaraokeEvent(new KaraokeEvent() {
             @Override
@@ -75,6 +84,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
         loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
+
+        loadPreferences();
+
+        mLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+            @Override
+            public void onActivityResult(ActivityResult result) {
+                if (result.getResultCode() == RESULT_OK) {
+                    loadPreferences();
+                }
+            }
+        });
     }
 
     private void loadTheLyrics(String lrcSample) {
@@ -111,6 +131,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 tvDescription.setText(description);
             }
         });
+    }
+
+    private void loadPreferences() {
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        int scoreLevel = prefs.getInt(getString(R.string.prefs_key_scoring_level), mKaraokeView.getScoreLevel());
+        mKaraokeView.setScoreLevel(scoreLevel);
+        int scoreOffset = prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), mKaraokeView.getScoreCompensationOffset());
+        mKaraokeView.setScoreCompensationOffset(scoreOffset);
     }
 
     private static File extractFromZipFileIfPossible(File file) {
@@ -188,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 Log.d("HAI_GUO", "updatePlayingProgress: in ui thread " + progress);
-                mCurrentPlayingProgress.setText("" + progress);
+                binding.playingProgress.setText("" + progress);
             }
         });
     }
@@ -243,7 +271,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void forwardToSettings() {
-        startActivity(new Intent(this, SettingsActivity.class));
+        Intent intent = new Intent(this, SettingsActivity.class);
+        mLauncher.launch(intent);
     }
 
     private void skipTheIntro() {

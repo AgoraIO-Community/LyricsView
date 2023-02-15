@@ -408,8 +408,16 @@ public class ScoringMachine {
         this.mScoreLevel = scoreLevel;
     }
 
+    public int getScoreLevel() {
+        return this.mScoreLevel;
+    }
+
     public void setScoreCompensationOffset(int scoreCompensationOffset) {
         this.mCompensationOffset = scoreCompensationOffset;
+    }
+
+    public int getScoreCompensationOffset() {
+        return this.mCompensationOffset;
     }
 
     public void reset() {

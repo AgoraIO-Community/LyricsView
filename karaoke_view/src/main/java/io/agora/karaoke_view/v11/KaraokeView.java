@@ -13,6 +13,8 @@ public class KaraokeView {
 
     private static final String TAG = "KaraokeView";
 
+    private static final boolean DEBUG = false;
+
     private IScoringAlgorithm mScoringAlgorithm;
 
     private KaraokeEvent mKaraokeEvent;
@@ -37,7 +39,9 @@ public class KaraokeView {
         mScoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
-                Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
+                if (DEBUG) {
+                    Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
+                }
 
                 if (mScoringView != null) {
                     mScoringView.forceStopPivotAnimationWhenFullLineFinished(score);
@@ -50,7 +54,9 @@ public class KaraokeView {
 
             @Override
             public void resetUi() {
-                Log.d(TAG, "resetUi");
+                if (DEBUG) {
+                    Log.d(TAG, "resetUi");
+                }
                 if (mScoringView != null) {
                     mScoringView.forceStopPivotAnimationWhenReachingContinuousZeros();
                     mScoringView.requestRefreshUi();
@@ -58,7 +64,9 @@ public class KaraokeView {
             }
 
             public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
-                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+                if (DEBUG) {
+                    Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+                }
 
                 if (mKaraokeEvent != null) {
                     mKaraokeEvent.onRefPitchUpdate(refPitch, numberOfRefPitches);
@@ -67,14 +75,18 @@ public class KaraokeView {
 
             @Override
             public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit) {
-                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
+                if (DEBUG) {
+                    Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
+                }
                 if (mScoringView != null) {
                     mScoringView.updatePitchAndScore(pitch, scoreAfterNormalization);
                 }
             }
 
             public void requestRefreshUi() {
-                Log.d(TAG, "requestRefreshUi");
+                if (DEBUG) {
+                    Log.d(TAG, "requestRefreshUi");
+                }
                 if (mScoringView != null) {
                     mScoringView.requestRefreshUi();
                 }
@@ -160,7 +172,15 @@ public class KaraokeView {
         mScoringMachine.setScoreLevel(level);
     }
 
+    public int getScoreLevel() {
+        return mScoringMachine.getScoreLevel();
+    }
+
     public void setScoreCompensationOffset(int offset) {
         mScoringMachine.setScoreCompensationOffset(offset);
+    }
+
+    public int getScoreCompensationOffset() {
+        return mScoringMachine.getScoreCompensationOffset();
     }
 }
