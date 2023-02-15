@@ -51,8 +51,11 @@ public class LyricsView extends View {
     private String mDefaultLabel;
     private int mCurrentLine = 0;
 
-    private float mFirstToneStartIndicatorPaddingTop;
-    private float mFirstToneStartIndicatorRadius;
+    private boolean mEnableStartOfVerseIndicator = true;
+    private float mStartOfVerseIndicatorPaddingTop;
+    private float mStartOfVerseIndicatorRadius;
+    private int mStartOfVerseIndicatorColor;
+    private final TextPaint mStartOfVerseIndicator = new TextPaint(Paint.ANTI_ALIAS_FLAG);
 
     /**
      * 歌词显示位置，靠左/居中/靠右
@@ -66,7 +69,7 @@ public class LyricsView extends View {
     private final Rect mRectDst = new Rect();
 
     private long mCurrentTime = 0;
-    private Long mTotalDuration;
+    private long mDuration;
 
     private Bitmap mBitmapBG;
     private Canvas mCanvasBG;
@@ -132,10 +135,14 @@ public class LyricsView extends View {
         mTextGravity = LyricsLineDrawerHelper.Gravity.parse(lrcTextGravity);
         enableDrag = ta.getBoolean(R.styleable.LyricsView_lrcEnableDrag, true);
 
-        mFirstToneStartIndicatorPaddingTop = ta.getDimension(R.styleable.LyricsView_firstToneStartIndicatorPaddingTop, getResources().getDimension(R.dimen.first_tone_start_indicator_padding_top));
-        mFirstToneStartIndicatorRadius = ta.getDimension(R.styleable.LyricsView_firstToneStartIndicatorRadius, getResources().getDimension(R.dimen.first_tone_start_indicator_radius));
+        mStartOfVerseIndicatorPaddingTop = ta.getDimension(R.styleable.LyricsView_startOfVerseIndicatorPaddingTop, getResources().getDimension(R.dimen.start_of_verse_indicator_padding_top));
+        mStartOfVerseIndicatorRadius = ta.getDimension(R.styleable.LyricsView_startOfVerseIndicatorRadius, getResources().getDimension(R.dimen.start_of_verse_indicator_radius));
+        mStartOfVerseIndicatorColor = ta.getColor(R.styleable.LyricsView_startOfVerseIndicatorColor, getResources().getColor(R.color.lrc_current_text_color));
 
         ta.recycle();
+
+        mStartOfVerseIndicator.setColor(mStartOfVerseIndicatorColor);
+        mStartOfVerseIndicator.setAntiAlias(true);
 
         mPaintFG.setTextSize(mCurrentTextSize);
         mPaintFG.setColor(mCurrentTextColor);
@@ -204,29 +211,9 @@ public class LyricsView extends View {
      *
      * @param duration 时间，单位毫秒
      */
-    public synchronized void setTotalDuration(long duration) {
-        mTotalDuration = duration;
-
-        if (lrcData != null && lrcData.lines != null && !lrcData.lines.isEmpty()) {
-            List<LyricsLineModel.Tone> tones = lrcData.lines.get(lrcData.lines.size() - 1).tones; // Last line
-
-            tones = lrcData.lines.get(0).tones; // First line
-            if (tones != null && !tones.isEmpty()) {
-                mTimestampForFirstTone = tones.get(0).begin; // find the first tone timestamp
-            }
-        }
-    }
-
-    private long mTimestampForFirstTone = -1;
-
-    /**
-     * setLrcData(LrcData data) 以及 setTotalDuration(long duration) 调用完毕之后可以通过该方法查询
-     *
-     * @return mTimestampForFirstTone <= 0 通常表示歌词设置失败或者歌词内容不正确没有解析出来
-     * mTimestampForFirstTone > 0 表示歌曲第一句开始时间
-     */
-    public double getFirstToneBeginPosition() {
-        return mTimestampForFirstTone;
+    @Deprecated
+    public synchronized void setDuration(long duration) {
+        mDuration = duration;
     }
 
     /**
@@ -277,6 +264,26 @@ public class LyricsView extends View {
 
     public void setLineSpacing(float lineSpacing) {
         this.mLineSpacing = lineSpacing;
+    }
+
+    public void enableStartOfVerseIndicator(boolean enable) {
+        this.mEnableStartOfVerseIndicator = enable;
+    }
+
+    public void setStartOfVerseIndicatorPaddingTop(float paddingTop) {
+        this.mStartOfVerseIndicatorPaddingTop = paddingTop;
+    }
+
+    public void setStartOfVerseIndicatorRadius(float radius) {
+        this.mStartOfVerseIndicatorRadius = radius;
+    }
+
+    public void setStartOfVerseIndicatorColor(int color) {
+        if (color == 0) {
+            color = getResources().getColor(R.color.lrc_current_text_color);
+        }
+        this.mStartOfVerseIndicatorColor = color;
+        this.mStartOfVerseIndicator.setColor(color);
     }
 
     /**
@@ -503,23 +510,26 @@ public class LyricsView extends View {
     }
 
     private void drawFirstToneIndicator(Canvas canvas) {
-        double countDown = Math.ceil((mTimestampForFirstTone - mCurrentTime) / 1000.f); // to make first tone indicator animation more smooth
+        if (!mEnableStartOfVerseIndicator) {
+            return;
+        }
+        double countDown = Math.ceil((lrcData.startOfVerse - mCurrentTime) / 1000.f); // to make start-of-verse indicator animation more smooth
         if (countDown <= 0) {
             return;
         }
 
-        float sY = mFirstToneStartIndicatorPaddingTop + mFirstToneStartIndicatorRadius; // central of circle
+        float sY = mStartOfVerseIndicatorPaddingTop + mStartOfVerseIndicatorRadius; // central of circle
         float sX = getWidth() / 2.f; // central of circle
 
-        canvas.drawCircle(sX - mFirstToneStartIndicatorRadius * 3, sY, mFirstToneStartIndicatorRadius, mPaintBG); // Indicator 1
+        canvas.drawCircle(sX - mStartOfVerseIndicatorRadius * 3, sY, mStartOfVerseIndicatorRadius, mStartOfVerseIndicator); // Indicator 1
 
         if ((countDown >= 2 & countDown < 3)) {
-            canvas.drawCircle(sX, sY, mFirstToneStartIndicatorRadius, mPaintBG); // Indicator 2
+            canvas.drawCircle(sX, sY, mStartOfVerseIndicatorRadius, mStartOfVerseIndicator); // Indicator 2
         } else if ((countDown >= 3)) {
-            canvas.drawCircle(sX, sY, mFirstToneStartIndicatorRadius, mPaintBG); // Indicator 2
+            canvas.drawCircle(sX, sY, mStartOfVerseIndicatorRadius, mStartOfVerseIndicator); // Indicator 2
 
             if ((countDown % 2 == 1) || mCurrentTime < 2000L) { // After shown for a little time, then begin to blink
-                canvas.drawCircle(sX + 3 * mFirstToneStartIndicatorRadius, sY, mFirstToneStartIndicatorRadius, mPaintBG); // Indicator 3
+                canvas.drawCircle(sX + 3 * mStartOfVerseIndicatorRadius, sY, mStartOfVerseIndicatorRadius, mStartOfVerseIndicator); // Indicator 3
             }
         }
     }
@@ -651,7 +661,7 @@ public class LyricsView extends View {
         mCurrentTime = 0;
         mOffset = 0;
         targetIndex = 0;
-        mTotalDuration = null;
+        mDuration = 0;
     }
 
     /**

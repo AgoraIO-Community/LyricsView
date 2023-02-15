@@ -3,8 +3,8 @@
     <dimen name="lrc_text_size">16sp</dimen>
     <dimen name="line_spacing">16dp</dimen>
     <dimen name="lrc_margin_top">0dp</dimen>
-    <dimen name="first_tone_start_indicator_padding_top">8dp</dimen>
-    <dimen name="first_tone_start_indicator_radius">6dp</dimen>
+    <dimen name="start_of_verse_indicator_padding_top">8dp</dimen>
+    <dimen name="start_of_verse_indicator_radius">6dp</dimen>
     <dimen name="pitch_stick_height">6dp</dimen>
     <dimen name="local_pitch_indicator_radius">8dp</dimen>
 </resources>

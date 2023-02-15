@@ -124,9 +124,9 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         String[] availableRadiusOfIndicator = getResources().getStringArray(R.array.available_indicator_radius);
-        int indicatorRadius = prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_radius), 8);
+        String indicatorRadius = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_radius), "6dp");
         for (int idx = 0; idx < availableRadiusOfIndicator.length; idx++) {
-            if (indicatorRadius == Integer.parseInt(availableRadiusOfIndicator[idx])) {
+            if (indicatorRadius.equals(availableRadiusOfIndicator[idx])) {
                 binding.startOfVerseIndicatorRadiusSelector.setSelection(idx, false);
                 break;
             }
@@ -134,7 +134,7 @@ public class SettingsActivity extends AppCompatActivity {
         binding.startOfVerseIndicatorRadiusSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                editor.putInt(getString(R.string.prefs_key_start_of_verse_indicator_radius), Integer.parseInt(availableRadiusOfIndicator[position]));
+                editor.putString(getString(R.string.prefs_key_start_of_verse_indicator_radius), availableRadiusOfIndicator[position]);
                 editor.apply();
             }
 
@@ -144,7 +144,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        binding.marginTopOfIndicatorTune.setProgress(prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_margin_top), 6)); // 2...20
+        binding.marginTopOfIndicatorTune.setProgress(prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_padding_top), 6)); // 2...20
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             binding.marginTopOfIndicatorTune.setMin(2);
         }
@@ -153,7 +153,7 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    editor.putInt(getString(R.string.prefs_key_start_of_verse_indicator_margin_top), progress);
+                    editor.putInt(getString(R.string.prefs_key_start_of_verse_indicator_padding_top), progress);
                     editor.apply();
                 }
             }

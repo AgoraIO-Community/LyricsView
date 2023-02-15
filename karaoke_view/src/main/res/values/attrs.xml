@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="LyricsView">
-        <attr name="firstToneStartIndicatorPaddingTop" format="dimension" />
-        <attr name="firstToneStartIndicatorRadius" format="dimension" />
+        <attr name="startOfVerseIndicatorPaddingTop" format="dimension" />
+        <attr name="startOfVerseIndicatorRadius" format="dimension" />
+        <attr name="startOfVerseIndicatorColor" format="reference|color" />
         <attr name="lrcMarginTop" format="dimension" />
         <attr name="lrcTextSize" format="dimension" />
         <attr name="lineSpacing" format="dimension" />

@@ -4,12 +4,11 @@
 
     <string name="prefs_key_scoring_level" translatable="false">prefs_key_scoring_level</string>
     <string name="prefs_key_scoring_compensation_offset" translatable="false">prefs_key_scoring_compensation_offset</string>
-    <string name="prefs_key_enable_indicator_before_start_of_verse" translatable="false">prefs_key_enable_indicator_before_start_of_verse</string>
 
     <string name="prefs_key_start_of_verse_indicator_switch" translatable="false">prefs_key_start_of_verse_indicator_switch</string>
     <string name="prefs_key_start_of_verse_indicator_color" translatable="false">prefs_key_start_of_verse_indicator_color</string>
     <string name="prefs_key_start_of_verse_indicator_radius" translatable="false">prefs_key_start_of_verse_indicator_radius</string>
-    <string name="prefs_key_start_of_verse_indicator_margin_top" translatable="false">prefs_key_start_of_verse_indicator_margin_top</string>
+    <string name="prefs_key_start_of_verse_indicator_padding_top" translatable="false">prefs_key_start_of_verse_indicator_padding_top</string>
 
     <string name="prefs_key_default_line_text_color" translatable="false">prefs_key_default_line_text_color</string>
     <string name="prefs_key_default_line_text_size" translatable="false">prefs_key_default_line_text_size</string>
@@ -35,9 +34,9 @@
     </string-array>
 
     <string-array name="available_indicator_radius">
-        <item>8</item>
-        <item>16</item>
-        <item>20</item>
+        <item>8dp</item>
+        <item>16dp</item>
+        <item>20dp</item>
     </string-array>
 
     <string-array name="available_text_size">

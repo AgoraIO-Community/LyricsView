@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
@@ -142,11 +143,48 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         String lineSpacing = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");
         binding.lyricsView.setLineSpacing(dp2pix(Float.parseFloat(lineSpacing.replace("dp", ""))));
+
+        boolean indicatorOn = prefs.getBoolean(getString(R.string.prefs_key_start_of_verse_indicator_switch), true);
+        binding.lyricsView.enableStartOfVerseIndicator(indicatorOn);
+        String indicatorColor = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_color), "Gray");
+        binding.lyricsView.setStartOfVerseIndicatorColor(colorInStringToDex(indicatorColor));
+        String indicatorRadius = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_radius), "6dp");
+        binding.lyricsView.setStartOfVerseIndicatorRadius(dp2pix(Float.parseFloat(indicatorRadius.replace("dp", ""))));
+        int paddingTop = prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_padding_top), 6);
+        binding.lyricsView.setStartOfVerseIndicatorPaddingTop(dp2pix(paddingTop));
     }
 
     private int dp2pix(float dp) {
         float density = getResources().getDisplayMetrics().scaledDensity;
         return (int) (dp * density);
+    }
+
+    private int colorInStringToDex(String color) {
+        int colorInDex = 0;
+        switch (color) {
+            case "Yellow":
+                colorInDex = Color.YELLOW;
+                break;
+            case "Red":
+                colorInDex = Color.RED;
+                break;
+            case "Gray":
+                colorInDex = Color.GRAY;
+                break;
+            case "Orange":
+                colorInDex = Color.parseColor("#FFA500");
+                break;
+            case "Blue":
+                colorInDex = Color.BLUE;
+                break;
+            case "Brown":
+                colorInDex = Color.parseColor("#654321");
+                break;
+            default:
+                colorInDex = 0;
+                break;
+        }
+        return colorInDex;
     }
 
     private static File extractFromZipFileIfPossible(File file) {
