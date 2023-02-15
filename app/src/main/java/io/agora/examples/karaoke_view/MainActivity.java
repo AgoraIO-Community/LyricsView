@@ -141,17 +141,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int scoreOffset = prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), mKaraokeView.getScoreCompensationOffset());
         mKaraokeView.setScoreCompensationOffset(scoreOffset);
 
-        String lineSpacing = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");
-        binding.lyricsView.setLineSpacing(dp2pix(Float.parseFloat(lineSpacing.replace("dp", ""))));
-
         boolean indicatorOn = prefs.getBoolean(getString(R.string.prefs_key_start_of_verse_indicator_switch), true);
         binding.lyricsView.enableStartOfVerseIndicator(indicatorOn);
         String indicatorColor = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_color), "Gray");
         binding.lyricsView.setStartOfVerseIndicatorColor(colorInStringToDex(indicatorColor));
         String indicatorRadius = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_radius), "6dp");
         binding.lyricsView.setStartOfVerseIndicatorRadius(dp2pix(Float.parseFloat(indicatorRadius.replace("dp", ""))));
-        int paddingTop = prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_padding_top), 6);
-        binding.lyricsView.setStartOfVerseIndicatorPaddingTop(dp2pix(paddingTop));
+        int indicatorPaddingTop = prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_padding_top), 6);
+        binding.lyricsView.setStartOfVerseIndicatorPaddingTop(dp2pix(indicatorPaddingTop));
+
+        String defaultTextColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "Default");
+        binding.lyricsView.setDefaultTextColor(colorInStringToDex(defaultTextColor));
+
+        String highlightedTextColor = prefs.getString(getString(R.string.prefs_key_highlighted_line_text_color), "Red");
+        binding.lyricsView.setCurrentTextColor(colorInStringToDex(highlightedTextColor));
+
+        String lineSpacing = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");
+        binding.lyricsView.setLineSpacing(dp2pix(Float.parseFloat(lineSpacing.replace("dp", ""))));
+
+        boolean lyricsDraggingOn = prefs.getBoolean(getString(R.string.prefs_key_lyrics_dragging_switch), true);
+        binding.lyricsView.setEnableDragging(lyricsDraggingOn);
+
+        String labelWhenNoLyrics = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text), getString(R.string.no_lyrics_label));
+        binding.lyricsView.setLabelShownWhenNoLyrics(labelWhenNoLyrics);
+
+        String defaultRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_default_ref_pitch_stick_color), "Default");
+        binding.scoringView.setDefaultRefPitchStickColor(colorInStringToDex(defaultRefPitchStickColor));
+
+        String highlightedRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_highlighted_ref_pitch_stick_color), "Default");
+        binding.scoringView.setHighlightRefPitchStickColor(colorInStringToDex(highlightedRefPitchStickColor));
     }
 
     private int dp2pix(float dp) {
@@ -169,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 colorInDex = Color.RED;
                 break;
             case "Gray":
-                colorInDex = Color.GRAY;
+                colorInDex = Color.parseColor("#9E9E9E");
                 break;
             case "Orange":
                 colorInDex = Color.parseColor("#FFA500");

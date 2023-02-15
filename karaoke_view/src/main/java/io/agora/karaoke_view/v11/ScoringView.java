@@ -4,7 +4,6 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -66,7 +65,7 @@ public class ScoringView extends View {
     private LinearGradient mOverpastLinearGradient;
 
     private final Paint mPitchStickLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private int mOriginPitchStickColor;
+    private int mDefaultRefPitchStickColor;
     private final Paint mHighlightPitchStickLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int mHighlightPitchStickColor;
 
@@ -100,6 +99,24 @@ public class ScoringView extends View {
         init(attrs);
     }
 
+    public void setDefaultRefPitchStickColor(int color) {
+        if (color == 0) {
+            color = getResources().getColor(R.color.default_text_color);
+        }
+        this.mDefaultRefPitchStickColor = color;
+
+        tryInvalidate();
+    }
+
+    public void setHighlightRefPitchStickColor(int color) {
+        if (color == 0) {
+            color = getResources().getColor(R.color.pitch_stick_highlight_color);
+        }
+        this.mHighlightPitchStickColor = color;
+
+        tryInvalidate();
+    }
+
     private void init(@Nullable AttributeSet attrs) {
         if (attrs == null) {
             return;
@@ -114,7 +131,7 @@ public class ScoringView extends View {
             throw new IllegalArgumentException("Invalid value for pitchInitialScore, must >= 0, current is " + mInitialScore);
         }
 
-        mOriginPitchStickColor = getResources().getColor(R.color.lrc_normal_text_color);
+        mDefaultRefPitchStickColor = getResources().getColor(R.color.default_text_color);
         mHighlightPitchStickColor = ta.getColor(R.styleable.ScoringView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
 
         pitchStickHeight = ta.getDimension(R.styleable.ScoringView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));
@@ -262,7 +279,7 @@ public class ScoringView extends View {
 
     private void drawPitchSticks(Canvas canvas) {
         mPitchStickLinearGradientPaint.setShader(null);
-        mPitchStickLinearGradientPaint.setColor(mOriginPitchStickColor);
+        mPitchStickLinearGradientPaint.setColor(mDefaultRefPitchStickColor);
         mPitchStickLinearGradientPaint.setAntiAlias(true);
 
         mHighlightPitchStickLinearGradientPaint.setShader(null);

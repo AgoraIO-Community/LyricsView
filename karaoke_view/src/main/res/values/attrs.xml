@@ -4,17 +4,17 @@
         <attr name="startOfVerseIndicatorPaddingTop" format="dimension" />
         <attr name="startOfVerseIndicatorRadius" format="dimension" />
         <attr name="startOfVerseIndicatorColor" format="reference|color" />
-        <attr name="lrcMarginTop" format="dimension" />
-        <attr name="lrcTextSize" format="dimension" />
+        <attr name="paddingTop" format="dimension" />
         <attr name="lineSpacing" format="dimension" />
-        <attr name="lrcNormalTextSize" format="dimension" />
-        <attr name="lrcNormalTextColor" format="reference|color" />
-        <attr name="lrcPastTextColor" format="reference|color" />
-        <attr name="lrcFutureTextColor" format="reference|color" />
-        <attr name="lrcCurrentTextColor" format="reference|color" />
-        <attr name="lrcLabel" format="string" />
-        <attr name="lrcEnableDrag" format="boolean" />
-        <attr name="lrcTextGravity">
+        <attr name="defaultTextSize" format="dimension" />
+        <attr name="defaultTextColor" format="reference|color" />
+        <attr name="pastTextColor" format="reference|color" />
+        <attr name="upcomingTextColor" format="reference|color" />
+        <attr name="currentTextSize" format="dimension" />
+        <attr name="currentTextColor" format="reference|color" />
+        <attr name="labelWhenNoLyrics" format="string" />
+        <attr name="enableDragging" format="boolean" />
+        <attr name="textGravity">
             <enum name="center" value="0" />
             <enum name="left" value="1" />
             <enum name="right" value="2" />

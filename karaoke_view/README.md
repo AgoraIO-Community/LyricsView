@@ -73,19 +73,19 @@ dependencies {
     android:paddingEnd="10dp"
     android:paddingBottom="20dp"
     // 当前行歌词颜色
-    app:lrcCurrentTextColor="@color/ktv_lrc_highlight"
+    app:currentTextColor="@color/ktv_lrc_highlight"
+    // 当前行歌词字体大小
+    app:currentTextSize="26sp"
     // 歌词行间距
     app:lineSpacing="20dp"
     // 无歌词情况下的默认文字
-    app:lrcLabel="暂无歌词"
+    app:labelWhenNoLyrics="暂无歌词"
     // 非当前行歌词颜色
-    app:lrcNormalTextColor="@color/ktv_lrc_nomal"
+    app:defaultTextColor="@color/ktv_lrc_nomal"
     // 非当前行歌词字体大小
-    app:lrcNormalTextSize="16sp"
+    app:defaultTextSize="16sp"
     // 歌词对齐方式
-    app:lrcTextGravity="center"
-    // 当前行歌词字体大小
-    app:lrcTextSize="26sp" />
+    app:textGravity="center" />
 ```
 
 ## 声明和初始化 LyricsView/ScoringView 控件对象
@@ -191,17 +191,17 @@ public interface KaraokeEvent {
 
 核心 API 参考如下：
 
-| API                | 实现功能                      |
-|--------------------|---------------------------|
-| setKaraokeEvent    | 绑定唱歌过程中拖动/打分/原始参考值等事件回调。  |
-| setEnableDrag      | 设置是否允许上下拖动歌词。             |
-| setNormalColor     | 设置非当前行歌词字体颜色。             |
-| setNormalTextSize  | 普通歌词文本字体大小。               |
-| setCurrentTextSize | 当前歌词文本字体大小。               |
-| setCurrentColor    | 设置当前行歌词的字体颜色。             |
-| setLabel           | 设置歌词为空时屏幕中央显示的文字，如“暂无歌词”。 |
-| reset              | 重置内部状态，清空已经加载的歌词。         |
-| setLyricsData      | 手动设置歌词数据。                 |
-| parseLyricsData    | 加载本地歌词文件。                 |
-| setProgress        | 根据当前歌曲播放进度更新歌词进度，单位为毫秒。   |
-| setPitch           | 根据演唱者 pitch 更新进行打分。       |
+| API                 | 实现功能                      |
+|---------------------|---------------------------|
+| setKaraokeEvent     | 绑定唱歌过程中拖动/打分/原始参考值等事件回调。  |
+| setEnableDrag       | 设置是否允许上下拖动歌词。             |
+| setDefaultTextColor | 设置非当前行歌词字体颜色。             |
+| setDefaultTextSize  | 普通歌词文本字体大小。               |
+| setCurrentTextSize  | 当前歌词文本字体大小。               |
+| setCurrentTextColor | 设置当前行歌词的字体颜色。             |
+| labelWhenNoLyrics   | 设置歌词为空时屏幕中央显示的文字，如“暂无歌词”。 |
+| reset               | 重置内部状态，清空已经加载的歌词。         |
+| setLyricsData       | 手动设置歌词数据。                 |
+| parseLyricsData     | 加载本地歌词文件。                 |
+| setProgress         | 根据当前歌曲播放进度更新歌词进度，单位为毫秒。   |
+| setPitch            | 根据演唱者 pitch 更新进行打分。       |

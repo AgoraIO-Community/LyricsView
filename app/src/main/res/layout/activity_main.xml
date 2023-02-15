@@ -40,18 +40,18 @@
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
         android:paddingBottom="10dp"
+        app:currentTextColor="#FFF44336"
+        app:currentTextSize="20sp"
+        app:defaultTextColor="#00888F"
+        app:defaultTextSize="12sp"
+        app:labelWhenNoLyrics=""
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:lrcCurrentTextColor="#FFF44336"
         app:lineSpacing="6dp"
-        app:lrcFutureTextColor="#33FFFFFF"
-        app:lrcLabel=" "
-        app:lrcMarginTop="-10dp"
-        app:lrcNormalTextColor="#FFFFFF"
-        app:lrcNormalTextSize="12sp"
-        app:lrcPastTextColor="#99FFFFFF"
-        app:lrcTextGravity="center"
-        app:lrcTextSize="20sp" />
+        app:paddingTop="8dp"
+        app:pastTextColor="#99FFFFFF"
+        app:textGravity="center"
+        app:upcomingTextColor="#33FFFFFF" />
 
     <TextView
         android:id="@+id/playing_progress"
