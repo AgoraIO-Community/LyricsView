@@ -6,6 +6,27 @@
     <string name="prefs_key_scoring_compensation_offset" translatable="false">prefs_key_scoring_compensation_offset</string>
     <string name="prefs_key_enable_indicator_before_start_of_verse" translatable="false">prefs_key_enable_indicator_before_start_of_verse</string>
 
+    <string name="prefs_key_start_of_verse_indicator_switch" translatable="false">prefs_key_start_of_verse_indicator_switch</string>
+    <string name="prefs_key_start_of_verse_indicator_color" translatable="false">prefs_key_start_of_verse_indicator_color</string>
+    <string name="prefs_key_start_of_verse_indicator_radius" translatable="false">prefs_key_start_of_verse_indicator_radius</string>
+    <string name="prefs_key_start_of_verse_indicator_margin_top" translatable="false">prefs_key_start_of_verse_indicator_margin_top</string>
+
+    <string name="prefs_key_default_line_text_color" translatable="false">prefs_key_default_line_text_color</string>
+    <string name="prefs_key_default_line_text_size" translatable="false">prefs_key_default_line_text_size</string>
+    <string name="prefs_key_highlighted_line_text_color" translatable="false">prefs_key_highlighted_line_text_color</string>
+    <string name="prefs_key_highlighted_line_text_size" translatable="false">prefs_key_highlighted_line_text_size</string>
+
+    <string name="prefs_key_line_margin" translatable="false">prefs_key_line_margin</string>
+
+    <string name="prefs_key_lyrics_dragging_switch" translatable="false">prefs_key_lyrics_dragging_switch</string>
+
+    <string name="prefs_key_lyrics_not_available_text" translatable="false">prefs_key_lyrics_not_available_text</string>
+    <string name="prefs_key_lyrics_not_available_text_color" translatable="false">prefs_key_lyrics_not_available_text_color</string>
+    <string name="prefs_key_lyrics_not_available_text_size" translatable="false">prefs_key_lyrics_not_available_text_size</string>
+
+    <string name="prefs_key_default_ref_pitch_stick_color" translatable="false">prefs_key_default_ref_pitch_stick_color</string>
+    <string name="prefs_key_highlighted_ref_pitch_stick_color" translatable="false">prefs_key_highlighted_ref_pitch_stick_color</string>
+
     <string-array name="available_indicator_colors">
         <item>Default</item>
         <item>Red</item>
@@ -21,24 +42,28 @@
 
     <string-array name="available_text_size">
         <item>12</item>
+        <item>14</item>
+        <item>16</item>
         <item>18</item>
         <item>26</item>
+        <item>32</item>
     </string-array>
 
     <string-array name="available_margin_lines">
         <item>2</item>
+        <item>4</item>
+        <item>6</item>
         <item>8</item>
-        <item>24</item>
     </string-array>
 
-    <string-array name="available_default_line_colors">
+    <string-array name="available_default_line_text_colors">
         <item>Default</item>
         <item>Yellow</item>
         <item>Gray</item>
         <item>Brown</item>
     </string-array>
 
-    <string-array name="available_highlighted_line_colors">
+    <string-array name="available_highlighted_line_text_colors">
         <item>Default</item>
         <item>Orange</item>
         <item>Red</item>
