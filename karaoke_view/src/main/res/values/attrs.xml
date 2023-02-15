@@ -5,7 +5,7 @@
         <attr name="firstToneStartIndicatorRadius" format="dimension" />
         <attr name="lrcMarginTop" format="dimension" />
         <attr name="lrcTextSize" format="dimension" />
-        <attr name="lrcDividerHeight" format="dimension" />
+        <attr name="lineSpacing" format="dimension" />
         <attr name="lrcNormalTextSize" format="dimension" />
         <attr name="lrcNormalTextColor" format="reference|color" />
         <attr name="lrcPastTextColor" format="reference|color" />

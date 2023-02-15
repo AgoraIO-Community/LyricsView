@@ -43,7 +43,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:lrcCurrentTextColor="#FFF44336"
-        app:lrcDividerHeight="6dp"
+        app:lineSpacing="6dp"
         app:lrcFutureTextColor="#33FFFFFF"
         app:lrcLabel=" "
         app:lrcMarginTop="-10dp"

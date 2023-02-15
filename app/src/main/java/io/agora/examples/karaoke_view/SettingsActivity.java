@@ -24,10 +24,18 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         loadPreferences();
+
+        binding.settingsDone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setResult(RESULT_OK);
+                finish();
+            }
+        });
     }
 
     private void loadPreferences() {
-        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
         loadPreferencesScoringAlgo(prefs, editor);
@@ -243,18 +251,18 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        String[] availableMarginBetweenLines = getResources().getStringArray(R.array.available_margin_lines);
-        int marginBetweenLines = prefs.getInt(getString(R.string.prefs_key_line_margin), 4);
-        for (int idx = 0; idx < availableMarginBetweenLines.length; idx++) {
-            if (marginBetweenLines == Integer.parseInt(availableMarginBetweenLines[idx])) {
-                binding.marginBetweenLinesSelector.setSelection(idx, false);
+        String[] availableSpacingBetweenLines = getResources().getStringArray(R.array.available_spacing_lines);
+        String spacingBetweenLines = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");
+        for (int idx = 0; idx < availableSpacingBetweenLines.length; idx++) {
+            if (spacingBetweenLines.equals(availableSpacingBetweenLines[idx])) {
+                binding.spacingBetweenLinesSelector.setSelection(idx, false);
                 break;
             }
         }
-        binding.marginBetweenLinesSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        binding.spacingBetweenLinesSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                editor.putInt(getString(R.string.prefs_key_line_margin), Integer.parseInt(availableMarginBetweenLines[position]));
+                editor.putString(getString(R.string.prefs_key_line_spacing), availableSpacingBetweenLines[position]);
                 editor.apply();
             }
 

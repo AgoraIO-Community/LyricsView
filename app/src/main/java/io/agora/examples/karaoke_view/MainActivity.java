@@ -134,11 +134,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void loadPreferences() {
-        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
         int scoreLevel = prefs.getInt(getString(R.string.prefs_key_scoring_level), mKaraokeView.getScoreLevel());
         mKaraokeView.setScoreLevel(scoreLevel);
         int scoreOffset = prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), mKaraokeView.getScoreCompensationOffset());
         mKaraokeView.setScoreCompensationOffset(scoreOffset);
+
+        String lineSpacing = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");
+        binding.lyricsView.setLineSpacing(dp2pix(Float.parseFloat(lineSpacing.replace("dp", ""))));
+    }
+
+    private int dp2pix(float dp) {
+        float density = getResources().getDisplayMetrics().scaledDensity;
+        return (int) (dp * density);
     }
 
     private static File extractFromZipFileIfPossible(File file) {

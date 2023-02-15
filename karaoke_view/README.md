@@ -75,7 +75,7 @@ dependencies {
     // 当前行歌词颜色
     app:lrcCurrentTextColor="@color/ktv_lrc_highlight"
     // 歌词行间距
-    app:lrcDividerHeight="20dp"
+    app:lineSpacing="20dp"
     // 无歌词情况下的默认文字
     app:lrcLabel="暂无歌词"
     // 非当前行歌词颜色

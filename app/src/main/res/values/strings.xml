@@ -16,7 +16,7 @@
     <string name="prefs_key_highlighted_line_text_color" translatable="false">prefs_key_highlighted_line_text_color</string>
     <string name="prefs_key_highlighted_line_text_size" translatable="false">prefs_key_highlighted_line_text_size</string>
 
-    <string name="prefs_key_line_margin" translatable="false">prefs_key_line_margin</string>
+    <string name="prefs_key_line_spacing" translatable="false">prefs_key_line_spacing</string>
 
     <string name="prefs_key_lyrics_dragging_switch" translatable="false">prefs_key_lyrics_dragging_switch</string>
 
@@ -49,11 +49,12 @@
         <item>32</item>
     </string-array>
 
-    <string-array name="available_margin_lines">
-        <item>2</item>
-        <item>4</item>
-        <item>6</item>
-        <item>8</item>
+    <string-array name="available_spacing_lines">
+        <item>2dp</item>
+        <item>4dp</item>
+        <item>6dp</item>
+        <item>8dp</item>
+        <item>16dp</item>
     </string-array>
 
     <string-array name="available_default_line_text_colors">

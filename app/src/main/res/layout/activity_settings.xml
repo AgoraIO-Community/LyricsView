@@ -283,27 +283,27 @@
                 app:layout_constraintTop_toTopOf="@id/size_of_highlighted_text_title" />
 
             <TextView
-                android:id="@+id/margin_between_lines_title"
+                android:id="@+id/spacing_between_lines_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="8dp"
                 android:lines="1"
-                android:text="Margin between lines"
+                android:text="Spacing between lines"
                 app:layout_constraintHorizontal_bias="0.6"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/size_of_highlighted_text_title" />
 
             <androidx.appcompat.widget.AppCompatSpinner
-                android:id="@+id/margin_between_lines_selector"
+                android:id="@+id/spacing_between_lines_selector"
                 android:layout_width="0dp"
                 android:layout_height="20dp"
-                android:entries="@array/available_margin_lines"
+                android:entries="@array/available_spacing_lines"
                 android:spinnerMode="dropdown"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.4"
-                app:layout_constraintStart_toEndOf="@id/margin_between_lines_title"
-                app:layout_constraintTop_toTopOf="@id/margin_between_lines_title" />
+                app:layout_constraintStart_toEndOf="@id/spacing_between_lines_title"
+                app:layout_constraintTop_toTopOf="@id/spacing_between_lines_title" />
 
             <TextView
                 android:id="@+id/enable_dragging_title"
@@ -315,7 +315,7 @@
                 android:text="Dragging Switch"
                 app:layout_constraintHorizontal_bias="0.18"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/margin_between_lines_title" />
+                app:layout_constraintTop_toBottomOf="@id/spacing_between_lines_title" />
 
             <androidx.appcompat.widget.AppCompatCheckBox
                 android:id="@+id/dragging_switch"
@@ -468,5 +468,15 @@
                 app:layout_constraintTop_toTopOf="@id/color_of_highlighted_ref_pitch_stick_title" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/settings_done"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:text="DONE"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

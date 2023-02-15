@@ -46,7 +46,7 @@ public class LyricsView extends View {
     private float mNormalTextSize;
     private int mCurrentTextColor;
     private float mCurrentTextSize;
-    private float mDividerHeight;
+    private float mLineSpacing;
     private float mMarginTop;
     private String mDefaultLabel;
     private int mCurrentLine = 0;
@@ -120,7 +120,7 @@ public class LyricsView extends View {
             mNormalTextSize = mCurrentTextSize;
         }
 
-        mDividerHeight = ta.getDimension(R.styleable.LyricsView_lrcDividerHeight, getResources().getDimension(R.dimen.lrc_divider_height));
+        mLineSpacing = ta.getDimension(R.styleable.LyricsView_lineSpacing, getResources().getDimension(R.dimen.line_spacing));
         mMarginTop = ta.getDimension(R.styleable.LyricsView_lrcMarginTop, getResources().getDimension(R.dimen.lrc_margin_top));
         mNormalTextColor = ta.getColor(R.styleable.LyricsView_lrcNormalTextColor, getResources().getColor(R.color.lrc_normal_text_color));
         mPastTextColor = ta.getColor(R.styleable.LyricsView_lrcPastTextColor, getResources().getColor(R.color.lrc_normal_text_color));
@@ -275,6 +275,10 @@ public class LyricsView extends View {
         invalidate();
     }
 
+    public void setLineSpacing(float lineSpacing) {
+        this.mLineSpacing = lineSpacing;
+    }
+
     /**
      * 歌词是否有效
      *
@@ -420,7 +424,7 @@ public class LyricsView extends View {
                 }
 
                 if (yReal + mLyricsLineDrawerHelper.getHeight() < 0) {
-                    y = y + mLyricsLineDrawerHelper.getHeight() + mDividerHeight;
+                    y = y + mLyricsLineDrawerHelper.getHeight() + mLineSpacing;
                     continue;
                 }
 
@@ -449,12 +453,12 @@ public class LyricsView extends View {
                     }
                 }
 
-                if ((y - mDividerHeight + getPaddingTop() + mOffset) <= centerY
+                if ((y - mLineSpacing + getPaddingTop() + mOffset) <= centerY
                         && centerY <= (y + mLyricsLineDrawerHelper.getHeight() + getPaddingTop() + mOffset)) {
                     targetIndex = i;
                 }
 
-                y = y + mLyricsLineDrawerHelper.getHeight() + mDividerHeight;
+                y = y + mLyricsLineDrawerHelper.getHeight() + mLineSpacing;
                 if (y + mOffset > getLrcHeight()) {
                     break;
                 }
@@ -539,12 +543,12 @@ public class LyricsView extends View {
             line = lrcData.lines.get(i);
             mLrcEntry = new LyricsLineDrawerHelper(line, mPaintBG, getLrcWidth(), mTextGravity);
 
-            mOffset = mOffset - mLrcEntry.getHeight() - mDividerHeight;
+            mOffset = mOffset - mLrcEntry.getHeight() - mLineSpacing;
 
-            if (curPointY - mDividerHeight - mLrcEntry.getHeight() < 0)
+            if (curPointY - mLineSpacing - mLrcEntry.getHeight() < 0)
                 continue;
 
-            y = mDividerHeight + mLrcEntry.getHeight();
+            y = mLineSpacing + mLrcEntry.getHeight();
             mCanvasBG.translate(0, -y);
             mLrcEntry.draw(mCanvasBG);
             curPointY = curPointY - y;
@@ -571,7 +575,7 @@ public class LyricsView extends View {
             return;
         }
 
-        float curPointY = (getLrcHeight() + curLrcEntry.getHeight()) / 2F + mDividerHeight + mMarginTop;
+        float curPointY = (getLrcHeight() + curLrcEntry.getHeight()) / 2F + mLineSpacing + mMarginTop;
         float y;
         LyricsLineModel data;
         LyricsLineDrawerHelper mLrcEntry;
@@ -589,7 +593,7 @@ public class LyricsView extends View {
                 break;
 
             mLrcEntry.draw(mCanvasBG);
-            y = mLrcEntry.getHeight() + mDividerHeight;
+            y = mLrcEntry.getHeight() + mLineSpacing;
             mCanvasBG.translate(0, y);
             curPointY = curPointY + y;
         }
