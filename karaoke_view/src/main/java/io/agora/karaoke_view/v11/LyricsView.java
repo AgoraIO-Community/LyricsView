@@ -204,7 +204,7 @@ public class LyricsView extends View {
      *
      * @param enableDrag
      */
-    public void setEnableDragging(boolean enableDrag) {
+    public void enableDragging(boolean enableDrag) {
         this.mEnableDragging = enableDrag;
     }
 

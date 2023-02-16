@@ -500,24 +500,21 @@ public class ScoringView extends View {
     }
 
     public void requestRefreshUi() {
-        if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    tryInvalidate();
-                }
-            });
-        } else {
-            tryInvalidate();
-        }
+        tryInvalidate();
     }
 
     private void tryInvalidate() {
-        if (System.currentTimeMillis() - mLastViewInvalidateTs <= 16) {
+        long delta = System.currentTimeMillis() - mLastViewInvalidateTs;
+        if (delta <= 16) {
             return;
         }
         // Try to avoid too many `invalidate` operations, it is expensive
-        invalidate();
+        if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
+            postInvalidate();
+        } else {
+            invalidate();
+        }
+
         mLastViewInvalidateTs = System.currentTimeMillis();
     }
 

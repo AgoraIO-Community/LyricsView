@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.lyricsView.setLineSpacing(dp2pix(Float.parseFloat(lineSpacing.replace("dp", ""))));
 
         boolean lyricsDraggingOn = prefs.getBoolean(getString(R.string.prefs_key_lyrics_dragging_switch), true);
-        binding.lyricsView.setEnableDragging(lyricsDraggingOn);
+        binding.lyricsView.enableDragging(lyricsDraggingOn);
 
         String labelWhenNoLyrics = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text), getString(R.string.no_lyrics_label));
         binding.lyricsView.setLabelShownWhenNoLyrics(labelWhenNoLyrics);
@@ -278,14 +278,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long mLyricsCurrentProgress = 0;
 
     private void updatePlayingProgress(final long progress) {
-        Log.d("HAI_GUO", "updatePlayingProgress: " + progress);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Log.d("HAI_GUO", "updatePlayingProgress: in ui thread " + progress);
-                binding.playingProgress.setText("" + progress);
-            }
-        });
+        binding.playingProgress.setText("" + progress);
     }
 
     private ScheduledFuture mFuture;
