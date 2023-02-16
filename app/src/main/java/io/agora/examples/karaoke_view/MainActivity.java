@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulatedScore, int index, int total) {
-
+                updateCallback("score=" + score + ", cumulatedScore=" + cumulatedScore + ", index=" + index + ", total=" + total);
             }
         });
 
@@ -263,14 +263,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void doClearCacheAndLoadTheLyrics() {
-        DownloadManager.getInstance().clearCache(this);
-
         mCurrentIndex++;
         if (mCurrentIndex >= LyricsResourcePool.asList().size()) {
             mCurrentIndex = 0;
         }
 
-        loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
+        mExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                DownloadManager.getInstance().clearCache(getApplicationContext());
+                loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
+            }
+        }, 0, TimeUnit.MILLISECONDS);
     }
 
     private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -279,6 +283,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void updatePlayingProgress(final long progress) {
         binding.playingProgress.setText("" + progress);
+    }
+
+    private void updateCallback(final String callback) {
+        binding.callBack.setText(callback);
     }
 
     private ScheduledFuture mFuture;

@@ -526,7 +526,7 @@ public class ScoringView extends View {
         }
     };
 
-    public void updatePitchAndScore(final float pitch, final double scoreAfterNormalization) {
+    public void updatePitchAndScore(final float pitch, final double scoreAfterNormalization, final boolean hit) {
         if (this.mScoringMachine == null || this.mScoringMachine.getLyricsModel() == null) {
             return;
         }
@@ -549,6 +549,8 @@ public class ScoringView extends View {
         } else {
             performPivotAnimationIfNecessary(pitch, scoreAfterNormalization);
         }
+
+        mInHighlightStatus = hit;
     }
 
     private long lastCurrentTs = 0;
@@ -578,12 +580,10 @@ public class ScoringView extends View {
                 }
                 mParticleSystem.resumeEmitting();
             }
-            mInHighlightStatus = true;
         } else {
             if (mParticleSystem != null) {
                 mParticleSystem.stopEmitting();
             }
-            mInHighlightStatus = false;
         }
     }
 

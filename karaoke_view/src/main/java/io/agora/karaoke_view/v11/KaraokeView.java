@@ -48,7 +48,7 @@ public class KaraokeView {
                 }
 
                 if (mKaraokeEvent != null) {
-                    mKaraokeEvent.onLineFinished(KaraokeView.this, line, (int) score, (int) cumulativeScore, index, numberOfLines);
+                    mKaraokeEvent.onLineFinished(KaraokeView.this, line, score, cumulativeScore, index, numberOfLines);
                 }
             }
 
@@ -79,7 +79,7 @@ public class KaraokeView {
                     Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
                 }
                 if (mScoringView != null) {
-                    mScoringView.updatePitchAndScore(pitch, scoreAfterNormalization);
+                    mScoringView.updatePitchAndScore(pitch, scoreAfterNormalization, hit);
                 }
             }
 
