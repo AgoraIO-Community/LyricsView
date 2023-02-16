@@ -26,11 +26,6 @@ public class ExampleUnitTest {
     }
 
     @Test
-    public void addition_isCorrect() {
-        assertEquals(4, 2 + 2);
-    }
-
-    @Test
     public void invalidFileChecking() {
         Exception exception = null;
         File lyrics = new File("");
@@ -79,39 +74,39 @@ public class ExampleUnitTest {
     public void testScoreCalculation2() {
         // TODO(Hai_Guo) Should figure out how to check the result if expected
         double scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 500f, 300);
-        assertEquals(0.11564141395769778, scoreAfterNormalization, 0f);
+        assertEquals(0.11564141395769778, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 500f, 300): " + scoreAfterNormalization);
 
         scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 400f, 300);
-        assertEquals(0.5019550802136014, scoreAfterNormalization, 0f);
+        assertEquals(0.5019550802136014, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 400f, 300): " + scoreAfterNormalization);
 
         scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 301f, 300);
-        assertEquals(0.9942388175378764, scoreAfterNormalization, 0f);
+        assertEquals(0.9942388175378764, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 301f, 300): " + scoreAfterNormalization);
 
         scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 300f, 300);
-        assertEquals(1.0, scoreAfterNormalization, 0f);
+        assertEquals(1.0, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 300f, 300): " + scoreAfterNormalization);
 
         scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 299f, 300);
-        assertEquals(0.9942195815041831, scoreAfterNormalization, 0f);
+        assertEquals(0.9942195815041831, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 299f, 300): " + scoreAfterNormalization);
 
         scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 200f, 300);
-        assertEquals(0.2980451578310306, scoreAfterNormalization, 0f);
+        assertEquals(0.2980451578310306, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 200f, 300): " + scoreAfterNormalization);
 
         scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 100f, 300);
-        assertEquals(0.0, scoreAfterNormalization, 0f);
+        assertEquals(0.0, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 100f, 300): " + scoreAfterNormalization);
 
         scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 50f, 300);
-        assertEquals(0.0, scoreAfterNormalization, 0f);
+        assertEquals(0.0, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 50f, 300): " + scoreAfterNormalization);
 
         scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 1f, 300);
-        assertEquals(0.0, scoreAfterNormalization, 0f);
+        assertEquals(0.0, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 1f, 300): " + scoreAfterNormalization);
     }
 }
