@@ -74,12 +74,8 @@ public class ScoringMachine {
     public ScoringMachine(VoicePitchChanger changer, IScoringAlgorithm algo, OnScoringListener listener) {
         reset();
 
-        if (algo == null) {
-            throw new IllegalArgumentException("IScoringAlgorithm should not be an empty object");
-        }
-
         this.mVoicePitchChanger = changer;
-        this.mScoringAlgo = algo;
+        setScoringAlgorithm(algo);
         this.mListener = listener;
     }
 
@@ -109,6 +105,13 @@ public class ScoringMachine {
 
     public boolean isReady() {
         return mLyricsModel != null && mTimestampOfFirstRefPitch > 0 && mNumberOfRefPitches > 0;
+    }
+
+    public void setScoringAlgorithm(IScoringAlgorithm algorithm) {
+        if (algorithm == null) {
+            throw new IllegalArgumentException("IScoringAlgorithm should not be an empty object");
+        }
+        this.mScoringAlgo = algorithm;
     }
 
     /**
