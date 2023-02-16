@@ -357,13 +357,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.switch_to_next:
+                updateCallback("Next");
                 mLyricsCurrentProgress = 0; // Replay if already playing
                 doClearCacheAndLoadTheLyrics();
                 break;
             case R.id.play:
+                updateCallback("Play");
                 doMockPlay();
                 break;
             case R.id.skip_the_intro:
+                updateCallback("Skip Intro");
                 skipTheIntro();
                 break;
             case R.id.settings:

@@ -150,6 +150,7 @@ public class KaraokeView {
                     if (mKaraokeEvent != null) {
                         mKaraokeEvent.onDragTo(KaraokeView.this, time);
                     }
+                    mScoringMachine.whenDraggingHappen(time);
                 }
 
                 @Override

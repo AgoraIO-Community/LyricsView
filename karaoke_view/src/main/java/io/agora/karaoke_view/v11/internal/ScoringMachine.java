@@ -50,6 +50,8 @@ public class ScoringMachine {
     // Pitches for every line, we will reset every new line
     public final LinkedHashMap<Long, Float> mPitchesForLine = new LinkedHashMap<>();
 
+    public final LinkedHashMap<Integer, Integer> mScoreForEachLine = new LinkedHashMap<>();
+
     // In highlighting status, always with some shiny animations
     private boolean mInHighlightingStatus;
 
@@ -279,6 +281,9 @@ public class ScoringMachine {
             if (mListener != null) {
                 mListener.onLineFinished(lineJustFinished, scoreThisTime, (int) mCumulativeScore, (int) mPerfectScore, indexOfLineJustFinished, mLyricsModel.lines.size());
             }
+
+            // Cache it for dragging
+            mScoreForEachLine.put(indexOfLineJustFinished, scoreThisTime);
         }
     }
 
@@ -384,16 +389,23 @@ public class ScoringMachine {
         return onHit;
     }
 
-    public void whenDraggingHappen(int progress) {
-        if (this.mCurrentTimestamp != 0 && Math.abs(progress - this.mCurrentTimestamp) >= 500) { // Workaround(We assume this as dragging happened)
-            for (int lineIndex = 0; lineIndex < mLyricsModel.lines.size(); lineIndex++) {
-                LyricsLineModel line = mLyricsModel.lines.get(lineIndex);
-                for (int toneIndex = 0; toneIndex < line.tones.size(); toneIndex++) {
-                    LyricsLineModel.Tone tone = line.tones.get(toneIndex);
-                    tone.resetHighlight();
-                }
+    public void whenDraggingHappen(long progress) {
+        for (int lineIndex = 0; lineIndex < mLyricsModel.lines.size(); lineIndex++) {
+            LyricsLineModel line = mLyricsModel.lines.get(lineIndex);
+            for (int toneIndex = 0; toneIndex < line.tones.size(); toneIndex++) {
+                LyricsLineModel.Tone tone = line.tones.get(toneIndex);
+                tone.resetHighlight();
             }
-            mPitchesForLine.clear();
+
+            if (progress <= line.getEndTime()) {
+                mScoreForEachLine.put(lineIndex, 0);
+            }
+        }
+        mPitchesForLine.clear();
+        mCumulativeScore = 0;
+
+        for (Integer score : mScoreForEachLine.values()) {
+            mCumulativeScore += score;
         }
     }
 
@@ -432,6 +444,7 @@ public class ScoringMachine {
 
         mRefPitchForCurrentTimestamp = 0f;
 
+        mScoreForEachLine.clear();
         mPitchesForLine.clear();
 
         mInHighlightingStatus = false;
