@@ -56,7 +56,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.2'
+    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.7'
 }
 ```
 
@@ -194,7 +194,7 @@ public interface KaraokeEvent {
 | API                 | 实现功能                      |
 |---------------------|---------------------------|
 | setKaraokeEvent     | 绑定唱歌过程中拖动/打分/原始参考值等事件回调。  |
-| setEnableDrag       | 设置是否允许上下拖动歌词。             |
+| enableDragging      | 设置是否允许上下拖动歌词。             |
 | setDefaultTextColor | 设置非当前行歌词字体颜色。             |
 | setDefaultTextSize  | 普通歌词文本字体大小。               |
 | setCurrentTextSize  | 当前歌词文本字体大小。               |

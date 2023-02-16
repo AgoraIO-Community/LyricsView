@@ -9,8 +9,8 @@ android {
         applicationId "io.agora.examples.karaoke_view"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 5
+        versionName "1.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,7 +36,7 @@ android {
 
 dependencies {
     implementation project(':karaoke_view')
-//  implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.2'
+//  implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.7'
 
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.6.1'
