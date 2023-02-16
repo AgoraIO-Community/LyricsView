@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.agora.examples.utils.ResourceHelper;
 
+import io.agora.karaoke_view.v11.DefaultScoringAlgorithm;
 import io.agora.karaoke_view.v11.VoicePitchChanger;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
@@ -147,34 +148,35 @@ public class LyricsInstrumentedTest {
 
         mNumberOfScoringLines = 0;
         mLatestIndexOfScoringLines = 0;
-        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
-            @Override
-            public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
-                Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
-                mNumberOfScoringLines++;
-                mLatestIndexOfScoringLines = index;
-            }
+        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new DefaultScoringAlgorithm(),
+                new ScoringMachine.OnScoringListener() {
+                    @Override
+                    public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
+                        Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
+                        mNumberOfScoringLines++;
+                        mLatestIndexOfScoringLines = index;
+                    }
 
-            @Override
-            public void resetUi() {
-                Log.d(TAG, "resetUi");
-            }
+                    @Override
+                    public void resetUi() {
+                        Log.d(TAG, "resetUi");
+                    }
 
-            @Override
-            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
-                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
-            }
+                    @Override
+                    public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
+                        Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+                    }
 
-            @Override
-            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit) {
-                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
-            }
+                    @Override
+                    public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit) {
+                        Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
+                    }
 
-            @Override
-            public void requestRefreshUi() {
-                Log.d(TAG, "requestRefreshUi");
-            }
-        });
+                    @Override
+                    public void requestRefreshUi() {
+                        Log.d(TAG, "requestRefreshUi");
+                    }
+                });
 
         long startTsOfTest = System.currentTimeMillis();
         scoringMachine.prepare(parsedLyrics);
@@ -212,7 +214,7 @@ public class LyricsInstrumentedTest {
 
         mNumberOfScoringLines = 0;
         mLatestIndexOfScoringLines = 0;
-        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
+        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new DefaultScoringAlgorithm(), new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
                 Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
@@ -289,7 +291,7 @@ public class LyricsInstrumentedTest {
             Log.d(TAG, "Line summary: " + line.getStartTime() + " ~ " + line.getEndTime() + " " + line.tones.size());
         }
 
-        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
+        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new DefaultScoringAlgorithm(), new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
                 Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
@@ -375,7 +377,7 @@ public class LyricsInstrumentedTest {
         }
 
         VoicePitchChanger changer = new VoicePitchChanger();
-        ScoringMachine scoringMachine = new ScoringMachine(changer, new ScoringMachine.OnScoringListener() {
+        ScoringMachine scoringMachine = new ScoringMachine(changer, new DefaultScoringAlgorithm(), new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
                 Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);

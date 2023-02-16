@@ -36,7 +36,7 @@ public class KaraokeView {
 
     private void initialize() {
         mScoringAlgorithm = new DefaultScoringAlgorithm();
-        mScoringMachine = new ScoringMachine(new VoicePitchChanger(), new ScoringMachine.OnScoringListener() {
+        mScoringMachine = new ScoringMachine(new VoicePitchChanger(), mScoringAlgorithm, new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
                 if (DEBUG) {
@@ -169,18 +169,18 @@ public class KaraokeView {
     }
 
     public void setScoreLevel(int level) {
-        mScoringMachine.setScoreLevel(level);
+        mScoringAlgorithm.setScoringLevel(level);
     }
 
     public int getScoreLevel() {
-        return mScoringMachine.getScoreLevel();
+        return mScoringAlgorithm.getScoringLevel();
     }
 
     public void setScoreCompensationOffset(int offset) {
-        mScoringMachine.setScoreCompensationOffset(offset);
+        mScoringAlgorithm.setScoringCompensationOffset(offset);
     }
 
     public int getScoreCompensationOffset() {
-        return mScoringMachine.getScoreCompensationOffset();
+        return mScoringAlgorithm.getScoringCompensationOffset();
     }
 }

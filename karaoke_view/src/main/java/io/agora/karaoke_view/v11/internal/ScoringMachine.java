@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
+import io.agora.karaoke_view.v11.IScoringAlgorithm;
 import io.agora.karaoke_view.v11.VoicePitchChanger;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
@@ -61,23 +62,24 @@ public class ScoringMachine {
     // Cumulative score
     private float mCumulativeScore;
 
-    // Maximum score for one line, 100 for maximum and 0 for minimum
-    private int mMaximumScoreForLine = 100;
-
     // Full marks/perfect for the lyrics
     private float mPerfectScore;
 
-    // Indicating the difficulty in scoring(can change by app)
-    private int mScoreLevel = 10; // 0~100
-    private int mCompensationOffset = 0; // -100~100
-
     private VoicePitchChanger mVoicePitchChanger;
+
+    private IScoringAlgorithm mScoringAlgo;
 
     private OnScoringListener mListener;
 
-    public ScoringMachine(VoicePitchChanger changer, OnScoringListener listener) {
+    public ScoringMachine(VoicePitchChanger changer, IScoringAlgorithm algo, OnScoringListener listener) {
         reset();
+
+        if (algo == null) {
+            throw new IllegalArgumentException("IScoringAlgorithm should not be an empty object");
+        }
+
         this.mVoicePitchChanger = changer;
+        this.mScoringAlgo = algo;
         this.mListener = listener;
     }
 
@@ -92,7 +94,7 @@ public class ScoringMachine {
         mLyricsModel = model;
 
         mEndTimeOfThisLyrics = model.lines.get(model.lines.size() - 1).getEndTime();
-        mPerfectScore = mMaximumScoreForLine * model.lines.size();
+        mPerfectScore = mScoringAlgo.getMaximumScoreForLine() * model.lines.size();
 
         for (LyricsLineModel line : model.lines) {
             for (LyricsLineModel.Tone tone : line.tones) {
@@ -356,11 +358,8 @@ public class ScoringMachine {
             pitchAfterProcess = pitch;
         }
 
-        final float scoreAfterNormalization = this.calculateScore2(mMinimumScorePerTone, mScoreLevel, mCompensationOffset, pitch, currentRefPitch);
-
-        float score = scoreAfterNormalization;
-        // 百分制分数 * 每句固定分数
-        score *= mMaximumScoreForLine;
+        float scoreAfterNormalization = mScoringAlgo.pitchToScore(mMinimumScorePerTone, pitch, currentRefPitch);
+        float score = scoreAfterNormalization * mScoringAlgo.getMaximumScoreForLine();
 
         mPitchesForLine.put(timestamp, score);
         if (DEBUG) {
@@ -404,21 +403,6 @@ public class ScoringMachine {
         this.mMinimumScorePerTone = minimumScore;
     }
 
-    public void setScoreLevel(int scoreLevel) {
-        this.mScoreLevel = scoreLevel;
-    }
-
-    public int getScoreLevel() {
-        return this.mScoreLevel;
-    }
-
-    public void setScoreCompensationOffset(int scoreCompensationOffset) {
-        this.mCompensationOffset = scoreCompensationOffset;
-    }
-
-    public int getScoreCompensationOffset() {
-        return this.mCompensationOffset;
-    }
 
     public void reset() {
         mLyricsModel = null;
@@ -429,8 +413,6 @@ public class ScoringMachine {
         mTimestampOfFirstRefPitch = -1;
 
         mEndTimeOfThisLyrics = 0;
-
-        mMaximumScoreForLine = 100;
 
         mPerfectScore = 0;
 
