@@ -58,6 +58,7 @@
 
     <string-array name="available_default_line_text_colors">
         <item>Default</item>
+        <item>White</item>
         <item>Yellow</item>
         <item>Gray</item>
         <item>Brown</item>

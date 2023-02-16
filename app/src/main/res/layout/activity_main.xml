@@ -42,7 +42,7 @@
         android:paddingBottom="10dp"
         app:currentTextColor="#FFF44336"
         app:currentTextSize="20sp"
-        app:defaultTextColor="#00888F"
+        app:defaultTextColor="#FFFFFF"
         app:defaultTextSize="12sp"
         app:labelWhenNoLyrics=""
         app:layout_constraintBottom_toBottomOf="parent"

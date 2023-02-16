@@ -101,7 +101,7 @@ public class ScoringView extends View {
 
     public void setDefaultRefPitchStickColor(int color) {
         if (color == 0) {
-            color = getResources().getColor(R.color.default_text_color);
+            color = getResources().getColor(R.color.default_popular_color);
         }
         this.mDefaultRefPitchStickColor = color;
 
@@ -131,7 +131,7 @@ public class ScoringView extends View {
             throw new IllegalArgumentException("Invalid value for pitchInitialScore, must >= 0, current is " + mInitialScore);
         }
 
-        mDefaultRefPitchStickColor = getResources().getColor(R.color.default_text_color);
+        mDefaultRefPitchStickColor = getResources().getColor(R.color.default_popular_color);
         mHighlightPitchStickColor = ta.getColor(R.styleable.ScoringView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
 
         pitchStickHeight = ta.getDimension(R.styleable.ScoringView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));

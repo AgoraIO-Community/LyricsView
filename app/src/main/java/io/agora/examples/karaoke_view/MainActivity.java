@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int indicatorPaddingTop = prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_padding_top), 6);
         binding.lyricsView.setStartOfVerseIndicatorPaddingTop(dp2pix(indicatorPaddingTop));
 
-        String defaultTextColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "Default");
+        String defaultTextColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "White");
         binding.lyricsView.setDefaultTextColor(colorInStringToDex(defaultTextColor));
 
         String highlightedTextColor = prefs.getString(getString(R.string.prefs_key_highlighted_line_text_color), "Red");
@@ -182,6 +182,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (color) {
             case "Yellow":
                 colorInDex = Color.YELLOW;
+                break;
+            case "White":
+                colorInDex = Color.WHITE;
                 break;
             case "Red":
                 colorInDex = Color.RED;

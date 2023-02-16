@@ -168,7 +168,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         String[] availableColorsOfDefaultLine = getResources().getStringArray(R.array.available_default_line_text_colors);
-        String defaultLineColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "Default");
+        String defaultLineColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "White");
         for (int idx = 0; idx < availableColorsOfDefaultLine.length; idx++) {
             if (defaultLineColor.equals(availableColorsOfDefaultLine[idx])) {
                 binding.defaultLineColorSelector.setSelection(idx, false);

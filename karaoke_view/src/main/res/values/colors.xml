@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="default_text_color">#9E9E9E</color>
+    <color name="default_popular_color">#9E9E9E</color>
     <color name="past_text_color">#9E9E9E</color>
     <color name="current_text_color">#FFF44336</color>
     <color name="local_pitch_indicator_color">#F0F0F0F0</color>

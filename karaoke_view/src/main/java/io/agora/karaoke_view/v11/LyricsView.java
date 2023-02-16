@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.text.Layout;
@@ -126,9 +127,9 @@ public class LyricsView extends View {
 
         mLineSpacing = ta.getDimension(R.styleable.LyricsView_lineSpacing, getResources().getDimension(R.dimen.line_spacing));
         mPaddingTop = ta.getDimension(R.styleable.LyricsView_paddingTop, getResources().getDimension(R.dimen.padding_top));
-        mDefaultTextColor = ta.getColor(R.styleable.LyricsView_defaultTextColor, getResources().getColor(R.color.default_text_color));
-        mPastTextColor = ta.getColor(R.styleable.LyricsView_pastTextColor, getResources().getColor(R.color.default_text_color));
-        mUpcomingTextColor = ta.getColor(R.styleable.LyricsView_upcomingTextColor, getResources().getColor(R.color.default_text_color));
+        mDefaultTextColor = ta.getColor(R.styleable.LyricsView_defaultTextColor, Color.WHITE);
+        mPastTextColor = ta.getColor(R.styleable.LyricsView_pastTextColor, getResources().getColor(R.color.default_popular_color));
+        mUpcomingTextColor = ta.getColor(R.styleable.LyricsView_upcomingTextColor, getResources().getColor(R.color.default_popular_color));
         mCurrentTextColor = ta.getColor(R.styleable.LyricsView_currentTextColor, getResources().getColor(R.color.current_text_color));
         mNoLyricsLabel = ta.getString(R.styleable.LyricsView_labelWhenNoLyrics);
         mNoLyricsLabel = TextUtils.isEmpty(mNoLyricsLabel) ? getContext().getString(R.string.no_lyrics_label) : mNoLyricsLabel;
@@ -138,7 +139,7 @@ public class LyricsView extends View {
 
         mStartOfVerseIndicatorPaddingTop = ta.getDimension(R.styleable.LyricsView_startOfVerseIndicatorPaddingTop, getResources().getDimension(R.dimen.start_of_verse_indicator_padding_top));
         mStartOfVerseIndicatorRadius = ta.getDimension(R.styleable.LyricsView_startOfVerseIndicatorRadius, getResources().getDimension(R.dimen.start_of_verse_indicator_radius));
-        mStartOfVerseIndicatorColor = ta.getColor(R.styleable.LyricsView_startOfVerseIndicatorColor, getResources().getColor(R.color.default_text_color));
+        mStartOfVerseIndicatorColor = ta.getColor(R.styleable.LyricsView_startOfVerseIndicatorColor, getResources().getColor(R.color.default_popular_color));
 
         ta.recycle();
 
@@ -222,7 +223,7 @@ public class LyricsView extends View {
      */
     public void setDefaultTextColor(@ColorInt int color) {
         if (color == 0) {
-            color = getResources().getColor(R.color.default_text_color);
+            color = Color.WHITE;
         }
 
         mDefaultTextColor = color;
@@ -288,7 +289,7 @@ public class LyricsView extends View {
 
     public void setStartOfVerseIndicatorColor(int color) {
         if (color == 0) {
-            color = getResources().getColor(R.color.default_text_color);
+            color = getResources().getColor(R.color.default_popular_color);
         }
         this.mStartOfVerseIndicatorColor = color;
         this.mStartOfVerseIndicator.setColor(color);
