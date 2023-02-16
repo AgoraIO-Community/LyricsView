@@ -17,10 +17,7 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
     @Override
     public float pitchToScore(float minimumScore, float currentPitch, float currentRefPitch) {
         final float scoreAfterNormalization = ScoringMachine.calculateScore2(minimumScore, mScoringLevel, mScoringCompensationOffset, currentPitch, currentRefPitch);
-
-        float score = scoreAfterNormalization;
-
-        return score;
+        return scoreAfterNormalization;
     }
 
     @Override
