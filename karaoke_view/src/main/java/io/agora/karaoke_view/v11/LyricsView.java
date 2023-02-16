@@ -202,10 +202,10 @@ public class LyricsView extends View {
     /**
      * 设置是否允许上下滑动
      *
-     * @param enableDrag
+     * @param enable
      */
-    public void enableDragging(boolean enableDrag) {
-        this.mEnableDragging = enableDrag;
+    public void enableDragging(boolean enable) {
+        this.mEnableDragging = enable;
     }
 
     /**

@@ -597,6 +597,7 @@ public class ScoringView extends View {
     }
 
     public void forceStopPivotAnimationWhenReachingContinuousZeros() {
+        mInHighlightStatus = false;
         if (this.mLocalPitch != 0) {
             mHandler.post(new Runnable() {
                 @Override
@@ -610,6 +611,7 @@ public class ScoringView extends View {
 
     public void forceStopPivotAnimationWhenFullLineFinished(double score) {
         if (score == 0 && this.mLocalPitch != 0) {
+            mInHighlightStatus = false;
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
