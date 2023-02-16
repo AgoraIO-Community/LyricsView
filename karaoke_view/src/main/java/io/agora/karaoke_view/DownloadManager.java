@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -23,7 +24,11 @@ public class DownloadManager {
     private static final String TAG = "DownloadManager";
 
     private static final String CACHE_FOLDER = "assets";
-    private final OkHttpClient okHttpClient = new OkHttpClient();
+    private final OkHttpClient okHttpClient =
+            new OkHttpClient.Builder()
+                    .connectTimeout(20, TimeUnit.SECONDS)
+                    .writeTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(15, TimeUnit.SECONDS).build();
     private static DownloadManager instance;
 
     public static DownloadManager getInstance() {

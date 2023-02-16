@@ -99,6 +99,7 @@ public class KaraokeView {
             mLyricsView.reset();
         }
         if (mScoringView != null) {
+            mScoringView.reset();
         }
         mScoringMachine.reset();
     }

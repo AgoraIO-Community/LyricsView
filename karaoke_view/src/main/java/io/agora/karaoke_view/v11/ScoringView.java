@@ -236,8 +236,8 @@ public class ScoringView extends View {
 
             Path path = new Path();
             path.moveTo(dotPointX, value);
-            path.lineTo(dotPointX - 26, value - 20);
-            path.lineTo(dotPointX - 26, value + 20);
+            path.lineTo(dotPointX - mLocalPitchIndicatorRadius, value - mLocalPitchIndicatorRadius);
+            path.lineTo(dotPointX - mLocalPitchIndicatorRadius, value + mLocalPitchIndicatorRadius);
             path.close();
             canvas.drawPath(path, mLocalPitchPivotPaint);
         }
@@ -246,7 +246,7 @@ public class ScoringView extends View {
     private float getYForPitchPivot() {
         float targetY = 0;
 
-        if (this.mScoringMachine == null) { // Not initialized
+        if (ifNotInitialized()) { // Not initialized
             targetY = getHeight() - this.mLocalPitchIndicatorRadius;
         } else if (this.mLocalPitch >= this.mScoringMachine.getMinimumRefPitch() && this.mScoringMachine.getMaximumRefPitch() != 0) { // Has value, not the default case
             float realPitchMax = this.mScoringMachine.getMaximumRefPitch() + 5;
@@ -257,10 +257,10 @@ public class ScoringView extends View {
             targetY = getHeight();
         }
 
-        if (targetY <= this.mLocalPitchIndicatorRadius) { // clamping it under the line
+        if (targetY < this.mLocalPitchIndicatorRadius) { // clamping it under the line
             targetY += this.mLocalPitchIndicatorRadius;
         }
-        if (targetY >= getHeight() - this.mLocalPitchIndicatorRadius) { // clamping it above the line
+        if (targetY > getHeight() - this.mLocalPitchIndicatorRadius) { // clamping it above the line
             targetY -= this.mLocalPitchIndicatorRadius;
         }
         return targetY;
@@ -286,7 +286,7 @@ public class ScoringView extends View {
         mHighlightPitchStickLinearGradientPaint.setColor(mHighlightPitchStickColor);
         mHighlightPitchStickLinearGradientPaint.setAntiAlias(true);
 
-        if (mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty()) {
+        if (ifNotInitialized()) {
             return;
         }
 
@@ -508,6 +508,11 @@ public class ScoringView extends View {
         if (delta <= 16) {
             return;
         }
+
+        invalidateForSureAndMarkTheTimestamp();
+    }
+
+    private void invalidateForSureAndMarkTheTimestamp() {
         // Try to avoid too many `invalidate` operations, it is expensive
         if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
             postInvalidate();
@@ -526,8 +531,12 @@ public class ScoringView extends View {
         }
     };
 
+    private boolean ifNotInitialized() {
+        return mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty();
+    }
+
     public void updatePitchAndScore(final float pitch, final double scoreAfterNormalization, final boolean hit) {
-        if (this.mScoringMachine == null || this.mScoringMachine.getLyricsModel() == null) {
+        if (ifNotInitialized()) {
             return;
         }
 
@@ -612,6 +621,19 @@ public class ScoringView extends View {
     }
 
     private boolean mInHighlightStatus;
+
+    public void reset() {
+        mLyricsModel = null;
+        mInHighlightStatus = false;
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
+                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
+                invalidateForSureAndMarkTheTimestamp();
+            }
+        });
+    }
 
     @Override
     protected void onDetachedFromWindow() {

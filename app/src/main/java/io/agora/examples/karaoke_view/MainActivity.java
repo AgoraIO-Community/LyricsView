@@ -71,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onDragTo(KaraokeView view, long position) {
                 mKaraokeView.setProgress(position);
+                mLyricsCurrentProgress = position;
             }
 
             @Override
@@ -328,6 +329,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         mFuture.cancel(true);
                     }
                     mLyricsCurrentProgress = 0;
+                    mKaraokeView.reset();
                     Log.d(PLAYER_TAG, "quit");
                     return;
                 }
