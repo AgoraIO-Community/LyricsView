@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         boolean particleEffectOn = prefs.getBoolean(getString(R.string.prefs_key_particle_effect_switch), true);
         binding.scoringView.enableParticleEffect(particleEffectOn);
 
-        boolean customizedPivotAndParticleOn = prefs.getBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), true);
+        boolean customizedPivotAndParticleOn = prefs.getBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), false);
         if (customizedPivotAndParticleOn) {
             Bitmap bitmap = drawableToBitmap(getDrawable(R.drawable.pitch_indicator));
             binding.scoringView.setLocalPitchPivot(bitmap);

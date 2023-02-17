@@ -414,7 +414,7 @@ public class SettingsActivity extends AppCompatActivity {
             editor.apply();
         });
 
-        boolean customizedPivotAndParticleSwitch = prefs.getBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), true);
+        boolean customizedPivotAndParticleSwitch = prefs.getBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), false);
         binding.customizedPivotAndParticleSwitch.setChecked(customizedPivotAndParticleSwitch);
         binding.customizedPivotAndParticleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             editor.putBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), isChecked);
