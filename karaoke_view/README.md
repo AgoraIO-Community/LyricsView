@@ -56,7 +56,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.9'
+    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.11'
 }
 ```
 
@@ -65,14 +65,14 @@ dependencies {
 在项目的 Activity 中，自定义 LyricsView 控件的界面布局。示例代码如下：
 ```xml
 <io.agora.karaoke_view.v11.LyricsView
-    android:id="@+id/lrc_view"
+    android:id="@+id/lyrics_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingStart="10dp"
     android:paddingTop="20dp"
     android:paddingEnd="10dp"
     android:paddingBottom="20dp"
-    // 当前行歌词颜色
+    // 当前行歌词高亮颜色
     app:currentTextColor="@color/ktv_lrc_highlight"
     // 当前行歌词字体大小
     app:currentTextSize="26sp"
@@ -80,11 +80,11 @@ dependencies {
     app:lineSpacing="20dp"
     // 无歌词情况下的默认文字
     app:labelWhenNoLyrics="暂无歌词"
-    // 非当前行歌词颜色
+    // 默认歌词颜色
     app:defaultTextColor="@color/ktv_lrc_nomal"
-    // 非当前行歌词字体大小
+    // 默认歌词字体大小
     app:defaultTextSize="16sp"
-    // 歌词对齐方式
+    // 歌词文字显示对齐方式
     app:textGravity="center" />
 ```
 
@@ -94,7 +94,7 @@ dependencies {
 ```Java
 public class LiveActivity extends RtcBaseActivity {
     private LyricsView mLyricsView;
-    private ScoringView mScoringView
+    private ScoringView mScoringView;
 
     private KaraokeView mKaraokeView;
 
@@ -128,7 +128,7 @@ public class LiveActivity extends RtcBaseActivity {
         mMockRtcWithPlayer = new MockRtcEngineWithPlayer(new PlayerEvent() {
             @Override
             public void onPlayPosition(long position) {
-                // This will trigger KaraokeView running
+                // This will trigger KaraokeView running, must be stable and smooth
                 mKaraokeView.setProgress(position);
             }
 

@@ -8,6 +8,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -19,8 +21,7 @@ import android.view.View;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.MainThread;
-
-import java.util.List;
+import androidx.annotation.Nullable;
 
 import io.agora.karaoke_view.R;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
@@ -37,7 +38,7 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
 public class LyricsView extends View {
     private static final String TAG = "LrcView";
 
-    private static volatile LyricsModel lrcData;
+    private static volatile LyricsModel mLrcData;
 
     private final TextPaint mPaintFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint mPaintBG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
@@ -99,7 +100,7 @@ public class LyricsView extends View {
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             mOffset += -distanceY;
-            invalidate();
+            tryInvalidate();
             return true;
         }
     };
@@ -117,7 +118,15 @@ public class LyricsView extends View {
         init(attrs);
     }
 
-    private void init(AttributeSet attrs) {
+    private Handler mHandler;
+
+    private void init(@Nullable AttributeSet attrs) {
+        if (attrs == null) {
+            return;
+        }
+
+        this.mHandler = new Handler(Looper.myLooper());
+
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.LyricsView);
         mCurrentTextSize = ta.getDimension(R.styleable.LyricsView_currentTextSize, getResources().getDimension(R.dimen.default_text_size));
         mDefaultTextSize = ta.getDimension(R.styleable.LyricsView_defaultTextSize, getResources().getDimension(R.dimen.default_text_size));
@@ -175,11 +184,12 @@ public class LyricsView extends View {
             return super.onTouchEvent(event);
         }
 
-        if (lrcData == null || lrcData.lines == null || lrcData.lines.isEmpty()) {
+        if (!hasLrc()) {
             return super.onTouchEvent(event);
         }
+        LyricsModel lyricsModel = mLrcData;
 
-        if (targetIndex < 0 || lrcData.lines.size() <= targetIndex) {
+        if (targetIndex < 0 || lyricsModel.lines.size() <= targetIndex) {
             return super.onTouchEvent(event);
         }
 
@@ -188,7 +198,7 @@ public class LyricsView extends View {
             mNewLine = true;
             mRectClip.setEmpty();
 
-            LyricsLineModel mIEntry = lrcData.lines.get(targetIndex);
+            LyricsLineModel mIEntry = lyricsModel.lines.get(targetIndex);
             updateTime(mIEntry.getStartTime());
 
             if (mOnSeekActionListener != null) {
@@ -229,7 +239,7 @@ public class LyricsView extends View {
         mDefaultTextColor = color;
         mPaintBG.setColor(mDefaultTextColor);
         mNewLine = true;
-        invalidate();
+        tryInvalidate();
     }
 
     /**
@@ -238,7 +248,7 @@ public class LyricsView extends View {
     public void setDefaultTextSize(float size) {
         mDefaultTextSize = size;
         mNewLine = true;
-        invalidate();
+        tryInvalidate();
     }
 
     /**
@@ -247,7 +257,7 @@ public class LyricsView extends View {
     public void setCurrentTextSize(float size) {
         mCurrentTextSize = size;
         mNewLine = true;
-        invalidate();
+        tryInvalidate();
     }
 
     /**
@@ -260,7 +270,7 @@ public class LyricsView extends View {
         mCurrentTextColor = color;
         mPaintFG.setColor(mCurrentTextColor);
         mNewLine = true;
-        invalidate();
+        tryInvalidate();
     }
 
     /**
@@ -268,7 +278,7 @@ public class LyricsView extends View {
      */
     public void setLabelShownWhenNoLyrics(String label) {
         mNoLyricsLabel = label;
-        invalidate();
+        tryInvalidate();
     }
 
     public void setLineSpacing(float lineSpacing) {
@@ -301,7 +311,7 @@ public class LyricsView extends View {
      * @return true，如果歌词有效，否则 false
      */
     private boolean hasLrc() {
-        return lrcData != null && lrcData.lines != null && !lrcData.lines.isEmpty();
+        return mLrcData != null && mLrcData.lines != null && !mLrcData.lines.isEmpty();
     }
 
     /**
@@ -310,11 +320,14 @@ public class LyricsView extends View {
      * @param time 当前播放时间，毫秒
      */
     public void updateTime(long time) {
+        mCurrentTime = time;
+
         if (!hasLrc()) {
+            if ((time / 1000) % 2 == 0) {
+                tryInvalidate();
+            }
             return;
         }
-
-        mCurrentTime = time;
 
         int line = findShowLine(time);
         if (line != mCurrentLine) {
@@ -322,7 +335,7 @@ public class LyricsView extends View {
             mCurrentLine = line;
         }
 
-        invalidate();
+        tryInvalidate();
     }
 
     @Override
@@ -363,7 +376,7 @@ public class LyricsView extends View {
             mRectDst.right = getPaddingStart() + getLrcWidth();
             mRectDst.bottom = getPaddingTop() + getLrcHeight();
 
-            invalidate();
+            tryInvalidate();
         }
     }
 
@@ -408,6 +421,8 @@ public class LyricsView extends View {
             return;
         }
 
+        LyricsModel lyricsModel = mLrcData;
+
         float centerY = getLrcHeight() / 2F + getPaddingTop() + mPaddingTop;
         if (isUnderDragging) {
             // 拖动状态下
@@ -418,7 +433,7 @@ public class LyricsView extends View {
             LyricsLineDrawerHelper mLyricsLineDrawerHelper;
             float y = 0;
             float yReal;
-            for (int i = 0; i < lrcData.lines.size(); i++) {
+            for (int i = 0; i < lyricsModel.lines.size(); i++) {
                 if (i == mCurrentLine) {
                     mPaintBG.setTextSize(mCurrentTextSize);
                 } else if (i < mCurrentLine) {
@@ -429,7 +444,7 @@ public class LyricsView extends View {
                     mPaintBG.setTextSize(mDefaultTextSize);
                 }
 
-                LyricsLineModel mIEntry = lrcData.lines.get(i);
+                LyricsLineModel mIEntry = lyricsModel.lines.get(i);
                 mLyricsLineDrawerHelper = new LyricsLineDrawerHelper(mIEntry, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
 
                 yReal = y + mOffset;
@@ -485,7 +500,7 @@ public class LyricsView extends View {
 
             canvas.drawLine(0, centerY, getWidth(), centerY + 1, mPaintFG);
         } else {
-            LyricsLineModel cur = lrcData.lines.get(mCurrentLine);
+            LyricsLineModel cur = lyricsModel.lines.get(mCurrentLine);
             if (mNewLine) {
                 mPaintBG.setColor(mDefaultTextColor);
                 mPaintBG.setTextSize(mCurrentTextSize);
@@ -497,14 +512,14 @@ public class LyricsView extends View {
                     mBitmapBG.eraseColor(0);
                 }
 
-                if (mCurrentLine < 0 || mCurrentLine >= lrcData.lines.size()) {
+                if (mCurrentLine < 0 || mCurrentLine >= lyricsModel.lines.size()) {
                     mNewLine = false;
                     return;
                 }
 
                 drawCurrent();
-                drawTop();
-                drawBottom();
+                drawTop(lyricsModel);
+                drawBottom(lyricsModel);
 
                 mNewLine = false;
             }
@@ -522,7 +537,12 @@ public class LyricsView extends View {
         if (!mEnableStartOfVerseIndicator) {
             return;
         }
-        double countDown = Math.ceil((lrcData.startOfVerse - mCurrentTime) / 1000.f); // to make start-of-verse indicator animation more smooth
+        if (!hasLrc()) {
+            return;
+        }
+        LyricsModel lyricsModel = mLrcData;
+
+        double countDown = Math.ceil((lyricsModel.startOfVerse - mCurrentTime) / 1000.f); // to make start-of-verse indicator animation more smooth
         if (countDown <= 0) {
             return;
         }
@@ -543,8 +563,8 @@ public class LyricsView extends View {
         }
     }
 
-    private void drawTop() {
-        if (curLrcEntry == null) {
+    private void drawTop(LyricsModel lyricsModel) {
+        if (curLrcEntry == null || lyricsModel == null) {
             return;
         }
 
@@ -559,7 +579,7 @@ public class LyricsView extends View {
         mCanvasBG.translate(0, curPointY);
 
         for (int i = mCurrentLine - 1; i >= 0; i--) {
-            line = lrcData.lines.get(i);
+            line = lyricsModel.lines.get(i);
             mLrcEntry = new LyricsLineDrawerHelper(line, mPaintBG, getLrcWidth(), mTextGravity);
 
             mOffset = mOffset - mLrcEntry.getHeight() - mLineSpacing;
@@ -589,8 +609,8 @@ public class LyricsView extends View {
         mOffset = y;
     }
 
-    private void drawBottom() {
-        if (curLrcEntry == null) {
+    private void drawBottom(LyricsModel lyricsModel) {
+        if (curLrcEntry == null || lyricsModel == null) {
             return;
         }
 
@@ -604,8 +624,8 @@ public class LyricsView extends View {
         mCanvasBG.save();
         mCanvasBG.translate(0, curPointY);
 
-        for (int i = mCurrentLine + 1; i < lrcData.lines.size(); i++) {
-            data = lrcData.lines.get(i);
+        for (int i = mCurrentLine + 1; i < lyricsModel.lines.size(); i++) {
+            data = lyricsModel.lines.get(i);
             mLrcEntry = new LyricsLineDrawerHelper(data, mPaintBG, getLrcWidth(), mTextGravity);
 
             if (curPointY + mLrcEntry.getHeight() > getLrcHeight())
@@ -649,9 +669,9 @@ public class LyricsView extends View {
     public void setLrcData(LyricsModel data) {
         resetInternal();
 
-        lrcData = data;
+        mLrcData = data;
 
-        invalidate();
+        tryInvalidate();
     }
 
     /**
@@ -659,12 +679,38 @@ public class LyricsView extends View {
      */
     public void reset() {
         resetInternal();
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                invalidateForSureAndMarkTheTimestamp();
+            }
+        });
+    }
 
-        invalidate();
+    private long mLastViewInvalidateTs;
+
+    private void tryInvalidate() {
+        long delta = System.currentTimeMillis() - mLastViewInvalidateTs;
+        if (delta <= 16) {
+            return;
+        }
+
+        invalidateForSureAndMarkTheTimestamp();
+    }
+
+    private void invalidateForSureAndMarkTheTimestamp() {
+        // Try to avoid too many `invalidate` operations, it is expensive
+        if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
+            postInvalidate();
+        } else {
+            invalidate();
+        }
+
+        mLastViewInvalidateTs = System.currentTimeMillis();
     }
 
     private void resetInternal() {
-        lrcData = null;
+        mLrcData = null;
         mCurrentLine = 0;
         mNewLine = true;
         mCurrentTime = 0;
@@ -677,16 +723,20 @@ public class LyricsView extends View {
      * 二分法查找当前时间应该显示的行数（最后一个 <= time 的行数）
      */
     private int findShowLine(long time) {
+        if (!hasLrc()) {
+            return 0;
+        }
+
         int left = 0;
-        int right = lrcData.lines.size();
+        int right = mLrcData.lines.size();
         while (left <= right) {
             int middle = (left + right) / 2;
-            long middleTime = lrcData.lines.get(middle).getStartTime();
+            long middleTime = mLrcData.lines.get(middle).getStartTime();
 
             if (time < middleTime) {
                 right = middle - 1;
             } else {
-                if (middle + 1 >= lrcData.lines.size() || time < lrcData.lines.get(middle + 1).getStartTime()) {
+                if (middle + 1 >= mLrcData.lines.size() || time < mLrcData.lines.get(middle + 1).getStartTime()) {
                     return middle;
                 }
 

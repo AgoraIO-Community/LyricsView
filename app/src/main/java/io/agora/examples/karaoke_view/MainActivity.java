@@ -81,7 +81,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulatedScore, int index, int total) {
-                updateCallback("score=" + score + ", cumulatedScore=" + cumulatedScore + ", index=" + index + ", total=" + total);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateCallback("score=" + score + ", cumulatedScore=" + cumulatedScore + ", index=" + index + ", total=" + total);
+                    }
+                });
             }
         });
 
@@ -317,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void run() {
                 if (mLyricsCurrentProgress >= 0 && mLyricsCurrentProgress < DURATION_OF_SONG) {
                     mKaraokeView.setProgress(mLyricsCurrentProgress);
-                    Log.d(PLAYER_TAG, "timer mCurrentPosition: " + mLyricsCurrentProgress);
+                    Log.d(PLAYER_TAG, "timer mCurrentPosition: " + mLyricsCurrentProgress + " " + Thread.currentThread());
                 } else if (mLyricsCurrentProgress >= DURATION_OF_SONG && mLyricsCurrentProgress < (DURATION_OF_SONG + 1000)) {
                     long lastPosition = mLyricsCurrentProgress;
                     mKaraokeView.setProgress(mLyricsCurrentProgress);
@@ -335,7 +340,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 mLyricsCurrentProgress += 20;
 
-                updatePlayingProgress(mLyricsCurrentProgress);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updatePlayingProgress(mLyricsCurrentProgress);
+                    }
+                });
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
     }
@@ -347,7 +357,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void skipTheIntro() {
         if (mLyricsModel == null || mLyricsCurrentProgress <= 0 || mLyricsCurrentProgress > mLyricsModel.lines.get(mLyricsModel.lines.size() - 1).getEndTime()) {
-            Toast.makeText(getBaseContext(), "Not READY for SKIP INTRO, please Play first", Toast.LENGTH_LONG).show();
+            Toast.makeText(getBaseContext(), "Not READY for SKIP INTRO, please Play first or no lyrics content", Toast.LENGTH_LONG).show();
             return;
         }
         mLyricsCurrentProgress = mKaraokeView.getLyricsData().startOfVerse - 500; // Jump to slight earlier
