@@ -22,15 +22,16 @@
         android:layout_height="120dp"
         android:layout_marginBottom="20dp"
         android:background="#02FFFFFF"
-        app:hitScoreThreshold="80"
+        app:hitScoreThreshold="0.8"
         app:layout_constraintBottom_toTopOf="@id/lyrics_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:minimumScore="40"
-        app:pitchDoneTextColor="@color/white"
+        app:movingPixelsPerMs="0.4"
         app:pitchIndicatorRadius="6dp"
         app:pitchInitialScore="0"
-        app:pitchStickHeight="6dp" />
+        app:pitchStickHeight="6dp"
+        app:pivotHorizontalBias="0.4" />
 
     <io.agora.karaoke_view.v11.LyricsView
         android:id="@+id/lyrics_view"

@@ -3,6 +3,7 @@ package io.agora.karaoke_view.v11;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -20,6 +21,7 @@ import android.view.animation.AccelerateInterpolator;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.annotation.UiThread;
 
 import com.plattysoft.leonids.ParticleSystem;
 
@@ -40,14 +42,13 @@ public class ScoringView extends View {
 
     private static final boolean DEBUG = false;
 
-    private static final float START_PERCENT = 0.4F;
+    private float mPivotHorizontalBias = 0.4f;
 
     private Handler mHandler;
 
-    private float movedPixelsPerMs = 0.4F; // 1ms 对应像素 px
+    private float mMovingPixelsPerMs; // 1ms 对应像素 px
 
-    private float pitchStickHeight; // 每一项高度 px
-    private int pitchStickSpace = 4; // 间距 px
+    private float mPitchStickHeight; // 每一项高度 px
 
     // 音调指示器的半径
     private float mLocalPitchIndicatorRadius;
@@ -69,13 +70,15 @@ public class ScoringView extends View {
     private final Paint mHighlightPitchStickLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int mHighlightPitchStickColor;
 
-    private float dotPointX = 0F; // 亮点坐标
+    private float dotPointX = 0f; // 亮点坐标
 
     private ParticleSystem mParticleSystem;
 
     private float mInitialScore;
 
     private float mThresholdOfHitScore;
+
+    private boolean mEnableParticleEffect;
 
     private long mThresholdOfOffPitchTime;
 
@@ -117,6 +120,10 @@ public class ScoringView extends View {
         tryInvalidate();
     }
 
+    public void setRefPitchStickHeight(float height) {
+        this.mPitchStickHeight = height;
+    }
+
     private void init(@Nullable AttributeSet attrs) {
         if (attrs == null) {
             return;
@@ -134,7 +141,7 @@ public class ScoringView extends View {
         mDefaultRefPitchStickColor = getResources().getColor(R.color.default_popular_color);
         mHighlightPitchStickColor = ta.getColor(R.styleable.ScoringView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
 
-        pitchStickHeight = ta.getDimension(R.styleable.ScoringView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));
+        mPitchStickHeight = ta.getDimension(R.styleable.ScoringView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));
 
         minimumScorePerTone = ta.getFloat(R.styleable.ScoringView_minimumScore, 40f) / 100;
 
@@ -142,10 +149,21 @@ public class ScoringView extends View {
             throw new IllegalArgumentException("Invalid value for minimumScore, must between 0 and 100, current is " + minimumScorePerTone);
         }
 
-        mThresholdOfHitScore = ta.getFloat(R.styleable.ScoringView_hitScoreThreshold, 70f) / 100;
+        mEnableParticleEffect = ta.getBoolean(R.styleable.ScoringView_enableParticleEffect, true);
 
+        mThresholdOfHitScore = ta.getFloat(R.styleable.ScoringView_hitScoreThreshold, 0.7f);
         if (mThresholdOfHitScore <= 0 || mThresholdOfHitScore > 1.0f) {
-            throw new IllegalArgumentException("Invalid value for hitScoreThreshold, must > 0 and <= 100, current is " + mThresholdOfHitScore);
+            throw new IllegalArgumentException("Invalid value for hitScoreThreshold, must > 0 and <= 1, current is " + mThresholdOfHitScore);
+        }
+
+        mMovingPixelsPerMs = ta.getFloat(R.styleable.ScoringView_movingPixelsPerMs, 0.4F);
+        if (mMovingPixelsPerMs <= 0 || mMovingPixelsPerMs > 20f) {
+            throw new IllegalArgumentException("Invalid value for mMovingPixelsPerMs, must > 0 and <= 20, current is " + mThresholdOfHitScore);
+        }
+
+        mPivotHorizontalBias = ta.getFloat(R.styleable.ScoringView_pivotHorizontalBias, 0.4f);
+        if (mPivotHorizontalBias <= 0 || mPivotHorizontalBias > 1f) {
+            throw new IllegalArgumentException("Invalid value for mPivotStartWeight, must > 0 and <= 1, current is " + mPivotHorizontalBias);
         }
 
         mThresholdOfOffPitchTime = ta.getInt(R.styleable.ScoringView_offPitchTimeThreshold, 1000);
@@ -172,7 +190,7 @@ public class ScoringView extends View {
         if (changed) {
             int w = right - left;
             int h = bottom - top;
-            dotPointX = w * START_PERCENT;
+            dotPointX = w * mPivotHorizontalBias;
 
             int startColor = getResources().getColor(R.color.pitch_start);
             int endColor = getResources().getColor(R.color.pitch_end);
@@ -180,24 +198,82 @@ public class ScoringView extends View {
 
             tryInvalidate();
 
+            tryEnableParticleEffect();
+        }
+    }
+
+    private void tryEnableParticleEffect() {
+        if (mEnableParticleEffect) {
             mHandler.postDelayed(() -> {
                 // Create a particle system and start emiting
                 if (mParticleSystem == null) {
-                    Drawable[] drawables = new Drawable[4];
-                    drawables[0] = getResources().getDrawable(R.drawable.star1);
-                    drawables[1] = getResources().getDrawable(R.drawable.star2);
-                    drawables[2] = getResources().getDrawable(R.drawable.star3);
-                    drawables[3] = getResources().getDrawable(R.drawable.star4);
-                    mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), 4, drawables, 200);
+                    setParticles(null);
                 }
-
-                // It works with an emision range
-                int[] location = new int[2];
-                this.getLocationInWindow(location);
-                mParticleSystem.setRotationSpeedRange(90, 180).setScaleRange(0.7f, 1.3f)
-                        .setSpeedModuleAndAngleRange(0.03f, 0.12f, 120, 240)
-                        .setFadeOut(200, new AccelerateInterpolator());
             }, 1000);
+        }
+    }
+
+    private void tryDisableParticleEffect() {
+        if (!mEnableParticleEffect) {
+            mHandler.postDelayed(() -> {
+                if (mParticleSystem != null) {
+                    mParticleSystem.cancel();
+                }
+            }, 30);
+        }
+    }
+
+    /**
+     * Do not call this regularly, this is very heavy
+     *
+     * @param particles
+     */
+    public void setParticles(Drawable[] particles) {
+        if (!mEnableParticleEffect) {
+            return;
+        }
+
+        if (mParticleSystem != null) {
+            mParticleSystem.cancel();
+        }
+
+        if (particles == null) {
+            particles = new Drawable[8];
+            particles[0] = getResources().getDrawable(R.drawable.star1);
+            particles[1] = getResources().getDrawable(R.drawable.star2);
+            particles[2] = getResources().getDrawable(R.drawable.star3);
+            particles[3] = getResources().getDrawable(R.drawable.star4);
+            particles[4] = getResources().getDrawable(R.drawable.star5);
+            particles[5] = getResources().getDrawable(R.drawable.star6);
+            particles[6] = getResources().getDrawable(R.drawable.star7);
+            particles[7] = getResources().getDrawable(R.drawable.star8);
+        }
+
+        if (particles.length > 8) {
+            // Should better <= 8 for performance concerns
+        }
+
+        mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), particles.length, particles, 200);
+        mParticleSystem.setRotationSpeedRange(90, 180).setScaleRange(0.7f, 1.3f)
+                .setSpeedModuleAndAngleRange(0.03f, 0.12f, 120, 240)
+                .setFadeOut(200, new AccelerateInterpolator());
+        mEmittingInitialized = false;
+    }
+
+    /**
+     * enable particle effect or not
+     * <p>
+     * Do not call this regularly, this is very heavy
+     *
+     * @param enable
+     */
+    public void enableParticleEffect(boolean enable) {
+        this.mEnableParticleEffect = enable;
+
+        if (enable) {
+            tryEnableParticleEffect();
+        } else {
+            tryDisableParticleEffect();
         }
     }
 
@@ -222,6 +298,20 @@ public class ScoringView extends View {
     //</editor-fold>
 
     //<editor-fold desc="Draw Related">
+
+    private Bitmap mCustomizedLocalPitchPivot;
+
+    public void setLocalPitchPivot(Bitmap bitmap) {
+        if (bitmap == null) {
+            if (mCustomizedLocalPitchPivot != null) {
+                mCustomizedLocalPitchPivot.recycle();
+            }
+            this.mCustomizedLocalPitchPivot = null;
+        } else {
+            this.mCustomizedLocalPitchPivot = bitmap;
+        }
+    }
+
     private void drawLocalPitchPivot(Canvas canvas) {
         mLocalPitchLinePaint.setShader(null);
         mLocalPitchLinePaint.setColor(mLocalPitchPivotColor);
@@ -234,12 +324,18 @@ public class ScoringView extends View {
             mLocalPitchPivotPaint.setStyle(Paint.Style.FILL_AND_STROKE);
             mLocalPitchPivotPaint.setAntiAlias(true);
 
-            Path path = new Path();
-            path.moveTo(dotPointX, value);
-            path.lineTo(dotPointX - mLocalPitchIndicatorRadius, value - mLocalPitchIndicatorRadius);
-            path.lineTo(dotPointX - mLocalPitchIndicatorRadius, value + mLocalPitchIndicatorRadius);
-            path.close();
-            canvas.drawPath(path, mLocalPitchPivotPaint);
+            if (mCustomizedLocalPitchPivot != null) {
+                int height = mCustomizedLocalPitchPivot.getHeight() / 2;
+                int width = mCustomizedLocalPitchPivot.getWidth() / 2;
+                canvas.drawBitmap(mCustomizedLocalPitchPivot, dotPointX - width, value - height, mLocalPitchPivotPaint);
+            } else {
+                Path path = new Path();
+                path.moveTo(dotPointX, value);
+                path.lineTo(dotPointX - mLocalPitchIndicatorRadius, value - mLocalPitchIndicatorRadius);
+                path.lineTo(dotPointX - mLocalPitchIndicatorRadius, value + mLocalPitchIndicatorRadius);
+                path.close();
+                canvas.drawPath(path, mLocalPitchPivotPaint);
+            }
         }
     }
 
@@ -297,7 +393,7 @@ public class ScoringView extends View {
 
         float y;
         float widthOfPitchStick;
-        float mItemHeightPerPitchLevel = (getHeight() - pitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);
+        float mItemHeightPerPitchLevel = (getHeight() - mPitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);
 
         long endTimeOfPreviousLine = 0; // Not used so far
 
@@ -330,27 +426,27 @@ public class ScoringView extends View {
                 }
             }
 
-            float pixelsAwayFromPilot = (startTime - this.mScoringMachine.getCurrentTimestamp()) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
+            float pixelsAwayFromPilot = (startTime - this.mScoringMachine.getCurrentTimestamp()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
             float x = dotPointX + pixelsAwayFromPilot;
 
             if (endTimeOfPreviousLine != 0) { // If has empty divider before
                 // Not used so far
-                int emptyDividerWidth = (int) (movedPixelsPerMs * (startTime - endTimeOfPreviousLine));
+                int emptyDividerWidth = (int) (mMovingPixelsPerMs * (startTime - endTimeOfPreviousLine));
                 x = x + emptyDividerWidth;
             }
 
             endTimeOfPreviousLine = line.getEndTime();
 
-            if (x + 2 * durationOfCurrentEntry * movedPixelsPerMs < 0) { // Already past for long time enough
+            if (x + 2 * durationOfCurrentEntry * mMovingPixelsPerMs < 0) { // Already past for long time enough
                 continue;
             }
 
             for (int toneIndex = 0; toneIndex < tones.size(); toneIndex++) {
                 LyricsLineModel.Tone tone = tones.get(toneIndex);
 
-                pixelsAwayFromPilot = (tone.begin - this.mScoringMachine.getCurrentTimestamp()) * movedPixelsPerMs; // For every time, we need to locate the new coordinate
+                pixelsAwayFromPilot = (tone.begin - this.mScoringMachine.getCurrentTimestamp()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
                 x = dotPointX + pixelsAwayFromPilot;
-                widthOfPitchStick = movedPixelsPerMs * tone.getDuration();
+                widthOfPitchStick = mMovingPixelsPerMs * tone.getDuration();
                 float endX = x + widthOfPitchStick;
 
                 if (endX <= 0) {
@@ -366,7 +462,7 @@ public class ScoringView extends View {
 
                 if (Math.abs(x - dotPointX) <= 2 * mLocalPitchIndicatorRadius || Math.abs(endX - dotPointX) <= 2 * mLocalPitchIndicatorRadius) { // Only mark item around local pitch pivot
                     boolean isJustHighlightTriggered = (!tone.highlight) && mInHighlightStatus;
-                    if (isJustHighlightTriggered && Math.abs(x - dotPointX) <= 400 * movedPixelsPerMs) {
+                    if (isJustHighlightTriggered && Math.abs(x - dotPointX) <= 400 * mMovingPixelsPerMs) {
                         tone.highlightOffset = Math.abs(dotPointX - x);
                         if (tone.highlightOffset >= widthOfPitchStick) {
                             tone.highlightOffset = 0.5f * widthOfPitchStick;
@@ -389,13 +485,13 @@ public class ScoringView extends View {
                     }
 
                     if (x >= dotPointX) {
-                        RectF rNormal = buildRectF(x, y, endX, y + pitchStickHeight);
+                        RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
                         canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
                     } else if (x < dotPointX && endX > dotPointX) {
-                        RectF rNormalRightHalf = buildRectF(dotPointX, y, endX, y + pitchStickHeight);
+                        RectF rNormalRightHalf = buildRectF(dotPointX, y, endX, y + mPitchStickHeight);
                         canvas.drawRoundRect(rNormalRightHalf, 8, 8, mPitchStickLinearGradientPaint);
 
-                        RectF rNormalLeftHalf = buildRectF(x, y, dotPointX, y + pitchStickHeight);
+                        RectF rNormalLeftHalf = buildRectF(x, y, dotPointX, y + mPitchStickHeight);
                         canvas.drawRoundRect(rNormalLeftHalf, 8, 8, mPitchStickLinearGradientPaint);
 
                         if (tone.highlightOffset >= 0) { // Partially draw
@@ -408,7 +504,7 @@ public class ScoringView extends View {
                                 }
                             }
 
-                            RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + pitchStickHeight);
+                            RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
                             if (tone.highlightOffset <= 0 || highlightEndX == dotPointX) {
                                 canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
                             } else {
@@ -417,7 +513,7 @@ public class ScoringView extends View {
                             }
                         }
                     } else if (endX <= dotPointX) {
-                        RectF rNormal = buildRectF(x, y, endX, y + pitchStickHeight);
+                        RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
                         canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
 
                         if (tone.highlightOffset >= 0) { // Partially draw
@@ -427,7 +523,7 @@ public class ScoringView extends View {
                                 highlightEndX = x + tone.highlightOffset + tone.highlightWidth;
                             }
 
-                            RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + pitchStickHeight);
+                            RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
                             if (tone.highlightOffset <= 0 && tone.highlightWidth <= 0 || highlightEndX == endX) {
                                 canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
                             } else {
@@ -438,7 +534,7 @@ public class ScoringView extends View {
                     }
                     fineTuneTheHighlightAnimation(endX);
                 } else {
-                    RectF rNormal = buildRectF(x, y, endX, y + pitchStickHeight);
+                    RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
                     canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
                     if (DEBUG) {
                         mHighlightPitchStickLinearGradientPaint.setTextSize(28);
@@ -454,15 +550,18 @@ public class ScoringView extends View {
     }
     //</editor-fold>
 
-    private volatile boolean emittingEnabled = false;
+    private volatile boolean mEmittingInitialized = false;
 
     private void fineTuneTheHighlightAnimation(float endX) {
+        if (!mEnableParticleEffect) {
+            return;
+        }
         if (endX > dotPointX) { // Animation Enhancement, If still to far from end, just keep the animation ongoing and update the coordinate
             float value = getYForPitchPivot();
             // It works with an emision range
             int[] location = new int[2];
             this.getLocationInWindow(location);
-            if (emittingEnabled && mParticleSystem != null) {
+            if (mEmittingInitialized && mParticleSystem != null) {
                 mParticleSystem.updateEmitPoint((int) (location[0] + dotPointX), location[1] + (int) (value));
             }
         }
@@ -574,6 +673,10 @@ public class ScoringView extends View {
     }
 
     private void assureAnimationForPitchPivot(double scoreAfterNormalization) {
+        if (!mEnableParticleEffect) {
+            return;
+        }
+
         // Animation for particle
         if (scoreAfterNormalization >= mThresholdOfHitScore) {
             if (mParticleSystem != null) {
@@ -581,8 +684,8 @@ public class ScoringView extends View {
                 // It works with an emision range
                 int[] location = new int[2];
                 this.getLocationInWindow(location);
-                if (!emittingEnabled) {
-                    emittingEnabled = true;
+                if (!mEmittingInitialized) {
+                    mEmittingInitialized = true;
                     mParticleSystem.emit((int) (location[0] + dotPointX), location[1] + (int) (value), 6);
                 } else {
                     mParticleSystem.updateEmitPoint((int) (location[0] + dotPointX), location[1] + (int) (value));

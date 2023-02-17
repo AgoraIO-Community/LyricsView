@@ -344,6 +344,27 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void loadPreferencesScoringUI(SharedPreferences prefs, SharedPreferences.Editor editor) {
+        String[] availableHeightOfRefPitchStick = getResources().getStringArray(R.array.available_spacing_lines);
+        String refPitchStickHeight = prefs.getString(getString(R.string.prefs_key_ref_pitch_stick_height), "6dp");
+        for (int idx = 0; idx < availableHeightOfRefPitchStick.length; idx++) {
+            if (refPitchStickHeight.equals(availableHeightOfRefPitchStick[idx])) {
+                binding.refPitchStickHeightSelector.setSelection(idx, false);
+                break;
+            }
+        }
+        binding.refPitchStickHeightSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                editor.putString(getString(R.string.prefs_key_ref_pitch_stick_height), availableHeightOfRefPitchStick[position]);
+                editor.apply();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
         String[] availableColorsOfDefaultRefPitchStick = getResources().getStringArray(R.array.available_default_line_text_colors);
         String defaultRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_default_ref_pitch_stick_color), "Default");
         for (int idx = 0; idx < availableColorsOfDefaultRefPitchStick.length; idx++) {
@@ -383,6 +404,44 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
+            }
+        });
+
+        boolean particleEffectSwitch = prefs.getBoolean(getString(R.string.prefs_key_particle_effect_switch), true);
+        binding.particleEffectSwitch.setChecked(particleEffectSwitch);
+        binding.particleEffectSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            editor.putBoolean(getString(R.string.prefs_key_particle_effect_switch), isChecked);
+            editor.apply();
+        });
+
+        boolean customizedPivotAndParticleSwitch = prefs.getBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), true);
+        binding.customizedPivotAndParticleSwitch.setChecked(customizedPivotAndParticleSwitch);
+        binding.customizedPivotAndParticleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            editor.putBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), isChecked);
+            editor.apply();
+        });
+
+        int particleHitThreshold = (int) (prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f) * 100);
+        binding.particleHitOnThresholdTune.setProgress(particleHitThreshold); // 0...1
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            binding.particleHitOnThresholdTune.setMin(0);
+        }
+        binding.particleHitOnThresholdTune.setMax(100);
+        binding.particleHitOnThresholdTune.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    editor.putFloat(getString(R.string.prefs_key_particle_hit_on_threshold), (float) progress / 100.f);
+                    editor.apply();
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
     }

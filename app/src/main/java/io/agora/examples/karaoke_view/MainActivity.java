@@ -9,8 +9,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
 import android.view.View;
@@ -51,7 +58,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private LyricsModel mLyricsModel;
 
-    ActivityResultLauncher mLauncher;
+    private ActivityResultLauncher mLauncher;
+
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +68,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        mHandler = new Handler(this.getMainLooper());
 
         binding.switchToNext.setOnClickListener(this);
         binding.play.setOnClickListener(this);
@@ -106,6 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void loadTheLyrics(String lrcSample) {
         mKaraokeView.reset();
+        mLyricsModel = null;
         if (lrcSample.startsWith("https://") || lrcSample.startsWith("http://")) {
             DownloadManager.getInstance().download(this, lrcSample, file -> {
                 file = extractFromZipFileIfPossible(file);
@@ -171,11 +183,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String labelWhenNoLyrics = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text), getString(R.string.no_lyrics_label));
         binding.lyricsView.setLabelShownWhenNoLyrics(labelWhenNoLyrics);
 
+        String heightOfRefPitch = prefs.getString(getString(R.string.prefs_key_ref_pitch_stick_height), "6dp");
+        binding.scoringView.setRefPitchStickHeight(dp2pix(Float.parseFloat(heightOfRefPitch.replace("dp", ""))));
+
         String defaultRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_default_ref_pitch_stick_color), "Default");
         binding.scoringView.setDefaultRefPitchStickColor(colorInStringToDex(defaultRefPitchStickColor));
 
         String highlightedRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_highlighted_ref_pitch_stick_color), "Default");
         binding.scoringView.setHighlightRefPitchStickColor(colorInStringToDex(highlightedRefPitchStickColor));
+
+        boolean particleEffectOn = prefs.getBoolean(getString(R.string.prefs_key_particle_effect_switch), true);
+        binding.scoringView.enableParticleEffect(particleEffectOn);
+
+        boolean customizedPivotAndParticleOn = prefs.getBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), true);
+        if (customizedPivotAndParticleOn) {
+            Bitmap bitmap = drawableToBitmap(getDrawable(R.drawable.pitch_indicator));
+            binding.scoringView.setLocalPitchPivot(bitmap);
+            setParticles(false);
+        } else {
+            binding.scoringView.setLocalPitchPivot(null);
+            setParticles(true);
+        }
+    }
+
+    private void setParticles(boolean defaultOrCustomized) {
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (defaultOrCustomized) {
+                    binding.scoringView.setParticles(null);
+                } else {
+                    Drawable[] drawables = new Drawable[]{getDrawable(R.drawable.pitch_indicator), getDrawable(R.drawable.ic_launcher_background), getDrawable(R.drawable.star7), getDrawable(R.drawable.star8)};
+                    binding.scoringView.setParticles(drawables);
+                }
+            }
+        }, 500);
+    }
+
+    public static Bitmap drawableToBitmap(Drawable drawable) {
+        if (drawable instanceof BitmapDrawable) {
+            return ((BitmapDrawable) drawable).getBitmap();
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
     }
 
     private int dp2pix(float dp) {
@@ -360,7 +415,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Toast.makeText(getBaseContext(), "Not READY for SKIP INTRO, please Play first or no lyrics content", Toast.LENGTH_LONG).show();
             return;
         }
-        mLyricsCurrentProgress = mKaraokeView.getLyricsData().startOfVerse - 500; // Jump to slight earlier
+        mLyricsCurrentProgress = mLyricsModel.startOfVerse - 500; // Jump to slight earlier
     }
 
     @Override

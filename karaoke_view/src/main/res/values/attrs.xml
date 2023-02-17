@@ -26,10 +26,12 @@
         <attr name="pitchIndicatorRadius" format="dimension" />
         <attr name="pitchStickHighlightColor" format="reference|color" />
         <attr name="pitchStickHeight" format="dimension" />
-        <attr name="pitchDoneTextColor" format="reference|color" />
         <attr name="pitchInitialScore" format="float" />
+        <attr name="movingPixelsPerMs" format="float" />
         <attr name="minimumScore" format="float" />
         <attr name="hitScoreThreshold" format="float" />
+        <attr name="pivotHorizontalBias" format="float" />
         <attr name="offPitchTimeThreshold" format="integer" />
+        <attr name="enableParticleEffect" format="boolean" />
     </declare-styleable>
 </resources>
