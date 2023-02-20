@@ -169,6 +169,9 @@ class LyricsLineDrawerHelper {
 
         int showLen = (int) (doneLen + curLen);
         for (int i = 0; i < mLayoutFG.getLineCount(); i++) {
+            if (i >= textRectDisplayLines.length) { // FIXME(Check why mLayoutFG exceeded lines of textRectDisplayLines)
+                break;
+            }
             int curLineWidth = textRectDisplayLines[i].width();
             drawRects[i].left = textRectDisplayLines[i].left;
             drawRects[i].right = textRectDisplayLines[i].right;

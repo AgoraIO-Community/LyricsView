@@ -168,7 +168,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         String[] availableColorsOfDefaultLine = getResources().getStringArray(R.array.available_default_line_text_colors);
-        String defaultLineColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "White");
+        String defaultLineColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "Default");
         for (int idx = 0; idx < availableColorsOfDefaultLine.length; idx++) {
             if (defaultLineColor.equals(availableColorsOfDefaultLine[idx])) {
                 binding.defaultLineColorSelector.setSelection(idx, false);
@@ -210,7 +210,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         String[] availableColorsOfHighlightedLine = getResources().getStringArray(R.array.available_highlighted_line_text_colors);
-        String highlightedLineColor = prefs.getString(getString(R.string.prefs_key_highlighted_line_text_color), "Default");
+        String highlightedLineColor = prefs.getString(getString(R.string.prefs_key_highlighted_text_color), "Default");
         for (int idx = 0; idx < availableColorsOfHighlightedLine.length; idx++) {
             if (highlightedLineColor.equals(availableColorsOfHighlightedLine[idx])) {
                 binding.highlightedLineColorSelector.setSelection(idx, false);
@@ -220,7 +220,7 @@ public class SettingsActivity extends AppCompatActivity {
         binding.highlightedLineColorSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                editor.putString(getString(R.string.prefs_key_highlighted_line_text_color), availableColorsOfHighlightedLine[position]);
+                editor.putString(getString(R.string.prefs_key_highlighted_text_color), availableColorsOfHighlightedLine[position]);
                 editor.apply();
             }
 
@@ -230,18 +230,39 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        String[] availableSizeOfHighlightedLineText = getResources().getStringArray(R.array.available_text_size);
-        int sizeOfHighlightedLineText = prefs.getInt(getString(R.string.prefs_key_highlighted_line_text_size), 16);
-        for (int idx = 0; idx < availableSizeOfHighlightedLineText.length; idx++) {
-            if (sizeOfHighlightedLineText == Integer.parseInt(availableSizeOfHighlightedLineText[idx])) {
-                binding.sizeOfHighlightedTextSelector.setSelection(idx, false);
+        String[] availableColorsOfCurrentLine = getResources().getStringArray(R.array.available_default_line_text_colors);
+        String currentLineColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "White");
+        for (int idx = 0; idx < availableColorsOfCurrentLine.length; idx++) {
+            if (currentLineColor.equals(availableColorsOfCurrentLine[idx])) {
+                binding.currentLineColorSelector.setSelection(idx, false);
                 break;
             }
         }
-        binding.sizeOfHighlightedTextSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        binding.currentLineColorSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                editor.putInt(getString(R.string.prefs_key_highlighted_line_text_size), Integer.parseInt(availableSizeOfHighlightedLineText[position]));
+                editor.putString(getString(R.string.prefs_key_current_line_text_color), availableColorsOfCurrentLine[position]);
+                editor.apply();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        String[] availableSizeOfCurrentLineText = getResources().getStringArray(R.array.available_text_size);
+        int sizeOfCurrentLineText = prefs.getInt(getString(R.string.prefs_key_current_line_text_size), 16);
+        for (int idx = 0; idx < availableSizeOfCurrentLineText.length; idx++) {
+            if (sizeOfCurrentLineText == Integer.parseInt(availableSizeOfCurrentLineText[idx])) {
+                binding.sizeOfCurrentTextSelector.setSelection(idx, false);
+                break;
+            }
+        }
+        binding.sizeOfCurrentTextSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                editor.putInt(getString(R.string.prefs_key_current_line_text_size), Integer.parseInt(availableSizeOfCurrentLineText[position]));
                 editor.apply();
             }
 
@@ -322,7 +343,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         String[] availableSizeOfTips = getResources().getStringArray(R.array.available_text_size);
-        int sizeOfDefaultLineTextWhenNoLyricsAvailable = prefs.getInt(getString(R.string.prefs_key_lyrics_not_available_text_size), 18);
+        int sizeOfDefaultLineTextWhenNoLyricsAvailable = prefs.getInt(getString(R.string.prefs_key_lyrics_not_available_text_size), 26);
         for (int idx = 0; idx < availableSizeOfTips.length; idx++) {
             if (sizeOfDefaultLineTextWhenNoLyricsAvailable == Integer.parseInt(availableSizeOfTips[idx])) {
                 binding.lyricsNotAvailableSizeSelector.setSelection(idx, false);

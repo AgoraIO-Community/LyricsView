@@ -567,11 +567,6 @@ public class ScoringView extends View {
         }
     }
 
-    private static int dip2px(Context context, float dipValue) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (dipValue * scale + 0.5f);
-    }
-
     private volatile float mLocalPitch = 0.0F;
 
     private long mTimestampForLastAnimationDecrease = -1;

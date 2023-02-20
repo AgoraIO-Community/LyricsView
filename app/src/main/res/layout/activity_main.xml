@@ -33,6 +33,14 @@
         app:pitchStickHeight="6dp"
         app:pivotHorizontalBias="0.4" />
 
+    <androidx.appcompat.widget.AppCompatCheckBox
+        android:id="@+id/enable_scoring"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        app:layout_constraintBottom_toBottomOf="@id/scoring_view"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <io.agora.karaoke_view.v11.LyricsView
         android:id="@+id/lyrics_view"
         android:layout_width="match_parent"
@@ -41,9 +49,9 @@
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
         android:paddingBottom="10dp"
-        app:currentTextColor="#FFF44336"
+        app:currentHighlightedTextColor="#FFF44336"
+        app:currentTextColor="#FFFFFF"
         app:currentTextSize="20sp"
-        app:defaultTextColor="#FFFFFF"
         app:defaultTextSize="12sp"
         app:labelWhenNoLyrics=""
         app:layout_constraintBottom_toBottomOf="parent"
@@ -53,6 +61,14 @@
         app:pastTextColor="#99FFFFFF"
         app:textGravity="center"
         app:upcomingTextColor="#33FFFFFF" />
+
+    <androidx.appcompat.widget.AppCompatCheckBox
+        android:id="@+id/enable_lyrics"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        app:layout_constraintBottom_toBottomOf="@id/lyrics_view"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/playing_progress"

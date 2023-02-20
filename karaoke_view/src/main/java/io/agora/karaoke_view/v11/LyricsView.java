@@ -40,15 +40,18 @@ public class LyricsView extends View {
 
     private static volatile LyricsModel mLrcData;
 
+    private final TextPaint mPaintNoLyricsFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint mPaintFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint mPaintBG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-    private int mDefaultTextColor;
-    private float mDefaultTextSize;
 
     private int mPastTextColor;
     private int mUpcomingTextColor;
-    private int mCurrentTextColor;
+    private float mDefaultTextSize;
+
+    private int mCurrentLineTextColor;
     private float mCurrentTextSize;
+    private int mCurrentHighlightedTextColor;
+
     private float mLineSpacing;
     private float mPaddingTop;
     private String mNoLyricsLabel;
@@ -128,18 +131,20 @@ public class LyricsView extends View {
         this.mHandler = new Handler(Looper.myLooper());
 
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.LyricsView);
-        mCurrentTextSize = ta.getDimension(R.styleable.LyricsView_currentTextSize, getResources().getDimension(R.dimen.default_text_size));
         mDefaultTextSize = ta.getDimension(R.styleable.LyricsView_defaultTextSize, getResources().getDimension(R.dimen.default_text_size));
-        if (mDefaultTextSize == 0) {
-            mDefaultTextSize = mCurrentTextSize;
+        mCurrentTextSize = ta.getDimension(R.styleable.LyricsView_currentTextSize, getResources().getDimension(R.dimen.current_text_size));
+        if (mCurrentTextSize == 0) {
+            mCurrentTextSize = mDefaultTextSize;
         }
 
         mLineSpacing = ta.getDimension(R.styleable.LyricsView_lineSpacing, getResources().getDimension(R.dimen.line_spacing));
         mPaddingTop = ta.getDimension(R.styleable.LyricsView_paddingTop, getResources().getDimension(R.dimen.padding_top));
-        mDefaultTextColor = ta.getColor(R.styleable.LyricsView_defaultTextColor, Color.WHITE);
-        mPastTextColor = ta.getColor(R.styleable.LyricsView_pastTextColor, getResources().getColor(R.color.default_popular_color));
-        mUpcomingTextColor = ta.getColor(R.styleable.LyricsView_upcomingTextColor, getResources().getColor(R.color.default_popular_color));
-        mCurrentTextColor = ta.getColor(R.styleable.LyricsView_currentTextColor, getResources().getColor(R.color.current_text_color));
+
+        mCurrentLineTextColor = ta.getColor(R.styleable.LyricsView_currentTextColor, Color.WHITE);
+        mPastTextColor = ta.getColor(R.styleable.LyricsView_pastTextColor, getResources().getColor(R.color.past_text_color));
+        mUpcomingTextColor = ta.getColor(R.styleable.LyricsView_upcomingTextColor, getResources().getColor(R.color.upcoming_text_color));
+        mCurrentHighlightedTextColor = ta.getColor(R.styleable.LyricsView_currentHighlightedTextColor, getResources().getColor(R.color.highlighted_text_color));
+
         mNoLyricsLabel = ta.getString(R.styleable.LyricsView_labelWhenNoLyrics);
         mNoLyricsLabel = TextUtils.isEmpty(mNoLyricsLabel) ? getContext().getString(R.string.no_lyrics_label) : mNoLyricsLabel;
         int textGravity = ta.getInteger(R.styleable.LyricsView_textGravity, 0);
@@ -155,13 +160,18 @@ public class LyricsView extends View {
         mStartOfVerseIndicator.setColor(mStartOfVerseIndicatorColor);
         mStartOfVerseIndicator.setAntiAlias(true);
 
+        mPaintNoLyricsFG.setTextSize(mCurrentTextSize);
+        mPaintNoLyricsFG.setColor(mCurrentHighlightedTextColor);
+        mPaintNoLyricsFG.setAntiAlias(true);
+        mPaintNoLyricsFG.setTextAlign(Paint.Align.LEFT);
+
         mPaintFG.setTextSize(mCurrentTextSize);
-        mPaintFG.setColor(mCurrentTextColor);
+        mPaintFG.setColor(mCurrentHighlightedTextColor);
         mPaintFG.setAntiAlias(true);
         mPaintFG.setTextAlign(Paint.Align.LEFT);
 
-        mPaintBG.setTextSize(mDefaultTextSize);
-        mPaintBG.setColor(mDefaultTextColor);
+        mPaintBG.setTextSize(mCurrentTextSize);
+        mPaintBG.setColor(mCurrentLineTextColor);
         mPaintBG.setAntiAlias(true);
         mPaintBG.setTextAlign(Paint.Align.LEFT);
 
@@ -228,22 +238,28 @@ public class LyricsView extends View {
         mDuration = duration;
     }
 
-    /**
-     * 设置非当前行歌词字体颜色
-     */
-    public void setDefaultTextColor(@ColorInt int color) {
+    public void setPastTextColor(@ColorInt int color) {
         if (color == 0) {
-            color = Color.WHITE;
+            color = getResources().getColor(R.color.past_text_color);
         }
 
-        mDefaultTextColor = color;
-        mPaintBG.setColor(mDefaultTextColor);
-        mNewLine = true;
+        mPastTextColor = color;
+
+        tryInvalidate();
+    }
+
+    public void setUpcomingTextColor(@ColorInt int color) {
+        if (color == 0) {
+            color = getResources().getColor(R.color.upcoming_text_color);
+        }
+
+        mUpcomingTextColor = color;
+
         tryInvalidate();
     }
 
     /**
-     * 普通歌词文本字体大小
+     * 设置普通歌词文本字体大小
      */
     public void setDefaultTextSize(float size) {
         mDefaultTextSize = size;
@@ -252,7 +268,7 @@ public class LyricsView extends View {
     }
 
     /**
-     * 当前歌词文本字体大小
+     * 设置当前行歌词文本字体大小
      */
     public void setCurrentTextSize(float size) {
         mCurrentTextSize = size;
@@ -261,14 +277,27 @@ public class LyricsView extends View {
     }
 
     /**
-     * 设置当前行歌词的字体颜色
+     * 设置当前行歌词字体颜色
      */
     public void setCurrentTextColor(@ColorInt int color) {
         if (color == 0) {
-            color = getResources().getColor(R.color.current_text_color);
+            color = Color.WHITE;
         }
-        mCurrentTextColor = color;
-        mPaintFG.setColor(mCurrentTextColor);
+        mCurrentLineTextColor = color;
+        mPaintBG.setColor(mCurrentLineTextColor);
+        mNewLine = true;
+        tryInvalidate();
+    }
+
+    /**
+     * 设置当前行高亮歌词字体颜色
+     */
+    public void setCurrentHighlightedTextColor(@ColorInt int color) {
+        if (color == 0) {
+            color = getResources().getColor(R.color.highlighted_text_color);
+        }
+        mCurrentHighlightedTextColor = color;
+        mPaintFG.setColor(mCurrentHighlightedTextColor);
         mNewLine = true;
         tryInvalidate();
     }
@@ -279,6 +308,17 @@ public class LyricsView extends View {
     public void setLabelShownWhenNoLyrics(String label) {
         mNoLyricsLabel = label;
         tryInvalidate();
+    }
+
+    public void setLabelShownWhenNoLyricsTextSize(float size) {
+        mPaintNoLyricsFG.setTextSize(size);
+    }
+
+    public void setLabelShownWhenNoLyricsTextColor(@ColorInt int color) {
+        if (color == 0) {
+            color = getResources().getColor(R.color.highlighted_text_color);
+        }
+        mPaintNoLyricsFG.setColor(color);
     }
 
     public void setLineSpacing(float lineSpacing) {
@@ -390,7 +430,7 @@ public class LyricsView extends View {
         mCanvasFG = new Canvas(mBitmapFG);
     }
 
-    private LyricsLineDrawerHelper curLrcEntry;
+    private LyricsLineDrawerHelper mLyricsLineDrawerHelper;
     private int targetIndex = 0;
 
     @Override
@@ -406,7 +446,7 @@ public class LyricsView extends View {
             @SuppressLint("DrawAllocation")
             StaticLayout staticLayout = new StaticLayout(
                     mNoLyricsLabel,
-                    mPaintFG,
+                    mPaintNoLyricsFG,
                     width,
                     Layout.Alignment.ALIGN_CENTER,
                     1f,
@@ -428,9 +468,9 @@ public class LyricsView extends View {
             // 拖动状态下
             mBitmapBG.eraseColor(0);
             mBitmapFG.eraseColor(0);
-            mPaintBG.setColor(mDefaultTextColor);
+            mPaintBG.setColor(mCurrentLineTextColor);
 
-            LyricsLineDrawerHelper mLyricsLineDrawerHelper;
+            LyricsLineDrawerHelper lyricsLineDrawerHelper;
             float y = 0;
             float yReal;
             for (int i = 0; i < lyricsModel.lines.size(); i++) {
@@ -445,27 +485,27 @@ public class LyricsView extends View {
                 }
 
                 LyricsLineModel mIEntry = lyricsModel.lines.get(i);
-                mLyricsLineDrawerHelper = new LyricsLineDrawerHelper(mIEntry, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
+                lyricsLineDrawerHelper = new LyricsLineDrawerHelper(mIEntry, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
 
                 yReal = y + mOffset;
-                if (i == 0 && yReal > (centerY - getPaddingTop() - (mLyricsLineDrawerHelper.getHeight() / 2F))) {
+                if (i == 0 && yReal > (centerY - getPaddingTop() - (lyricsLineDrawerHelper.getHeight() / 2F))) {
                     // 顶部限制
-                    mOffset = centerY - getPaddingTop() - (mLyricsLineDrawerHelper.getHeight() / 2F);
+                    mOffset = centerY - getPaddingTop() - (lyricsLineDrawerHelper.getHeight() / 2F);
                     yReal = y + mOffset;
                 }
 
-                if (yReal + mLyricsLineDrawerHelper.getHeight() < 0) {
-                    y = y + mLyricsLineDrawerHelper.getHeight() + mLineSpacing;
+                if (yReal + lyricsLineDrawerHelper.getHeight() < 0) {
+                    y = y + lyricsLineDrawerHelper.getHeight() + mLineSpacing;
                     continue;
                 }
 
                 mCanvasBG.save();
                 mCanvasBG.translate(0, yReal);
-                mLyricsLineDrawerHelper.draw(mCanvasBG);
+                lyricsLineDrawerHelper.draw(mCanvasBG);
                 mCanvasBG.restore();
 
                 if (i == mCurrentLine) {
-                    Rect[] drawRects = mLyricsLineDrawerHelper.getDrawRectByTime(mCurrentTime);
+                    Rect[] drawRects = lyricsLineDrawerHelper.getDrawRectByTime(mCurrentTime);
 
                     for (Rect dr : drawRects) {
                         if (dr.left == dr.right)
@@ -479,17 +519,17 @@ public class LyricsView extends View {
                         mCanvasFG.save();
                         mCanvasFG.clipRect(mRectClip);
                         mCanvasFG.translate(0, yReal);
-                        mLyricsLineDrawerHelper.drawFG(mCanvasFG);
+                        lyricsLineDrawerHelper.drawFG(mCanvasFG);
                         mCanvasFG.restore();
                     }
                 }
 
                 if ((y - mLineSpacing + getPaddingTop() + mOffset) <= centerY
-                        && centerY <= (y + mLyricsLineDrawerHelper.getHeight() + getPaddingTop() + mOffset)) {
+                        && centerY <= (y + lyricsLineDrawerHelper.getHeight() + getPaddingTop() + mOffset)) {
                     targetIndex = i;
                 }
 
-                y = y + mLyricsLineDrawerHelper.getHeight() + mLineSpacing;
+                y = y + lyricsLineDrawerHelper.getHeight() + mLineSpacing;
                 if (y + mOffset > getLrcHeight()) {
                     break;
                 }
@@ -500,12 +540,15 @@ public class LyricsView extends View {
 
             canvas.drawLine(0, centerY, getWidth(), centerY + 1, mPaintFG);
         } else {
-            LyricsLineModel cur = lyricsModel.lines.get(mCurrentLine);
+            LyricsLineModel currentLine = lyricsModel.lines.get(mCurrentLine);
             if (mNewLine) {
-                mPaintBG.setColor(mDefaultTextColor);
+                mPaintBG.setColor(mCurrentLineTextColor);
                 mPaintBG.setTextSize(mCurrentTextSize);
 
-                curLrcEntry = new LyricsLineDrawerHelper(cur, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
+                mPaintFG.setColor(mCurrentHighlightedTextColor);
+                mPaintFG.setTextSize(mCurrentTextSize);
+
+                mLyricsLineDrawerHelper = new LyricsLineDrawerHelper(currentLine, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
 
                 // clear bitmap
                 if (mBitmapBG != null) {
@@ -564,11 +607,11 @@ public class LyricsView extends View {
     }
 
     private void drawTop(LyricsModel lyricsModel) {
-        if (curLrcEntry == null || lyricsModel == null) {
+        if (mLyricsLineDrawerHelper == null || lyricsModel == null) {
             return;
         }
 
-        float curPointY = (getLrcHeight() - curLrcEntry.getHeight()) / 2F + mPaddingTop;
+        float curPointY = (getLrcHeight() - mLyricsLineDrawerHelper.getHeight()) / 2F + mPaddingTop;
         float y;
         LyricsLineModel line;
         LyricsLineDrawerHelper mLrcEntry;
@@ -596,25 +639,25 @@ public class LyricsView extends View {
     }
 
     private void drawCurrent() {
-        if (curLrcEntry == null) {
+        if (mLyricsLineDrawerHelper == null) {
             return;
         }
 
-        float y = (getLrcHeight() - curLrcEntry.getHeight()) / 2F + mPaddingTop;
+        float y = (getLrcHeight() - mLyricsLineDrawerHelper.getHeight()) / 2F + mPaddingTop;
         mCanvasBG.save();
         mCanvasBG.translate(0, y);
-        curLrcEntry.draw(mCanvasBG);
+        mLyricsLineDrawerHelper.draw(mCanvasBG);
         mCanvasBG.restore();
 
         mOffset = y;
     }
 
     private void drawBottom(LyricsModel lyricsModel) {
-        if (curLrcEntry == null || lyricsModel == null) {
+        if (mLyricsLineDrawerHelper == null || lyricsModel == null) {
             return;
         }
 
-        float curPointY = (getLrcHeight() + curLrcEntry.getHeight()) / 2F + mLineSpacing + mPaddingTop;
+        float curPointY = (getLrcHeight() + mLyricsLineDrawerHelper.getHeight()) / 2F + mLineSpacing + mPaddingTop;
         float y;
         LyricsLineModel data;
         LyricsLineDrawerHelper mLrcEntry;
@@ -640,14 +683,14 @@ public class LyricsView extends View {
     }
 
     private void drawHighLight() {
-        if (curLrcEntry == null) {
+        if (mLyricsLineDrawerHelper == null) {
             return;
         }
 
         mBitmapFG.eraseColor(0);
 
-        Rect[] drawRects = curLrcEntry.getDrawRectByTime(mCurrentTime);
-        float y = (getLrcHeight() - curLrcEntry.getHeight()) / 2F + mPaddingTop;
+        Rect[] drawRects = mLyricsLineDrawerHelper.getDrawRectByTime(mCurrentTime);
+        float y = (getLrcHeight() - mLyricsLineDrawerHelper.getHeight()) / 2F + mPaddingTop;
 
         for (Rect dr : drawRects) {
             if (dr.left == dr.right)
@@ -661,7 +704,7 @@ public class LyricsView extends View {
             mCanvasFG.save();
             mCanvasFG.clipRect(mRectClip);
             mCanvasFG.translate(0, y);
-            curLrcEntry.drawFG(mCanvasFG);
+            mLyricsLineDrawerHelper.drawFG(mCanvasFG);
             mCanvasFG.restore();
         }
     }

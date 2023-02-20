@@ -56,7 +56,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.11'
+    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.13'
 }
 ```
 
@@ -72,16 +72,20 @@ dependencies {
     android:paddingTop="20dp"
     android:paddingEnd="10dp"
     android:paddingBottom="20dp"
-    // 当前行歌词高亮颜色
-    app:currentTextColor="@color/ktv_lrc_highlight"
+    // 当前行歌词颜色
+    app:currentTextColor="@color/ktv_lrc_current"
     // 当前行歌词字体大小
     app:currentTextSize="26sp"
+    // 当前行歌词高亮颜色
+    app:currentHighlightedTextColor="@color/ktv_lrc_highlight"
     // 歌词行间距
     app:lineSpacing="20dp"
     // 无歌词情况下的默认文字
     app:labelWhenNoLyrics="暂无歌词"
-    // 默认歌词颜色
-    app:defaultTextColor="@color/ktv_lrc_nomal"
+    // 已经唱过歌词颜色
+    app:pastTextColor="@color/ktv_lrc_nomal"
+    // 即将显示的歌词颜色
+    app:upcomingTextColor="@color/ktv_lrc_nomal"
     // 默认歌词字体大小
     app:defaultTextSize="16sp"
     // 歌词文字显示对齐方式
@@ -191,17 +195,19 @@ public interface KaraokeEvent {
 
 核心 API 参考如下：
 
-| API                 | 实现功能                      |
-|---------------------|---------------------------|
-| setKaraokeEvent     | 绑定唱歌过程中拖动/打分/原始参考值等事件回调。  |
-| enableDragging      | 设置是否允许上下拖动歌词。             |
-| setDefaultTextColor | 设置非当前行歌词字体颜色。             |
-| setDefaultTextSize  | 普通歌词文本字体大小。               |
-| setCurrentTextSize  | 当前歌词文本字体大小。               |
-| setCurrentTextColor | 设置当前行歌词的字体颜色。             |
-| labelWhenNoLyrics   | 设置歌词为空时屏幕中央显示的文字，如“暂无歌词”。 |
-| reset               | 重置内部状态，清空已经加载的歌词。         |
-| setLyricsData       | 手动设置歌词数据。                 |
-| parseLyricsData     | 加载本地歌词文件。                 |
-| setProgress         | 根据当前歌曲播放进度更新歌词进度，单位为毫秒。   |
-| setPitch            | 根据演唱者 pitch 更新进行打分。       |
+| API                            | 实现功能                      |
+|--------------------------------|---------------------------|
+| setKaraokeEvent                | 绑定唱歌过程中拖动/打分/原始参考值等事件回调。  |
+| enableDragging                 | 设置是否允许上下拖动歌词。             |
+| setDefaultTextSize             | 设置歌词文本字体大小。               |
+| setCurrentTextSize             | 设置当前歌词文本字体大小。             |
+| setCurrentTextColor            | 设置当前行歌词的字体颜色。             |
+| setCurrentHighlightedTextColor | 设置当前行歌词的字体颜色。             |
+| setPastTextColor               | 设置已经过去歌词字体颜色。             |
+| setUpcomingTextColor           | 设置即将到来歌词字体颜色。             |
+| labelWhenNoLyrics              | 设置歌词为空时屏幕中央显示的文字，如“暂无歌词”。 |
+| reset                          | 重置内部状态，清空已经加载的歌词。         |
+| setLyricsData                  | 手动设置歌词数据。                 |
+| parseLyricsData                | 加载本地歌词文件。                 |
+| setProgress                    | 根据当前歌曲播放进度更新歌词进度，单位为毫秒。   |
+| setPitch                       | 根据演唱者 pitch 更新进行打分。       |

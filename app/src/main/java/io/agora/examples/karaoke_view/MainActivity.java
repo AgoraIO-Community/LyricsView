@@ -10,17 +10,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.skipTheIntro.setOnClickListener(this);
         binding.settings.setOnClickListener(this);
 
-        mKaraokeView = new KaraokeView(binding.lyricsView, binding.scoringView);
+        mKaraokeView = new KaraokeView(binding.enableLyrics.isChecked() ? binding.lyricsView : null, binding.enableScoring.isChecked() ? binding.scoringView : null);
 
         mKaraokeView.setKaraokeEvent(new KaraokeEvent() {
             @Override
@@ -104,6 +103,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
 
         loadPreferences();
+
+        binding.enableLyrics.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mKaraokeView.attachUi(isChecked ? binding.lyricsView : null, binding.enableScoring.isChecked() ? binding.scoringView : null);
+            }
+        });
+
+        binding.enableScoring.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mKaraokeView.attachUi(binding.enableLyrics.isChecked() ? binding.lyricsView : null, isChecked ? binding.scoringView : null);
+            }
+        });
 
         mLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
             @Override
@@ -168,11 +181,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int indicatorPaddingTop = prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_padding_top), 6);
         binding.lyricsView.setStartOfVerseIndicatorPaddingTop(dp2pix(indicatorPaddingTop));
 
-        String defaultTextColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "White");
-        binding.lyricsView.setDefaultTextColor(colorInStringToDex(defaultTextColor));
+        String defaultTextColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "Default");
+        binding.lyricsView.setPastTextColor(colorInStringToDex(defaultTextColor));
+        binding.lyricsView.setUpcomingTextColor(colorInStringToDex(defaultTextColor));
 
-        String highlightedTextColor = prefs.getString(getString(R.string.prefs_key_highlighted_line_text_color), "Red");
-        binding.lyricsView.setCurrentTextColor(colorInStringToDex(highlightedTextColor));
+        int defaultTextSize = prefs.getInt(getString(R.string.prefs_key_default_line_text_size), 14);
+        binding.lyricsView.setDefaultTextSize(sp2pix(defaultTextSize));
+
+        String currentTextColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "White");
+        binding.lyricsView.setCurrentTextColor(colorInStringToDex(currentTextColor));
+
+        String highlightedTextColor = prefs.getString(getString(R.string.prefs_key_highlighted_text_color), "Red");
+        binding.lyricsView.setCurrentHighlightedTextColor(colorInStringToDex(highlightedTextColor));
+
+        int currentTextSize = prefs.getInt(getString(R.string.prefs_key_current_line_text_size), 18);
+        binding.lyricsView.setCurrentTextSize(sp2pix(currentTextSize));
 
         String lineSpacing = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");
         binding.lyricsView.setLineSpacing(dp2pix(Float.parseFloat(lineSpacing.replace("dp", ""))));
@@ -182,6 +205,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         String labelWhenNoLyrics = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text), getString(R.string.no_lyrics_label));
         binding.lyricsView.setLabelShownWhenNoLyrics(labelWhenNoLyrics);
+
+        String labelWhenNoLyricsTextColor = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text_color), "Red");
+        binding.lyricsView.setLabelShownWhenNoLyricsTextColor(colorInStringToDex(labelWhenNoLyricsTextColor));
+
+        int labelWhenNoLyricsTextSize = prefs.getInt(getString(R.string.prefs_key_lyrics_not_available_text_size), 26);
+        binding.lyricsView.setLabelShownWhenNoLyricsTextSize(sp2pix(labelWhenNoLyricsTextSize));
 
         String heightOfRefPitch = prefs.getString(getString(R.string.prefs_key_ref_pitch_stick_height), "6dp");
         binding.scoringView.setRefPitchStickHeight(dp2pix(Float.parseFloat(heightOfRefPitch.replace("dp", ""))));
@@ -236,6 +265,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int dp2pix(float dp) {
         float density = getResources().getDisplayMetrics().scaledDensity;
         return (int) (dp * density);
+    }
+
+    private int sp2pix(float sp) {
+        float density = getResources().getDisplayMetrics().scaledDensity;
+        return (int) (sp * density + 0.5);
     }
 
     private int colorInStringToDex(String color) {

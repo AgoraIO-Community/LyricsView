@@ -7,11 +7,11 @@
         <attr name="paddingTop" format="dimension" />
         <attr name="lineSpacing" format="dimension" />
         <attr name="defaultTextSize" format="dimension" />
-        <attr name="defaultTextColor" format="reference|color" />
+        <attr name="currentTextColor" format="reference|color" />
         <attr name="pastTextColor" format="reference|color" />
         <attr name="upcomingTextColor" format="reference|color" />
         <attr name="currentTextSize" format="dimension" />
-        <attr name="currentTextColor" format="reference|color" />
+        <attr name="currentHighlightedTextColor" format="reference|color" />
         <attr name="labelWhenNoLyrics" format="string" />
         <attr name="enableDragging" format="boolean" />
         <attr name="textGravity">

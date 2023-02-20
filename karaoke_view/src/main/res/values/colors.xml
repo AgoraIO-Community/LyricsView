@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="default_popular_color">#9E9E9E</color>
-    <color name="past_text_color">#9E9E9E</color>
-    <color name="current_text_color">#FFF44336</color>
+    <color name="past_text_color">#33FFFFFF</color>
+    <color name="upcoming_text_color">#99FFFFFF</color>
+    <color name="highlighted_text_color">#FFF44336</color>
     <color name="local_pitch_indicator_color">#F0F0F0F0</color>
     <color name="local_pitch_indicator_emitter_color">#F44336</color>
     <color name="pitch_stick_highlight_color">#FFF44336</color>

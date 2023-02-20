@@ -124,6 +124,44 @@ public class KaraokeView {
         }
     }
 
+    public void attachUi(LyricsView lyrics, ScoringView scoring) {
+        if (mScoringMachine == null) {
+            throw new IllegalStateException("Call this after KaraokeView initialized, this is a convenient method for attach/detach on-the-fly");
+        }
+
+        if (scoring != null && mScoringView != scoring) {
+            if (mScoringView != null) {
+                mScoringView.reset();
+            }
+            mScoringView = scoring;
+        } else if (scoring == null) {
+            if (mScoringView != null) {
+                mScoringView.reset();
+            }
+            mScoringView = null;
+        }
+
+        if (lyrics != null && mLyricsView != lyrics) {
+            if (mLyricsView != null) {
+                mLyricsView.reset();
+            }
+            mLyricsView = lyrics;
+        } else if (lyrics == null) {
+            if (mLyricsView != null) {
+                mLyricsView.reset();
+            }
+            mLyricsView = null;
+        }
+
+        if (mLyricsView != null) {
+            mLyricsView.setLrcData(mScoringMachine.getLyricsModel());
+        }
+
+        if (mScoringView != null) {
+            mScoringView.attachToScoringMachine(mScoringMachine);
+        }
+    }
+
     public final LyricsModel getLyricsData() {
         return mScoringMachine.getLyricsModel();
     }

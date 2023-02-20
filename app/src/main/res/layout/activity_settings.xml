@@ -222,7 +222,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:lines="1"
-                android:text="Default Text Size"
+                android:text="Default Text Size(sp)"
                 app:layout_constraintHorizontal_bias="0.6"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/default_line_color_title" />
@@ -244,7 +244,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:lines="1"
-                android:text="Highlighted Line Color"
+                android:text="Highlighted Color"
                 app:layout_constraintHorizontal_bias="0.18"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/size_of_default_text_title" />
@@ -261,26 +261,48 @@
                 app:layout_constraintTop_toTopOf="@id/highlighted_line_color_title" />
 
             <TextView
-                android:id="@+id/size_of_highlighted_text_title"
+                android:id="@+id/size_of_current_text_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:lines="1"
-                android:text="Highlighted Text Size"
+                android:text="Current Text Size(sp)"
                 app:layout_constraintHorizontal_bias="0.6"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/highlighted_line_color_title" />
 
             <androidx.appcompat.widget.AppCompatSpinner
-                android:id="@+id/size_of_highlighted_text_selector"
+                android:id="@+id/size_of_current_text_selector"
                 android:layout_width="0dp"
                 android:layout_height="20dp"
                 android:entries="@array/available_text_size"
                 android:spinnerMode="dropdown"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.4"
-                app:layout_constraintStart_toEndOf="@id/size_of_highlighted_text_title"
-                app:layout_constraintTop_toTopOf="@id/size_of_highlighted_text_title" />
+                app:layout_constraintStart_toEndOf="@id/size_of_current_text_title"
+                app:layout_constraintTop_toTopOf="@id/size_of_current_text_title" />
+
+            <TextView
+                android:id="@+id/current_line_color_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:lines="1"
+                android:text="Current Line Color"
+                app:layout_constraintHorizontal_bias="0.18"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/size_of_current_text_title" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/current_line_color_selector"
+                android:layout_width="0dp"
+                android:layout_height="20dp"
+                android:entries="@array/available_default_line_text_colors"
+                android:spinnerMode="dropdown"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.82"
+                app:layout_constraintStart_toEndOf="@id/current_line_color_title"
+                app:layout_constraintTop_toTopOf="@id/current_line_color_title" />
 
             <TextView
                 android:id="@+id/spacing_between_lines_title"
@@ -292,7 +314,7 @@
                 android:text="Spacing between lines"
                 app:layout_constraintHorizontal_bias="0.6"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/size_of_highlighted_text_title" />
+                app:layout_constraintTop_toBottomOf="@id/current_line_color_title" />
 
             <androidx.appcompat.widget.AppCompatSpinner
                 android:id="@+id/spacing_between_lines_selector"
@@ -378,7 +400,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:lines="1"
-                android:text="Size"
+                android:text="Size(sp)"
                 app:layout_constraintHorizontal_bias="0.6"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/lyrics_not_available_color_title" />
