@@ -24,6 +24,7 @@ import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 
 import io.agora.karaoke_view.R;
+import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 
@@ -38,7 +39,9 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
 public class LyricsView extends View {
     private static final String TAG = "LrcView";
 
-    private static volatile LyricsModel mLrcData;
+    private static volatile LyricsModel mLyricsModel;
+
+    private ScoringMachine mScoringMachine;
 
     private final TextPaint mPaintNoLyricsFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint mPaintFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
@@ -197,7 +200,7 @@ public class LyricsView extends View {
         if (!hasLrc()) {
             return super.onTouchEvent(event);
         }
-        LyricsModel lyricsModel = mLrcData;
+        LyricsModel lyricsModel = mLyricsModel;
 
         if (targetIndex < 0 || lyricsModel.lines.size() <= targetIndex) {
             return super.onTouchEvent(event);
@@ -208,11 +211,11 @@ public class LyricsView extends View {
             mNewLine = true;
             mRectClip.setEmpty();
 
-            LyricsLineModel mIEntry = lyricsModel.lines.get(targetIndex);
-            updateTime(mIEntry.getStartTime());
+            LyricsLineModel targetLine = lyricsModel.lines.get(targetIndex);
+            updateByProgress(targetLine.getStartTime());
 
             if (mOnSeekActionListener != null) {
-                mOnSeekActionListener.onProgressChanged(mIEntry.getStartTime());
+                mOnSeekActionListener.onProgressChanged(targetLine.getStartTime());
                 mOnSeekActionListener.onStopTrackingTouch();
             }
         }
@@ -351,25 +354,28 @@ public class LyricsView extends View {
      * @return true，如果歌词有效，否则 false
      */
     private boolean hasLrc() {
-        return mLrcData != null && mLrcData.lines != null && !mLrcData.lines.isEmpty();
+        return mLyricsModel != null && mLyricsModel.lines != null && !mLyricsModel.lines.isEmpty();
     }
 
-    /**
-     * 更新进度，单位毫秒
-     *
-     * @param time 当前播放时间，毫秒
-     */
-    public void updateTime(long time) {
-        mCurrentTime = time;
+    public void requestRefreshUi() {
+        if (mScoringMachine == null) {
+            return;
+        }
+
+        updateByProgress(mScoringMachine.getCurrentTimestamp());
+    }
+
+    private void updateByProgress(long timestamp) {
+        mCurrentTime = timestamp;
 
         if (!hasLrc()) {
-            if ((time / 1000) % 2 == 0) {
+            if ((mCurrentTime / 1000) % 2 == 0) {
                 tryInvalidate();
             }
             return;
         }
 
-        int line = findShowLine(time);
+        int line = findShowLine(mCurrentTime);
         if (line != mCurrentLine) {
             mNewLine = true;
             mCurrentLine = line;
@@ -461,7 +467,7 @@ public class LyricsView extends View {
             return;
         }
 
-        LyricsModel lyricsModel = mLrcData;
+        LyricsModel lyricsModel = mLyricsModel;
 
         float centerY = getLrcHeight() / 2F + getPaddingTop() + mPaddingTop;
         if (isUnderDragging) {
@@ -583,7 +589,7 @@ public class LyricsView extends View {
         if (!hasLrc()) {
             return;
         }
-        LyricsModel lyricsModel = mLrcData;
+        LyricsModel lyricsModel = mLyricsModel;
 
         double countDown = Math.ceil((lyricsModel.startOfVerse - mCurrentTime) / 1000.f); // to make start-of-verse indicator animation more smooth
         if (countDown <= 0) {
@@ -709,12 +715,14 @@ public class LyricsView extends View {
         }
     }
 
-    public void setLrcData(LyricsModel data) {
-        resetInternal();
+    public void attachToScoringMachine(ScoringMachine machine) {
+        if (!machine.isReady()) {
+            throw new IllegalStateException("Must call ScoringMachine.prepare before attaching");
+        }
+        this.mScoringMachine = machine;
+        this.mLyricsModel = machine.getLyricsModel();
 
-        mLrcData = data;
-
-        tryInvalidate();
+        // Update values from UI view if necessary
     }
 
     /**
@@ -753,7 +761,7 @@ public class LyricsView extends View {
     }
 
     private void resetInternal() {
-        mLrcData = null;
+        mLyricsModel = null;
         mCurrentLine = 0;
         mNewLine = true;
         mCurrentTime = 0;
@@ -771,15 +779,15 @@ public class LyricsView extends View {
         }
 
         int left = 0;
-        int right = mLrcData.lines.size();
+        int right = mLyricsModel.lines.size();
         while (left <= right) {
             int middle = (left + right) / 2;
-            long middleTime = mLrcData.lines.get(middle).getStartTime();
+            long middleTime = mLyricsModel.lines.get(middle).getStartTime();
 
             if (time < middleTime) {
                 right = middle - 1;
             } else {
-                if (middle + 1 >= mLrcData.lines.size() || time < mLrcData.lines.get(middle + 1).getStartTime()) {
+                if (middle + 1 >= mLyricsModel.lines.size() || time < mLyricsModel.lines.get(middle + 1).getStartTime()) {
                     return middle;
                 }
 

@@ -410,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 if (mLyricsCurrentProgress >= 0 && mLyricsCurrentProgress < DURATION_OF_SONG) {
-                    mKaraokeView.setProgress(mLyricsCurrentProgress);
+                    mKaraokeView.setProgress(mLyricsCurrentProgress); // zero for first time
                     Log.d(PLAYER_TAG, "timer mCurrentPosition: " + mLyricsCurrentProgress + " " + Thread.currentThread());
                 } else if (mLyricsCurrentProgress >= DURATION_OF_SONG && mLyricsCurrentProgress < (DURATION_OF_SONG + 1000)) {
                     long lastPosition = mLyricsCurrentProgress;

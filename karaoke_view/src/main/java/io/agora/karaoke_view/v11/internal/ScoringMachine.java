@@ -309,10 +309,6 @@ public class ScoringMachine {
      *                 {@link ScoringMachine.OnScoringListener#onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines)}
      */
     public void setProgress(long progress) {
-        if (mLyricsModel == null) {
-            return;
-        }
-
         if (this.mCurrentTimestamp >= 0 && progress > 0) {
             mDeltaOfUpdate = (int) (progress - this.mCurrentTimestamp);
             if (mDeltaOfUpdate > 100 || mDeltaOfUpdate < 0) {
@@ -322,6 +318,16 @@ public class ScoringMachine {
         this.mCurrentTimestamp = progress;
         if (progress == 0L) {
             resetStats();
+            if (mListener != null) {
+                mListener.resetUi();
+            }
+        }
+
+        if (mLyricsModel == null) {
+            if (mListener != null) {
+                mListener.resetUi();
+            }
+            return;
         }
 
         boolean[] newLine = new boolean[1];
@@ -342,6 +348,9 @@ public class ScoringMachine {
 
     public void setPitch(float pitch) {
         if (mLyricsModel == null) {
+            if (mListener != null) {
+                mListener.resetUi();
+            }
             return;
         }
 
@@ -450,6 +459,12 @@ public class ScoringMachine {
         mInHighlightingStatus = false;
 
         mCumulativeScore = mInitialScore;
+    }
+
+    public void prepareUi() {
+        if (mListener != null) {
+            mListener.resetUi();
+        }
     }
 
     public LyricsModel getLyricsModel() {

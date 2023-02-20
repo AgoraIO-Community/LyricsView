@@ -57,6 +57,9 @@ public class KaraokeView {
                 if (DEBUG) {
                     Log.d(TAG, "resetUi");
                 }
+                if (mLyricsView != null) {
+                    mLyricsView.requestRefreshUi();
+                }
                 if (mScoringView != null) {
                     mScoringView.forceStopPivotAnimationWhenReachingContinuousZeros();
                     mScoringView.requestRefreshUi();
@@ -87,6 +90,9 @@ public class KaraokeView {
                 if (DEBUG) {
                     Log.d(TAG, "requestRefreshUi");
                 }
+                if (mLyricsView != null) {
+                    mLyricsView.requestRefreshUi();
+                }
                 if (mScoringView != null) {
                     mScoringView.requestRefreshUi();
                 }
@@ -116,12 +122,14 @@ public class KaraokeView {
         mScoringMachine.prepare(model);
 
         if (mLyricsView != null) {
-            mLyricsView.setLrcData(model);
+            mLyricsView.attachToScoringMachine(mScoringMachine);
         }
 
         if (mScoringView != null) {
             mScoringView.attachToScoringMachine(mScoringMachine);
         }
+
+        mScoringMachine.prepareUi();
     }
 
     public void attachUi(LyricsView lyrics, ScoringView scoring) {
@@ -154,7 +162,7 @@ public class KaraokeView {
         }
 
         if (mLyricsView != null) {
-            mLyricsView.setLrcData(mScoringMachine.getLyricsModel());
+            mLyricsView.attachToScoringMachine(mScoringMachine);
         }
 
         if (mScoringView != null) {
@@ -172,10 +180,6 @@ public class KaraokeView {
 
     public void setProgress(long progress) {
         mScoringMachine.setProgress(progress);
-
-        if (mLyricsView != null) {
-            mLyricsView.updateTime(progress);
-        }
     }
 
     public void setKaraokeEvent(KaraokeEvent event) {
