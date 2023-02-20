@@ -39,7 +39,7 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
 public class LyricsView extends View {
     private static final String TAG = "LrcView";
 
-    private static volatile LyricsModel mLyricsModel;
+    private volatile LyricsModel mLyricsModel;
 
     private ScoringMachine mScoringMachine;
 

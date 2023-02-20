@@ -201,8 +201,8 @@ public interface KaraokeEvent {
 | enableDragging                 | 设置是否允许上下拖动歌词。             |
 | setDefaultTextSize             | 设置歌词文本字体大小。               |
 | setCurrentTextSize             | 设置当前歌词文本字体大小。             |
-| setCurrentTextColor            | 设置当前行歌词的字体颜色。             |
-| setCurrentHighlightedTextColor | 设置当前行歌词的字体颜色。             |
+| setCurrentTextColor            | 设置当前行歌词文本字体颜色。            |
+| setCurrentHighlightedTextColor | 设置当前行高亮歌词文本字体颜色。          |
 | setPastTextColor               | 设置已经过去歌词字体颜色。             |
 | setUpcomingTextColor           | 设置即将到来歌词字体颜色。             |
 | labelWhenNoLyrics              | 设置歌词为空时屏幕中央显示的文字，如“暂无歌词”。 |

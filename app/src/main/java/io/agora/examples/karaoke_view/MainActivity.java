@@ -226,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         boolean customizedPivotAndParticleOn = prefs.getBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), false);
         if (customizedPivotAndParticleOn) {
-            Bitmap bitmap = drawableToBitmap(getDrawable(R.drawable.pitch_indicator));
+            Bitmap bitmap = drawableToBitmap(getDrawable(R.drawable.pitch_pivot));
             binding.scoringView.setLocalPitchPivot(bitmap);
             setParticles(false);
         } else {
@@ -242,7 +242,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (defaultOrCustomized) {
                     binding.scoringView.setParticles(null);
                 } else {
-                    Drawable[] drawables = new Drawable[]{getDrawable(R.drawable.pitch_indicator), getDrawable(R.drawable.ic_launcher_background), getDrawable(R.drawable.star7), getDrawable(R.drawable.star8)};
+                    Drawable[] drawables = new Drawable[]{getDrawable(R.drawable.pitch_pivot), getDrawable(R.drawable.pitch_pivot_yellow), getDrawable(R.drawable.ic_launcher_background), getDrawable(R.drawable.star7), getDrawable(R.drawable.star8)};
                     binding.scoringView.setParticles(drawables);
                 }
             }
@@ -400,6 +400,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         final long DURATION_OF_SONG = mLyricsModel.lines.get(mLyricsModel.lines.size() - 1).getEndTime();
         mLyricsCurrentProgress = 0;
+        mKaraokeView.reset();
+        mKaraokeView.setLyricsData(mLyricsModel);
         final String PLAYER_TAG = TAG + "_MockPlayer";
         Log.d(PLAYER_TAG, "duration: " + DURATION_OF_SONG + ", progress: " + mLyricsCurrentProgress + " " + mFuture);
         if (mFuture != null) {
@@ -450,6 +452,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
         mLyricsCurrentProgress = mLyricsModel.startOfVerse - 500; // Jump to slight earlier
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mLyricsCurrentProgress = 0;
+        if (mKaraokeView != null) {
+            mKaraokeView.setProgress(0);
+            mKaraokeView.setPitch(0);
+            mKaraokeView.reset();
+            mKaraokeView = null;
+        }
+
+        if (mFuture != null) {
+            mFuture.cancel(true);
+        }
     }
 
     @Override

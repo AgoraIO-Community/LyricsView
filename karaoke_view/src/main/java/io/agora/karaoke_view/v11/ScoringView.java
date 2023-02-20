@@ -14,6 +14,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -202,24 +203,39 @@ public class ScoringView extends View {
         }
     }
 
+    private Object mDelayedTaskToken;
+
     private void tryEnableParticleEffect() {
         if (mEnableParticleEffect) {
-            mHandler.postDelayed(() -> {
+            if (mDelayedTaskToken != null) {
+                mHandler.removeCallbacksAndMessages(mDelayedTaskToken);
+                mDelayedTaskToken = null;
+            }
+
+            mDelayedTaskToken = new Object();
+            boolean result = mHandler.postAtTime(() -> {
                 // Create a particle system and start emiting
+                ParticleSystem system = mParticleSystem;
                 if (mParticleSystem == null) {
                     setParticles(null);
                 }
-            }, 1000);
+            }, mDelayedTaskToken, SystemClock.uptimeMillis() + 1000);
         }
     }
 
     private void tryDisableParticleEffect() {
         if (!mEnableParticleEffect) {
-            mHandler.postDelayed(() -> {
+            if (mDelayedTaskToken != null) {
+                mHandler.removeCallbacksAndMessages(mDelayedTaskToken);
+                mDelayedTaskToken = null;
+            }
+
+            mDelayedTaskToken = new Object();
+            boolean result = mHandler.postAtTime(() -> {
                 if (mParticleSystem != null) {
                     mParticleSystem.cancel();
                 }
-            }, 30);
+            }, mDelayedTaskToken, SystemClock.uptimeMillis() + 30);
         }
     }
 
