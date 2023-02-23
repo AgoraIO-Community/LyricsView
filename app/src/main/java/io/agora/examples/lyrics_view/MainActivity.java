@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.AndroidRuntimeException;
+import android.util.Log;
 import android.view.View;
 
 import java.io.ByteArrayOutputStream;
@@ -17,6 +18,8 @@ import java.util.zip.ZipInputStream;
 
 import io.agora.examples.utils.ResourceHelper;
 import io.agora.lyrics_view.DownloadManager;
+import io.agora.lyrics_view.logging.Handler;
+import io.agora.lyrics_view.logging.LogManager;
 import io.agora.lyrics_view.LrcLoadUtils;
 import io.agora.lyrics_view.LrcView;
 import io.agora.lyrics_view.bean.LrcData;
@@ -35,6 +38,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         lrcView.setSeekListener(this);
 
         loadLrc(LyricsResourcePool.LRC_SAMPLE_1);
+
+        LogManager.instance().addHandler(new Handler() {
+            @Override
+            public void onWarn(String tag, String message) {
+                Log.w(tag, message);
+            }
+
+            @Override
+            public void onInfo(String tag, String message) {
+                Log.i(tag, message);
+            }
+
+            @Override
+            public void onDebug(String tag, String message) {
+                Log.d(tag, message);
+            }
+
+            @Override
+            public void onError(String tag, String message) {
+                Log.e(tag, message);
+            }
+        });
     }
 
     private void loadLrc(String lrcSample) {

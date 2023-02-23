@@ -29,6 +29,7 @@ import java.util.List;
 
 import io.agora.lyrics_view.bean.LrcData;
 import io.agora.lyrics_view.bean.LrcEntryData;
+import io.agora.lyrics_view.logging.LogManager;
 
 /**
  * 音调 View
@@ -39,6 +40,8 @@ import io.agora.lyrics_view.bean.LrcEntryData;
 public class PitchView extends View {
 
     private static final boolean DEBUG = false;
+
+    private static final String TAG = "PitchView";
 
     private static final float START_PERCENT = 0.4F;
 
@@ -637,6 +640,8 @@ public class PitchView extends View {
      * @param pitch 单位 hz
      */
     public void updateLocalPitch(float pitch) {
+        LogManager.instance().debug(TAG, "updateLocalPitch " + pitch + " " + lrcData);
+
         if (lrcData == null) {
             return;
         }
@@ -833,6 +838,7 @@ public class PitchView extends View {
     private void dispatchScore(double score) {
         if (onSingScoreListener != null) {
             onSingScoreListener.onScore(score, cumulatedScore, totalScore);
+            LogManager.instance().info(TAG, "onScore " + score + " " + cumulatedScore + " " + totalScore);
         }
     }
 
@@ -844,6 +850,8 @@ public class PitchView extends View {
      * @param time 当前播放时间，毫秒
      */
     public void updateTime(long time) {
+        LogManager.instance().debug(TAG, "updateTime " + time + " " + lrcData);
+
         if (lrcData == null) {
             return;
         }

@@ -23,6 +23,7 @@ import java.util.List;
 
 import io.agora.lyrics_view.bean.LrcData;
 import io.agora.lyrics_view.bean.LrcEntryData;
+import io.agora.lyrics_view.logging.LogManager;
 
 /**
  * 歌词视图
@@ -222,7 +223,7 @@ public class LrcView extends View {
      * setLrcData(LrcData data) 以及 setTotalDuration(long duration) 调用完毕之后可以通过该方法查询
      *
      * @return mTimestampForFirstTone <= 0 通常表示歌词设置失败或者歌词内容不正确没有解析出来
-     *         mTimestampForFirstTone > 0 表示歌曲第一句开始时间
+     * mTimestampForFirstTone > 0 表示歌曲第一句开始时间
      */
     public double getFirstToneBeginPosition() {
         return mTimestampForFirstTone;
@@ -289,6 +290,8 @@ public class LrcView extends View {
      * @param time 当前播放时间，毫秒
      */
     public void updateTime(long time) {
+        LogManager.instance().debug(TAG, "updateTime " + time + " " + lrcData);
+
         if (!hasLrc()) {
             return;
         }

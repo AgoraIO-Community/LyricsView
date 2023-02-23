@@ -1,7 +1,6 @@
 package io.agora.lyrics_view;
 
 import android.content.Context;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import io.agora.lyrics_view.logging.LogManager;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -74,11 +74,11 @@ public class DownloadManager {
                         fos.write(buf, 0, len);
                         sum += len;
                         int progress = (int) (sum * 1.0f / total * 100);
-                        Log.d("down", file.getName() + ", progress: " + progress);
+                        LogManager.instance().debug("down", file.getName() + ", progress: " + progress);
                     }
                     fos.flush();
                     // 下载完成
-                    Log.d("down", file.getName() + " onComplete");
+                    LogManager.instance().debug("down", file.getName() + " onComplete");
                     callback.onSuccess(file);
                 } catch (Exception e) {
                     error.onFailed(e);

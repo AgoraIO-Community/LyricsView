@@ -88,6 +88,9 @@ class LrcEntry {
             Rect rectTotal = new Rect();
             textRectTotalWords[i] = rectTotal;
             String s = tone.word;
+            if (s == null) { // Sometimes, lyrics/sentence contains no word-tag
+                s = "";
+            }
             if (tone.lang != LrcEntryData.Lang.Chinese) {
                 s = s + " ";
             }
