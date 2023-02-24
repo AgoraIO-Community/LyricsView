@@ -2,9 +2,9 @@ package io.agora.karaoke_view.v11.internal;
 
 import android.util.Log;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 
+import io.agora.karaoke_view.v11.DefaultScoringAlgorithm;
 import io.agora.karaoke_view.v11.IScoringAlgorithm;
 import io.agora.karaoke_view.v11.VoicePitchChanger;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
@@ -57,9 +57,6 @@ public class ScoringMachine {
 
     // Initial score for the lyrics(can change by app)
     private float mInitialScore;
-
-    // Minimum score for each tone/pitch
-    private float mMinimumScorePerTone;
 
     // Cumulative score
     private float mCumulativeScore;
@@ -221,62 +218,13 @@ public class ScoringMachine {
 
         if (newLine && !mPitchesForLine.isEmpty()) {
             LyricsLineModel lineJustFinished = mLyricsModel.lines.get(indexOfLineJustFinished);
-
-            // 计算歌词当前句的分数 = 所有打分/分数个数
-            float totalScoreForThisLine = 0;
-            int scoreCount = 0;
-
-            Float scoreForOnePitch;
-            // 两种情况 1. 到了空档期 2. 到了下一句
-            Iterator<Long> iterator = mPitchesForLine.keySet().iterator();
-            int continuousZeroCount = 0;
-
-            if (DEBUG) {
-                debugScoringAlgo();
+            if (mListener != null) {
+                mScoringAlgo.setScoringListener(mListener); // May need to update states during scoring
             }
-
-            while (iterator.hasNext()) {
-                Long myKeyTimestamp = iterator.next();
-                if (myKeyTimestamp <= lineJustFinished.getEndTime()) {
-                    scoreForOnePitch = mPitchesForLine.get(myKeyTimestamp);
-                    if (scoreForOnePitch == null || scoreForOnePitch == 0.f) {
-                        continuousZeroCount++;
-                        if (continuousZeroCount >= 8) {
-                            continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
-                            if (mListener != null) {
-                                mListener.resetUi();
-                            }
-                        }
-                    } else {
-                        continuousZeroCount = 0;
-                    }
-                    iterator.remove();
-                    mPitchesForLine.remove(myKeyTimestamp);
-
-                    if (mMinimumScorePerTone > 0) {
-                        if (scoreForOnePitch != null && scoreForOnePitch >= mMinimumScorePerTone) {
-                            totalScoreForThisLine += scoreForOnePitch;
-                            scoreCount++;
-                        }
-                    } else {
-                        if (scoreForOnePitch != null) {
-                            totalScoreForThisLine += scoreForOnePitch;
-                        }
-                        scoreCount++;
-                    }
-                }
-            }
-
-            scoreCount = Math.max(1, scoreCount);
-
-            int scoreThisTime = (int) totalScoreForThisLine / scoreCount;
+            int scoreThisTime = mScoringAlgo.calcLineScore(mPitchesForLine, indexOfLineJustFinished, lineJustFinished);
 
             // 统计到累计分数
             mCumulativeScore += scoreThisTime;
-
-            if (DEBUG) {
-                Log.d(TAG, "debugScoringAlgo/mPitchesForLine/CALC: timestamp=" + timestamp + ", totalScoreForThisLine=" + totalScoreForThisLine + ", scoreCount=" + scoreCount + ", scoreThisTime=" + scoreThisTime);
-            }
 
             if (mListener != null) {
                 mListener.onLineFinished(lineJustFinished, scoreThisTime, (int) mCumulativeScore, (int) mPerfectScore, indexOfLineJustFinished, mLyricsModel.lines.size());
@@ -285,18 +233,6 @@ public class ScoringMachine {
             // Cache it for dragging
             mScoreForEachLine.put(indexOfLineJustFinished, scoreThisTime);
         }
-    }
-
-    private void debugScoringAlgo() {
-        Iterator<Long> iterator = mPitchesForLine.keySet().iterator();
-        double cumulativeScoreForLine = 0;
-        while (iterator.hasNext()) {
-            Long myKeyTimestamp = iterator.next();
-            Float score = mPitchesForLine.get(myKeyTimestamp);
-            cumulativeScoreForLine += (score != null ? score : 0);
-            Log.d(TAG, "debugScoringAlgo/mPitchesForLine: timestamp=" + myKeyTimestamp + ", scoreForPitch=" + score);
-        }
-        Log.d(TAG, "debugScoringAlgo/mPitchesForLine: numberOfPitches=" + mPitchesForLine.size() + ", cumulativeScoreForLine=" + cumulativeScoreForLine + ", mIndexOfCurrentLine=" + mIndexOfCurrentLine);
     }
 
     /**
@@ -375,7 +311,7 @@ public class ScoringMachine {
             pitchAfterProcess = pitch;
         }
 
-        float scoreAfterNormalization = mScoringAlgo.pitchToScore(mMinimumScorePerTone, pitch, currentRefPitch);
+        float scoreAfterNormalization = mScoringAlgo.pitchToScore(pitch, currentRefPitch);
         float score = scoreAfterNormalization * mScoringAlgo.getMaximumScoreForLine();
 
         mPitchesForLine.put(timestamp, score);
@@ -422,11 +358,6 @@ public class ScoringMachine {
         mPerfectScore += mInitialScore;
         this.mInitialScore = initialScore;
     }
-
-    public void setMinimumScorePerTone(float minimumScore) {
-        this.mMinimumScorePerTone = minimumScore;
-    }
-
 
     public void reset() {
         mLyricsModel = null;

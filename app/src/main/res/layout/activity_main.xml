@@ -26,7 +26,6 @@
         app:layout_constraintBottom_toTopOf="@id/lyrics_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:minimumScore="40"
         app:movingPixelsPerMs="0.4"
         app:pitchIndicatorRadius="6dp"
         app:pitchInitialScore="0"

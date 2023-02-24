@@ -28,7 +28,6 @@
         <attr name="pitchStickHeight" format="dimension" />
         <attr name="pitchInitialScore" format="float" />
         <attr name="movingPixelsPerMs" format="float" />
-        <attr name="minimumScore" format="float" />
         <attr name="hitScoreThreshold" format="float" />
         <attr name="pivotHorizontalBias" format="float" />
         <attr name="offPitchTimeThreshold" format="integer" />

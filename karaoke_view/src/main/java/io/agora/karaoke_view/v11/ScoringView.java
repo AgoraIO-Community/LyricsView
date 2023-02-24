@@ -54,10 +54,6 @@ public class ScoringView extends View {
     // 音调指示器的半径
     private float mLocalPitchIndicatorRadius;
 
-    // 分数阈值 大于此值计分 小于不计分
-    // TODO(Hai_Guo) rename minimumScorePerTone
-    public float minimumScorePerTone;
-
     private final Paint mLocalPitchLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int mLocalPitchPivotColor;
 
@@ -144,12 +140,6 @@ public class ScoringView extends View {
         mHighlightPitchStickColor = ta.getColor(R.styleable.ScoringView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
 
         mPitchStickHeight = ta.getDimension(R.styleable.ScoringView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));
-
-        minimumScorePerTone = ta.getFloat(R.styleable.ScoringView_minimumScore, 40f) / 100;
-
-        if (minimumScorePerTone < 0 || minimumScorePerTone > 1.0f) {
-            throw new IllegalArgumentException("Invalid value for minimumScore, must between 0 and 100, current is " + minimumScorePerTone);
-        }
 
         mEnableParticleEffect = ta.getBoolean(R.styleable.ScoringView_enableParticleEffect, true);
 
@@ -615,7 +605,6 @@ public class ScoringView extends View {
 
         // Update values from UI view
         this.mScoringMachine.setInitialScore(mInitialScore);
-        this.mScoringMachine.setMinimumScorePerTone(minimumScorePerTone);
     }
 
     public void requestRefreshUi() {
