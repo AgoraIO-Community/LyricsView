@@ -214,6 +214,63 @@ public class MyScoringView extends ScoringView {
 }
 ```
 
+### 重写打分逻辑:
+```Java
+public class DefaultScoringAlgorithm implements IScoringAlgorithm {
+    // Maximum score for one line, 100 for maximum and 0 for minimum
+    private final int mMaximumScoreForLine = 100;
+
+    private ScoringMachine.OnScoringListener mListener;
+
+    // Indicating the difficulty in scoring(can change by app)
+    private int mScoringLevel = 10; // 0~100
+    private int mScoringCompensationOffset = 0; // -100~100
+
+    public DefaultScoringAlgorithm() {
+    }
+
+    @Override
+    public float pitchToScore(float currentPitch, float currentRefPitch) {
+        final float scoreAfterNormalization = ScoringMachine.calculateScore2(0, mScoringLevel, mScoringCompensationOffset, currentPitch, currentRefPitch);
+        // 返回的为 [0, 1] 之间的规范值
+        return scoreAfterNormalization;
+    }
+
+    @Override
+    public int calcLineScore(final LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished) {
+        // 计算歌词当前句的分数 = 单字打分总和 / 分数个数
+        // 其中单字打分 = pitchToScore(...) * mMaximumScoreForLine
+        float totalScoreForThisLine = 0;
+        int scoreCount = 0;
+
+        Float scoreForOnePitch;
+        Iterator<Long> iterator = pitchesForLine.keySet().iterator();
+
+        while (iterator.hasNext()) {
+            Long myKeyTimestamp = iterator.next();
+            if (myKeyTimestamp <= lineJustFinished.getEndTime()) { // 如果时间戳在需要打分的行范围内，就参与打分
+                scoreForOnePitch = pitchesForLine.get(myKeyTimestamp);
+
+                iterator.remove();
+                pitchesForLine.remove(myKeyTimestamp);
+
+                if (scoreForOnePitch != null) {
+                    totalScoreForThisLine += scoreForOnePitch; // 计算当前行总分
+                }
+                scoreCount++;
+            }
+        }
+
+        scoreCount = Math.max(1, scoreCount);
+
+        int scoreThisLine = (int) totalScoreForThisLine / scoreCount;
+
+        return scoreThisLine;
+    }
+}
+```
+
+
 核心 API 参考如下：
 
 | API                            | 实现功能                      |

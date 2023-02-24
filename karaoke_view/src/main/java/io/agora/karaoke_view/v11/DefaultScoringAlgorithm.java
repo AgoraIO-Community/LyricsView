@@ -16,8 +16,6 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
     // Maximum score for one line, 100 for maximum and 0 for minimum
     private final int mMaximumScoreForLine = 100;
 
-    private ScoringMachine.OnScoringListener mListener;
-
     public DefaultScoringAlgorithm() {
     }
 
@@ -33,14 +31,11 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
     @Override
     public int calcLineScore(final LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished) {
-        // 计算歌词当前句的分数 = 所有打分/分数个数
         float totalScoreForThisLine = 0;
         int scoreCount = 0;
 
         Float scoreForOnePitch;
-        // 两种情况 1. 到了空档期 2. 到了下一句
         Iterator<Long> iterator = pitchesForLine.keySet().iterator();
-        int continuousZeroCount = 0;
 
         if (DEBUG) {
             debugScoringAlgo(pitchesForLine, indexOfLineJustFinished);
@@ -50,17 +45,7 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
             Long myKeyTimestamp = iterator.next();
             if (myKeyTimestamp <= lineJustFinished.getEndTime()) {
                 scoreForOnePitch = pitchesForLine.get(myKeyTimestamp);
-                if (scoreForOnePitch == null || scoreForOnePitch == 0.f) {
-                    continuousZeroCount++;
-                    if (continuousZeroCount >= 8) {
-                        continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
-                        if (mListener != null) { // Update UI when too many zeros comes
-                            mListener.resetUi();
-                        }
-                    }
-                } else {
-                    continuousZeroCount = 0;
-                }
+
                 iterator.remove();
                 pitchesForLine.remove(myKeyTimestamp);
 
@@ -73,13 +58,13 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
         scoreCount = Math.max(1, scoreCount);
 
-        int scoreThisTime = (int) totalScoreForThisLine / scoreCount;
+        int scoreThisLine = (int) totalScoreForThisLine / scoreCount;
 
         if (DEBUG) {
-            Log.d(TAG, "debugScoringAlgo/mPitchesForLine/CALC: totalScoreForThisLine=" + totalScoreForThisLine + ", scoreCount=" + scoreCount + ", scoreThisTime=" + scoreThisTime);
+            Log.d(TAG, "debugScoringAlgo/mPitchesForLine/CALC: totalScoreForThisLine=" + totalScoreForThisLine + ", scoreCount=" + scoreCount + ", scoreThisLine=" + scoreThisLine);
         }
 
-        return scoreThisTime;
+        return scoreThisLine;
     }
 
     private void debugScoringAlgo(LinkedHashMap<Long, Float> pitches, int indexOfLineJustFinished) {
@@ -92,11 +77,6 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
             Log.d(TAG, "debugScoringAlgo/mPitchesForLine: timestamp=" + myKeyTimestamp + ", scoreForPitch=" + score);
         }
         Log.d(TAG, "debugScoringAlgo/mPitchesForLine: numberOfPitches=" + pitches.size() + ", cumulativeScoreForLine=" + cumulativeScoreForLine + ", mIndexOfCurrentLine=" + indexOfLineJustFinished);
-    }
-
-    @Override
-    public void setScoringListener(ScoringMachine.OnScoringListener listener) {
-        this.mListener = listener;
     }
 
     @Override

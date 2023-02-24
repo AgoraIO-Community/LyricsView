@@ -1,9 +1,7 @@
 package io.agora.karaoke_view.v11;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 
-import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 
 public interface IScoringAlgorithm {
@@ -35,6 +33,4 @@ public interface IScoringAlgorithm {
     int getScoringLevel();
 
     int getScoringCompensationOffset();
-
-    void setScoringListener(ScoringMachine.OnScoringListener listener);
 }

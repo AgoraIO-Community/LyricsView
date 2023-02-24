@@ -218,9 +218,6 @@ public class ScoringMachine {
 
         if (newLine && !mPitchesForLine.isEmpty()) {
             LyricsLineModel lineJustFinished = mLyricsModel.lines.get(indexOfLineJustFinished);
-            if (mListener != null) {
-                mScoringAlgo.setScoringListener(mListener); // May need to update states during scoring
-            }
             int scoreThisTime = mScoringAlgo.calcLineScore(mPitchesForLine, indexOfLineJustFinished, lineJustFinished);
 
             // 统计到累计分数
@@ -282,6 +279,8 @@ public class ScoringMachine {
         }
     }
 
+    private int mContinuousZeroCount = 0;
+
     public void setPitch(float pitch) {
         if (mLyricsModel == null) {
             if (mListener != null) {
@@ -290,8 +289,19 @@ public class ScoringMachine {
             return;
         }
 
+        final int ZERO_PITCH_COUNT_THRESHOLD = 10;
+
+        if (pitch == 0) {
+            if (++mContinuousZeroCount < ZERO_PITCH_COUNT_THRESHOLD) {
+                return;
+            }
+        } else {
+            mContinuousZeroCount = 0;
+        }
+
         float currentRefPitch = mRefPitchForCurrentTimestamp; // Not started or ended
-        if (currentRefPitch == 0 || pitch == 0) { // No ref pitch, just ignore this time
+        if (currentRefPitch == 0 || mContinuousZeroCount >= ZERO_PITCH_COUNT_THRESHOLD) { // No ref pitch, just ignore this time
+            mContinuousZeroCount = 0;
             if (mListener != null) {
                 mListener.resetUi();
             }
@@ -390,6 +400,8 @@ public class ScoringMachine {
         mInHighlightingStatus = false;
 
         mCumulativeScore = mInitialScore;
+
+        mContinuousZeroCount = 0;
     }
 
     public void prepareUi() {
