@@ -56,7 +56,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.16'
+    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.0-beta.17'
 }
 ```
 
@@ -191,6 +191,27 @@ public interface KaraokeEvent {
     android:id="@+id/scoring_view
     app:pitchInitialScore="0"
   />
+```
+
+### 重写粒子动画效果:
+```Java
+public class MyScoringView extends ScoringView {
+
+    ...
+
+    @Override
+    public void initParticleSystem(Drawable[] particles) {
+        // Import Leonids as below when re-write initParticleSystem
+        // api 'com.github.guohai:Leonids:9f5a9190f6'
+        mParticlesPerSecond = 16;
+        particles = {..., ..., ...} // Optional
+
+        mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), particles.length * 6, particles, 900);
+        mParticleSystem.setRotationSpeedRange(90, 180).setScaleRange(0.7f, 1.6f)
+                .setSpeedModuleAndAngleRange(0.10f, 0.20f, 120, 240)
+                .setFadeOut(300, new AccelerateInterpolator());
+    }
+}
 ```
 
 核心 API 参考如下：

@@ -73,7 +73,8 @@ public class ScoringView extends View {
 
     private float dotPointX = 0f; // 亮点坐标
 
-    private ParticleSystem mParticleSystem;
+    protected ParticleSystem mParticleSystem;
+    protected int mParticlesPerSecond = 16;
 
     private float mInitialScore;
 
@@ -253,27 +254,35 @@ public class ScoringView extends View {
             mParticleSystem.cancel();
         }
 
-        if (particles == null) {
-            particles = new Drawable[8];
-            particles[0] = getResources().getDrawable(R.drawable.star1);
-            particles[1] = getResources().getDrawable(R.drawable.star2);
-            particles[2] = getResources().getDrawable(R.drawable.star3);
-            particles[3] = getResources().getDrawable(R.drawable.star4);
-            particles[4] = getResources().getDrawable(R.drawable.star5);
-            particles[5] = getResources().getDrawable(R.drawable.star6);
-            particles[6] = getResources().getDrawable(R.drawable.star7);
-            particles[7] = getResources().getDrawable(R.drawable.star8);
-        }
+        initParticleSystem(particles);
 
-        if (particles.length > 8) {
-            // Should better <= 8 for performance concerns
-        }
-
-        mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), particles.length, particles, 200);
-        mParticleSystem.setRotationSpeedRange(90, 180).setScaleRange(0.7f, 1.3f)
-                .setSpeedModuleAndAngleRange(0.03f, 0.12f, 120, 240)
-                .setFadeOut(200, new AccelerateInterpolator());
         mEmittingInitialized = false;
+    }
+
+    protected final Drawable[] buildDefaultParticleList() {
+        Drawable[] particles = new Drawable[8];
+        particles[0] = getResources().getDrawable(R.drawable.star1);
+        particles[1] = getResources().getDrawable(R.drawable.star2);
+        particles[2] = getResources().getDrawable(R.drawable.star3);
+        particles[3] = getResources().getDrawable(R.drawable.star4);
+        particles[4] = getResources().getDrawable(R.drawable.star5);
+        particles[5] = getResources().getDrawable(R.drawable.star6);
+        particles[6] = getResources().getDrawable(R.drawable.star7);
+        particles[7] = getResources().getDrawable(R.drawable.star8);
+        return particles;
+    }
+
+    protected void initParticleSystem(Drawable[] particles) {
+        mParticlesPerSecond = 12;
+
+        if (particles == null) {
+            particles = buildDefaultParticleList();
+        }
+
+        mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), particles.length * 3, particles, 900);
+        mParticleSystem.setRotationSpeedRange(90, 180).setScaleRange(0.7f, 1.6f)
+                .setSpeedModuleAndAngleRange(0.10f, 0.20f, 130, 230)
+                .setFadeOut(300, new AccelerateInterpolator());
     }
 
     /**
@@ -697,7 +706,7 @@ public class ScoringView extends View {
                 this.getLocationInWindow(location);
                 if (!mEmittingInitialized) {
                     mEmittingInitialized = true;
-                    mParticleSystem.emit((int) (location[0] + dotPointX), location[1] + (int) (value), 6);
+                    mParticleSystem.emit((int) (location[0] + dotPointX), location[1] + (int) (value), mParticlesPerSecond);
                 } else {
                     mParticleSystem.updateEmitPoint((int) (location[0] + dotPointX), location[1] + (int) (value));
                 }
