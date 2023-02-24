@@ -310,7 +310,7 @@ public class ScoringMachine {
 
         long timestamp = mCurrentTimestamp;
 
-        boolean onHit = checkHitEvent();
+        boolean betweenCurrentPitch = checkBetweenCurrentRefPitch();
 
         float rawPitch = pitch;
         float pitchAfterProcess = 0;
@@ -331,17 +331,17 @@ public class ScoringMachine {
         }
 
         if (mListener != null) {
-            mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization, onHit);
+            mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization, betweenCurrentPitch);
         }
     }
 
-    private boolean checkHitEvent() {
-        boolean onHit = mStartTimeOfCurrentRefPitch > 0 && mEndTimeOfCurrentRefPitch > 0
+    private boolean checkBetweenCurrentRefPitch() {
+        boolean betweenCurrentPitch = mStartTimeOfCurrentRefPitch > 0 && mEndTimeOfCurrentRefPitch > 0
                 && mCurrentTimestamp >= mTimestampOfFirstRefPitch
                 && mCurrentTimestamp <= mEndTimeOfThisLyrics
                 && mCurrentTimestamp >= mStartTimeOfCurrentRefPitch
                 && mCurrentTimestamp <= mEndTimeOfCurrentRefPitch;
-        return onHit;
+        return betweenCurrentPitch;
     }
 
     public void whenDraggingHappen(long progress) {
@@ -441,7 +441,7 @@ public class ScoringMachine {
 
         public void onRefPitchUpdate(float refPitch, int numberOfRefPitches);
 
-        public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit);
+        public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean betweenCurrentPitch);
 
         public void requestRefreshUi();
     }

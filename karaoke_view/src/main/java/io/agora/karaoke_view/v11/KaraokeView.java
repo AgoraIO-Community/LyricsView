@@ -77,12 +77,12 @@ public class KaraokeView {
             }
 
             @Override
-            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit) {
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean betweenCurrentPitch) {
                 if (DEBUG) {
-                    Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
+                    Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + betweenCurrentPitch);
                 }
                 if (mScoringView != null) {
-                    mScoringView.updatePitchAndScore(pitch, scoreAfterNormalization, hit);
+                    mScoringView.updatePitchAndScore(pitch, scoreAfterNormalization, betweenCurrentPitch);
                 }
             }
 

@@ -643,7 +643,7 @@ public class ScoringView extends View {
         return mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty();
     }
 
-    public void updatePitchAndScore(final float pitch, final double scoreAfterNormalization, final boolean hit) {
+    public void updatePitchAndScore(final float pitch, final double scoreAfterNormalization, final boolean betweenCurrentPitch) {
         if (ifNotInitialized()) {
             return;
         }
@@ -666,8 +666,6 @@ public class ScoringView extends View {
         } else {
             performPivotAnimationIfNecessary(pitch, scoreAfterNormalization);
         }
-
-        mInHighlightStatus = hit;
     }
 
     private long lastCurrentTs = 0;
@@ -701,10 +699,12 @@ public class ScoringView extends View {
                 }
                 mParticleSystem.resumeEmitting();
             }
+            mInHighlightStatus = true;
         } else {
             if (mParticleSystem != null) {
                 mParticleSystem.stopEmitting();
             }
+            mInHighlightStatus = false;
         }
     }
 
