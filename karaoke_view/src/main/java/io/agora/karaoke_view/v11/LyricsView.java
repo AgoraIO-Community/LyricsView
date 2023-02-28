@@ -436,12 +436,21 @@ public class LyricsView extends View {
         mCanvasFG = new Canvas(mBitmapFG);
     }
 
+    private boolean isCanvasNotReady() {
+        return mBitmapBG == null || mCanvasBG == null || mBitmapFG == null || mCanvasFG == null;
+    }
+
     private LyricsLineDrawerHelper mLyricsLineDrawerHelper;
     private int targetIndex = 0;
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        if (isCanvasNotReady()) { // Fail fast
+            return;
+        }
+
         // 无歌词文件
         if (!hasLrc()) {
             int width = getLrcWidth();

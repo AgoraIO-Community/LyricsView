@@ -194,6 +194,10 @@ public class ScoringView extends View {
         }
     }
 
+    private boolean isCanvasNotReady() {
+        return dotPointX <= 0;
+    }
+
     private Object mDelayedTaskToken;
 
     private void tryEnableParticleEffect() {
@@ -305,6 +309,10 @@ public class ScoringView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        if (isCanvasNotReady()) { // Fail fast
+            return;
+        }
 
         drawStartLine(canvas);
         drawPitchSticks(canvas);
