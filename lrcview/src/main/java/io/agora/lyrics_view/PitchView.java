@@ -63,7 +63,6 @@ public class PitchView extends View {
     private long currentPitchEndTime = -1;
     // 当前 Pitch 所在的句的结束时间
     private long currentEntryEndTime = -1;
-    private int mScoringFiredIndexOfLine = -1; // Indicating that scoring just fired
     // Delta of time between updates
     private int mDeltaOfUpdate = 20;
     // Index of current line
@@ -586,7 +585,7 @@ public class PitchView extends View {
      *
      * @return 当前时间歌词的 Pitch
      */
-    private float findPitchByTime(long time) {
+    private float findPitchByTime(long time, final boolean[] returnNewLine, final int[] returnIndexOfLastLine) {
         if (lrcData == null) return 0;
 
         float targetPitch = 0;
@@ -603,6 +602,10 @@ public class PitchView extends View {
                         currentPitchEndTime = tone.end;
 
                         currentEntryEndTime = entry.getEndTime();
+                        if (mIndexOfCurrentLine != i && i >= 1) { // Line switch
+                            returnIndexOfLastLine[0] = i - 1;
+                            returnNewLine[0] = true;
+                        }
                         mIndexOfCurrentLine = i;
                         break;
                     }
@@ -610,6 +613,9 @@ public class PitchView extends View {
                 break;
             }
         }
+
+        long latestEndTimeOfLastLine = currentEntryEndTime;
+
         if (targetPitch == 0) {
             currentPitchStartTime = -1;
             currentPitchEndTime = -1;
@@ -623,6 +629,13 @@ public class PitchView extends View {
             everyPitchList.put(time, 0d);
         }
         mCurrentOriginalPitch = targetPitch;
+
+        // Last line(No line switch any more), should do extra check
+        if (time > lrcEndTime && latestEndTimeOfLastLine == lrcEndTime) {
+            returnIndexOfLastLine[0] = mIndexOfCurrentLine;
+            returnNewLine[0] = true;
+        }
+
         return targetPitch;
     }
 
@@ -755,75 +768,63 @@ public class PitchView extends View {
      *
      * @param time 当前歌曲播放时间 毫秒
      */
-    private void updateScore(long time) {
+    private void updateScore(long time, boolean newLine, int indexOfLineJustFinished) {
         if (time < mTimestampForFirstTone) { // Not started
             return;
         }
 
-        //  没有开始 || 在空档期
-        boolean pushAll = currentEntryEndTime == -1;
-        // 当前时间 >= 打分句结束时间
-        boolean isThisSentenceOver = ((time >= currentEntryEndTime)|| (currentEntryEndTime - time) > 0 && (currentEntryEndTime - time) < mDeltaOfUpdate) && currentEntryEndTime > 0;;
-        // 当前时间 >= 歌词结束时间
-        boolean isThisSongOver = time >= lrcEndTime;
-        boolean scoringNotFiredBefore = (mScoringFiredIndexOfLine != mIndexOfCurrentLine);
+        if (newLine && !everyPitchList.isEmpty()) {
+            // 计算歌词当前句的分数 = 所有打分/分数个数
+            double tempTotalScore = 0;
+            int scoreCount = 0;
 
-        if (scoringNotFiredBefore && (pushAll || isThisSentenceOver || isThisSongOver)) {
-            if (!everyPitchList.isEmpty()) {
-                mScoringFiredIndexOfLine = mIndexOfCurrentLine;
-
-                // 计算歌词当前句的分数 = 所有打分/分数个数
-                double tempTotalScore = 0;
-                int scoreCount = 0;
-
-                Double tempScore;
-                // 两种情况 1. 到了空档期 2. 到了下一句
-                Iterator<Long> iterator = everyPitchList.keySet().iterator();
-                int continuousZeroCount = 0;
-                while (iterator.hasNext()) {
-                    Long duration = iterator.next();
-                    if (pushAll || duration <= currentEntryEndTime) {
-                        tempScore = everyPitchList.get(duration);
-                        if (tempScore == null || tempScore.floatValue() == 0.f) {
-                            continuousZeroCount++;
-                            if (continuousZeroCount >= 8) {
-                                continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
-                                assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
-                                ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
-                            }
-                        } else {
-                            continuousZeroCount = 0;
+            Double tempScore;
+            // 两种情况 1. 到了空档期 2. 到了下一句
+            Iterator<Long> iterator = everyPitchList.keySet().iterator();
+            int continuousZeroCount = 0;
+            while (iterator.hasNext()) {
+                Long duration = iterator.next();
+                if (duration <= currentEntryEndTime) {
+                    tempScore = everyPitchList.get(duration);
+                    if (tempScore == null || tempScore.floatValue() == 0.f) {
+                        continuousZeroCount++;
+                        if (continuousZeroCount >= 8) {
+                            continuousZeroCount = 0; // re-count it when reach 8 continuous zeros
+                            assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
+                            ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", PitchView.this.mLocalPitch, PitchView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
                         }
-                        iterator.remove();
-                        everyPitchList.remove(duration);
+                    } else {
+                        continuousZeroCount = 0;
+                    }
+                    iterator.remove();
+                    everyPitchList.remove(duration);
 
-                        if (minimumScorePerTone > 0) {
-                            if (tempScore != null && tempScore.floatValue() >= minimumScorePerTone) {
-                                tempTotalScore += tempScore.floatValue();
-                                scoreCount++;
-                            }
-                        } else {
-                            if (tempScore != null) {
-                                tempTotalScore += tempScore.floatValue();
-                            }
+                    if (minimumScorePerTone > 0) {
+                        if (tempScore != null && tempScore.floatValue() >= minimumScorePerTone) {
+                            tempTotalScore += tempScore.floatValue();
                             scoreCount++;
                         }
+                    } else {
+                        if (tempScore != null) {
+                            tempTotalScore += tempScore.floatValue();
+                        }
+                        scoreCount++;
                     }
                 }
+            }
 
-                scoreCount = Math.max(1, scoreCount);
+            scoreCount = Math.max(1, scoreCount);
 
-                double scoreThisTime = tempTotalScore / scoreCount;
+            double scoreThisTime = tempTotalScore / scoreCount;
 
-                // 统计到累计分数
-                cumulatedScore += scoreThisTime;
-                // 回调到上层
-                dispatchScore(scoreThisTime);
+            // 统计到累计分数
+            cumulatedScore += scoreThisTime;
+            // 回调到上层
+            dispatchScore(scoreThisTime);
 
-                if (scoreThisTime == 0 && this.mLocalPitch != 0) {
-                    assureAnimationForPitchPivot(0); // Force stop the animation when there is no new score for a long time(a full sentence)
-                    ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
-                }
+            if (scoreThisTime == 0 && this.mLocalPitch != 0) {
+                assureAnimationForPitchPivot(0); // Force stop the animation when there is no new score for a long time(a full sentence)
+                ObjectAnimator.ofFloat(PitchView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
             }
         }
     }
@@ -867,13 +868,16 @@ public class PitchView extends View {
         }
 
         this.mCurrentTime = time;
+
+        boolean[] newLine = new boolean[1];
+        int[] indexOfLastLine = new int[]{-1};
         if (time < currentPitchStartTime || time > currentPitchEndTime) {
-            float currentOriginalPitch = findPitchByTime(time);
+            float currentOriginalPitch = findPitchByTime(time, newLine, indexOfLastLine);
             if (currentOriginalPitch > 0) {
                 onSingScoreListener.onOriginalPitch(currentOriginalPitch, totalPitch);
             }
         }
-        updateScore(time);
+        updateScore(time, newLine[0], indexOfLastLine[0]);
 
         tryInvalidate();
     }
