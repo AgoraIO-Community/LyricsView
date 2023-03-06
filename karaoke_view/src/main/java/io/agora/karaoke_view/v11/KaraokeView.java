@@ -66,9 +66,9 @@ public class KaraokeView {
                 }
             }
 
-            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
+            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches, long progress) {
                 if (DEBUG) {
-                    Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+                    Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches + " " + progress);
                 }
 
                 if (mKaraokeEvent != null) {
@@ -77,9 +77,9 @@ public class KaraokeView {
             }
 
             @Override
-            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean betweenCurrentPitch) {
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean betweenCurrentPitch, long progress) {
                 if (DEBUG) {
-                    Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + betweenCurrentPitch);
+                    Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + betweenCurrentPitch + " " + progress);
                 }
                 if (mScoringView != null) {
                     mScoringView.updatePitchAndScore(pitch, scoreAfterNormalization, betweenCurrentPitch);

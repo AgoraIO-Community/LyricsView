@@ -126,13 +126,28 @@ public class LyricsInstrumentedTest {
     }
 
     @Test
-    public void parseSameTimestampForStartAndPreviousEndXmlFile() {
-        // specified to 825003.xml
-        // 825003.xml has 30 lines
-        String fileNameOfSong = "825003.xml";
-        String songTitle = "净化空间";
-        int expectedNumberOfLines = 30;
+    public void lineSeparating() {
+        String fileNameOfSong;
+        String songTitle;
+        int expectedNumberOfLines;
 
+        fileNameOfSong = "825003.xml"; // May contains same timestamp for start and previous end
+        songTitle = "净化空间";
+        expectedNumberOfLines = 30;
+        fullyPlayASong(fileNameOfSong, songTitle, expectedNumberOfLines);
+
+        fileNameOfSong = "237732.xml"; // Long blank between two lines(line 18 & line 19)
+        songTitle = "不是因为寂寞才想你";
+        expectedNumberOfLines = 50;
+        fullyPlayASong(fileNameOfSong, songTitle, expectedNumberOfLines);
+
+        fileNameOfSong = "237732-modified-for-testing.xml"; // Empty/No/Invalid pitches
+        songTitle = "不是因为寂寞才想你(ModifiedForTesting)";
+        expectedNumberOfLines = 17;
+        fullyPlayASong(fileNameOfSong, songTitle, expectedNumberOfLines);
+    }
+
+    private void fullyPlayASong(String fileNameOfSong, String songTitle, int expectedNumberOfLines) {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         String sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
         assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
@@ -155,6 +170,10 @@ public class LyricsInstrumentedTest {
                         Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
                         mNumberOfScoringLines++;
                         mLatestIndexOfScoringLines = index;
+
+                        assertEquals(parsedLyrics.lines.get(index).getStartTime(), line.getStartTime());
+                        assertEquals(parsedLyrics.lines.get(index).getEndTime(), line.getEndTime());
+                        assertTrue(mCurrentPosition - line.getEndTime() < 50); // `onLineFinished` should immediately(in 50 milliseconds) come back when line finish
                     }
 
                     @Override
@@ -163,13 +182,13 @@ public class LyricsInstrumentedTest {
                     }
 
                     @Override
-                    public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
-                        Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+                    public void onRefPitchUpdate(float refPitch, int numberOfRefPitches, long progress) {
+                        Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches + " " + progress);
                     }
 
                     @Override
-                    public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit) {
-                        Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
+                    public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit, long progress) {
+                        Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit + " " + progress);
                     }
 
                     @Override
@@ -228,13 +247,13 @@ public class LyricsInstrumentedTest {
             }
 
             @Override
-            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
-                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches, long progress) {
+                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches + " " + progress);
             }
 
             @Override
-            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit) {
-                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit, long progress) {
+                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit + " " + progress);
             }
 
             @Override
@@ -303,14 +322,14 @@ public class LyricsInstrumentedTest {
             }
 
             @Override
-            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
-                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches, long progress) {
+                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches + " " + progress);
                 mRefPitch = refPitch;
             }
 
             @Override
-            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit) {
-                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit, long progress) {
+                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit + " " + progress);
             }
 
             @Override
@@ -389,13 +408,13 @@ public class LyricsInstrumentedTest {
             }
 
             @Override
-            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
-                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches);
+            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches, long progress) {
+                Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches + " " + progress);
             }
 
             @Override
-            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit) {
-                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit);
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit, long progress) {
+                Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + hit + " " + progress);
                 mPitchHit = pitch;
                 mHit = hit;
             }

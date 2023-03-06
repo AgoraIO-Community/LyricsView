@@ -430,26 +430,26 @@ public class ScoringView extends View {
             long startTime = line.getStartTime();
             long durationOfCurrentEntry = line.getEndTime() - startTime;
 
-            if (this.mScoringMachine.getCurrentTimestamp() - startTime <= -(2 * durationOfCurrentEntry)) { // If still to early for current entry, we do not draw the sticks
+            if (this.mScoringMachine.getCurrentProgress() - startTime <= -(2 * durationOfCurrentEntry)) { // If still to early for current entry, we do not draw the sticks
                 // If we show the sticks too late, they will appear suddenly in the central of screen, not start from the right side
                 break;
             }
 
-            if (i + 1 < lines.size() && line.getStartTime() < this.mScoringMachine.getCurrentTimestamp()) { // Has next entry
+            if (i + 1 < lines.size() && line.getStartTime() < this.mScoringMachine.getCurrentProgress()) { // Has next entry
                 // Get next entry
                 // If start for next is far away than 2 seconds
                 // stop the current animation now
                 long nextEntryStartTime = mLyricsModel.lines.get(i + 1).getStartTime();
-                if ((nextEntryStartTime - line.getEndTime() >= 2 * 1000) && this.mScoringMachine.getCurrentTimestamp() > line.getEndTime() && this.mScoringMachine.getCurrentTimestamp() < nextEntryStartTime) { // Two seconds after this entry stop
+                if ((nextEntryStartTime - line.getEndTime() >= 2 * 1000) && this.mScoringMachine.getCurrentProgress() > line.getEndTime() && this.mScoringMachine.getCurrentProgress() < nextEntryStartTime) { // Two seconds after this entry stop
                     assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
-                    if (mTimestampForLastAnimationDecrease < 0 || this.mScoringMachine.getCurrentTimestamp() - mTimestampForLastAnimationDecrease > 4 * 1000) {
+                    if (mTimestampForLastAnimationDecrease < 0 || this.mScoringMachine.getCurrentProgress() - mTimestampForLastAnimationDecrease > 4 * 1000) {
                         ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
-                        mTimestampForLastAnimationDecrease = this.mScoringMachine.getCurrentTimestamp();
+                        mTimestampForLastAnimationDecrease = this.mScoringMachine.getCurrentProgress();
                     }
                 }
             }
 
-            float pixelsAwayFromPilot = (startTime - this.mScoringMachine.getCurrentTimestamp()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
+            float pixelsAwayFromPilot = (startTime - this.mScoringMachine.getCurrentProgress()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
             float x = dotPointX + pixelsAwayFromPilot;
 
             if (endTimeOfPreviousLine != 0) { // If has empty divider before
@@ -467,7 +467,7 @@ public class ScoringView extends View {
             for (int toneIndex = 0; toneIndex < tones.size(); toneIndex++) {
                 LyricsLineModel.Tone tone = tones.get(toneIndex);
 
-                pixelsAwayFromPilot = (tone.begin - this.mScoringMachine.getCurrentTimestamp()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
+                pixelsAwayFromPilot = (tone.begin - this.mScoringMachine.getCurrentProgress()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
                 x = dotPointX + pixelsAwayFromPilot;
                 widthOfPitchStick = mMovingPixelsPerMs * tone.getDuration();
                 float endX = x + widthOfPitchStick;

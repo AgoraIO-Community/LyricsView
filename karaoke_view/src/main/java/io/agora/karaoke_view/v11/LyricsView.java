@@ -362,7 +362,7 @@ public class LyricsView extends View {
             return;
         }
 
-        updateByProgress(mScoringMachine.getCurrentTimestamp());
+        updateByProgress(mScoringMachine.getCurrentProgress());
     }
 
     private void updateByProgress(long timestamp) {

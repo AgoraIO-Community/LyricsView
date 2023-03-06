@@ -38,14 +38,15 @@ public class ScoringMachine {
     private long mEndTimeOfThisLyrics = 0;
     // Index of current line
     private int mIndexOfCurrentLine = -1;
+    private long mMarkOfLineEndEventFire = -1;
 
-    // Current timestamp for this lyrics
-    private long mCurrentTimestamp = 0;
+    // Current progress for this lyrics
+    private long mCurrentProgress = 0;
     // Delta of time between updates
     private int mDeltaOfUpdate = 20;
 
     // Reference pitch for current timestamp
-    private float mRefPitchForCurrentTimestamp = 0f;
+    private float mRefPitchForCurrentProgress = -1f;
 
     // Pitches for every line, we will reset every new line
     public final LinkedHashMap<Long, Float> mPitchesForLine = new LinkedHashMap<>();
@@ -124,14 +125,16 @@ public class ScoringMachine {
      */
     private float findRefPitchByTime(long timestamp, final boolean[] returnNewLine, final int[] returnIndexOfLastLine) {
         if (mLyricsModel == null) {
-            return 0;
+            return -1; // Not ready
         }
 
-        float referencePitch = 0;
+        float referencePitch = -1f;
         int numberOfLines = mLyricsModel.lines.size();
         for (int i = 0; i < numberOfLines; i++) {
             LyricsLineModel line = mLyricsModel.lines.get(i);
             if (timestamp >= line.getStartTime() && timestamp <= line.getEndTime()) {
+                mEndTimeOfCurrentLine = line.getEndTime();
+
                 int numberOfTones = line.tones.size();
                 for (int j = 0; j < numberOfTones; j++) {
                     LyricsLineModel.Tone tone = line.tones.get(j);
@@ -140,12 +143,10 @@ public class ScoringMachine {
                         mStartTimeOfCurrentRefPitch = tone.begin;
                         mEndTimeOfCurrentRefPitch = tone.end;
 
-                        mEndTimeOfCurrentLine = line.getEndTime();
-                        if (mIndexOfCurrentLine != i && i >= 1) { // Line switch
-                            returnIndexOfLastLine[0] = i - 1;
-                            returnNewLine[0] = true;
+                        if (j == numberOfTones - 1) { // Last tone in this line
+                            mIndexOfCurrentLine = i;
+                            mMarkOfLineEndEventFire = mEndTimeOfCurrentLine;
                         }
-                        mIndexOfCurrentLine = i;
                         break;
                     }
                 }
@@ -153,33 +154,30 @@ public class ScoringMachine {
             }
         }
 
-        long latestEndTimeOfLastLine = mEndTimeOfCurrentLine;
-
-        if (referencePitch == 0) { // Clear current line stats data if goes into another line
+        if (referencePitch == -1f) { // No ref pitch hit
             mStartTimeOfCurrentRefPitch = -1;
             mEndTimeOfCurrentRefPitch = -1;
 
             if (timestamp > mEndTimeOfCurrentLine) {
                 mEndTimeOfCurrentLine = -1;
             }
-        } else {
-            // 进入此行代码条件 ： 所唱歌词句开始时间 <= 当前时间 >= 所唱歌词句结束时间
-            // 强行加上一个　0 分 ，标识此为可打分句
-            // 相当于歌词当中预期有 pitch，所以需要做好占位
+        } else { // If hit the ref pitch(whenever 0 or > 0)
             mPitchesForLine.put(timestamp, 0f);
             if (DEBUG) {
                 Log.d(TAG, "debugScoringAlgo/mPitchesForLine/STUB: timestamp=" + timestamp + ", referencePitch=" + referencePitch + ", scoreForPitch=" + 0d);
             }
         }
-        mRefPitchForCurrentTimestamp = referencePitch;
 
-        // Last line(No line switch any more), should do extra check
-        if (timestamp > mEndTimeOfThisLyrics && latestEndTimeOfLastLine == mEndTimeOfThisLyrics) {
+        if (mIndexOfCurrentLine >= 0 && timestamp > mMarkOfLineEndEventFire) { // Line switch
             returnIndexOfLastLine[0] = mIndexOfCurrentLine;
             returnNewLine[0] = true;
+            mIndexOfCurrentLine = -1;
+            mMarkOfLineEndEventFire = -1;
         }
 
-        return referencePitch;
+        mRefPitchForCurrentProgress = referencePitch;
+
+        return referencePitch; // -1, 0, valid pitches
     }
 
     public static float calculateScore2(double minimumScore, int scoreLevel, int compensationOffset, double pitch, double refPitch) {
@@ -234,7 +232,7 @@ public class ScoringMachine {
 
     /**
      * 更新歌词进度，单位毫秒
-     * 根据当前时间，决定是否回调 {@link ScoringMachine.OnScoringListener#onRefPitchUpdate(float, int)}}
+     * 根据当前时间，决定是否回调 {@link ScoringMachine.OnScoringListener#onRefPitchUpdate(float, int, long progress)}}
      * 并驱动打分
      *
      * @param progress 当前播放时间，毫秒
@@ -242,13 +240,13 @@ public class ScoringMachine {
      *                 {@link ScoringMachine.OnScoringListener#onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines)}
      */
     public void setProgress(long progress) {
-        if (this.mCurrentTimestamp >= 0 && progress > 0) {
-            mDeltaOfUpdate = (int) (progress - this.mCurrentTimestamp);
+        if (this.mCurrentProgress >= 0 && progress > 0) {
+            mDeltaOfUpdate = (int) (progress - this.mCurrentProgress);
             if (mDeltaOfUpdate > 100 || mDeltaOfUpdate < 0) {
                 mDeltaOfUpdate = 20;
             }
         }
-        this.mCurrentTimestamp = progress;
+        this.mCurrentProgress = progress;
         if (progress == 0L) {
             resetStats();
             if (mListener != null) {
@@ -267,8 +265,8 @@ public class ScoringMachine {
         int[] indexOfLastLine = new int[]{-1};
         if (progress < mStartTimeOfCurrentRefPitch || progress > mEndTimeOfCurrentRefPitch) {
             float currentRefPitch = findRefPitchByTime(progress, newLine, indexOfLastLine);
-            if (currentRefPitch > 0 && mListener != null) {
-                mListener.onRefPitchUpdate(currentRefPitch, mNumberOfRefPitches);
+            if (currentRefPitch > -1f && mListener != null) {
+                mListener.onRefPitchUpdate(currentRefPitch, mNumberOfRefPitches, progress);
             }
         }
 
@@ -299,8 +297,8 @@ public class ScoringMachine {
             mContinuousZeroCount = 0;
         }
 
-        float currentRefPitch = mRefPitchForCurrentTimestamp; // Not started or ended
-        if (currentRefPitch == 0 || mContinuousZeroCount >= ZERO_PITCH_COUNT_THRESHOLD) { // No ref pitch, just ignore this time
+        float currentRefPitch = mRefPitchForCurrentProgress; // Not started or ended
+        if (currentRefPitch <= 0 || mContinuousZeroCount >= ZERO_PITCH_COUNT_THRESHOLD) { // No ref pitch, just ignore this time
             mContinuousZeroCount = 0;
             if (mListener != null) {
                 mListener.resetUi();
@@ -308,7 +306,7 @@ public class ScoringMachine {
             return;
         }
 
-        long timestamp = mCurrentTimestamp;
+        long progress = mCurrentProgress;
 
         boolean betweenCurrentPitch = checkBetweenCurrentRefPitch();
 
@@ -324,23 +322,23 @@ public class ScoringMachine {
         float scoreAfterNormalization = mScoringAlgo.pitchToScore(pitch, currentRefPitch);
         float score = scoreAfterNormalization * mScoringAlgo.getMaximumScoreForLine();
 
-        mPitchesForLine.put(timestamp, score);
+        mPitchesForLine.put(progress, score);
         if (DEBUG) {
-            Log.d(TAG, "debugScoringAlgo/mPitchesForLine/REAL: timestamp=" + timestamp +
+            Log.d(TAG, "debugScoringAlgo/mPitchesForLine/REAL: progress=" + progress +
                     ", scoreForPitch=" + score + ", rawPitch=" + rawPitch + ", pitchAfterProcess=" + pitchAfterProcess + ", currentRefPitch=" + currentRefPitch);
         }
 
         if (mListener != null) {
-            mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization, betweenCurrentPitch);
+            mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization, betweenCurrentPitch, progress);
         }
     }
 
     private boolean checkBetweenCurrentRefPitch() {
         boolean betweenCurrentPitch = mStartTimeOfCurrentRefPitch > 0 && mEndTimeOfCurrentRefPitch > 0
-                && mCurrentTimestamp >= mTimestampOfFirstRefPitch
-                && mCurrentTimestamp <= mEndTimeOfThisLyrics
-                && mCurrentTimestamp >= mStartTimeOfCurrentRefPitch
-                && mCurrentTimestamp <= mEndTimeOfCurrentRefPitch;
+                && mCurrentProgress >= mTimestampOfFirstRefPitch
+                && mCurrentProgress <= mEndTimeOfThisLyrics
+                && mCurrentProgress >= mStartTimeOfCurrentRefPitch
+                && mCurrentProgress <= mEndTimeOfCurrentRefPitch;
         return betweenCurrentPitch;
     }
 
@@ -385,14 +383,14 @@ public class ScoringMachine {
     }
 
     private void resetStats() {
-        mCurrentTimestamp = 0;
+        mCurrentProgress = 0;
 
         mIndexOfCurrentLine = -1;
         mStartTimeOfCurrentRefPitch = -1;
         mEndTimeOfCurrentRefPitch = -1;
         mEndTimeOfCurrentLine = -1;
 
-        mRefPitchForCurrentTimestamp = 0f;
+        mRefPitchForCurrentProgress = -1f;
 
         mScoreForEachLine.clear();
         mPitchesForLine.clear();
@@ -414,8 +412,8 @@ public class ScoringMachine {
         return this.mLyricsModel;
     }
 
-    public long getCurrentTimestamp() {
-        return this.mCurrentTimestamp;
+    public long getCurrentProgress() {
+        return this.mCurrentProgress;
     }
 
     public int getMinimumRefPitch() {
@@ -439,9 +437,9 @@ public class ScoringMachine {
 
         public void resetUi();
 
-        public void onRefPitchUpdate(float refPitch, int numberOfRefPitches);
+        public void onRefPitchUpdate(float refPitch, int numberOfRefPitches, long progress);
 
-        public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean betweenCurrentPitch);
+        public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean betweenCurrentPitch, long progress);
 
         public void requestRefreshUi();
     }
