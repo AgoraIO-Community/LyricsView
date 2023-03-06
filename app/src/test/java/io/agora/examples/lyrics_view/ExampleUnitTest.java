@@ -54,7 +54,7 @@ public class ExampleUnitTest {
     private double pitchToScore(double refPitch, double minPitch, double maxPitch, double pitch,
                                 int level, int offset, int scorePerSentence) {
 
-        if (pitch == 0 || pitch < minPitch || pitch > maxPitch) {
+        if (pitch <= 0 || pitch < minPitch || pitch > maxPitch) {
             return 0;
         }
 

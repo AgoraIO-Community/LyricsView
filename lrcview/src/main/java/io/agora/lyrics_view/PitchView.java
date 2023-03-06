@@ -67,10 +67,11 @@ public class PitchView extends View {
     private int mDeltaOfUpdate = 20;
     // Index of current line
     private int mIndexOfCurrentLine = -1;
+    private long mMarkOfLineEndEventFire = -1;
     // 当前在打分的所在句的结束时间
     private long lrcEndTime = 0;
     // 当前 时间的 Pitch，不断变化
-    private float mCurrentOriginalPitch = 0f;
+    private float mCurrentOriginalPitch = -1f;
 
     // 音调指示器的半径
     private float mLocalPitchIndicatorRadius;
@@ -586,13 +587,14 @@ public class PitchView extends View {
      * @return 当前时间歌词的 Pitch
      */
     private float findPitchByTime(long time, final boolean[] returnNewLine, final int[] returnIndexOfLastLine) {
-        if (lrcData == null) return 0;
+        if (lrcData == null) return -1;
 
         float targetPitch = 0;
         int entryCount = lrcData.entrys.size();
         for (int i = 0; i < entryCount; i++) {
             LrcEntryData entry = lrcData.entrys.get(i);
             if (time >= entry.getStartTime() && time <= entry.getEndTime()) { // 索引
+                currentEntryEndTime = entry.getEndTime();
                 int toneCount = entry.tones.size();
                 for (int j = 0; j < toneCount; j++) {
                     LrcEntryData.Tone tone = entry.tones.get(j);
@@ -601,12 +603,10 @@ public class PitchView extends View {
                         currentPitchStartTime = tone.begin;
                         currentPitchEndTime = tone.end;
 
-                        currentEntryEndTime = entry.getEndTime();
-                        if (mIndexOfCurrentLine != i && i >= 1) { // Line switch
-                            returnIndexOfLastLine[0] = i - 1;
-                            returnNewLine[0] = true;
+                        if (j == toneCount - 1) { // Last tone in this line
+                            mIndexOfCurrentLine = i;
+                            mMarkOfLineEndEventFire = currentEntryEndTime;
                         }
-                        mIndexOfCurrentLine = i;
                         break;
                     }
                 }
@@ -616,7 +616,7 @@ public class PitchView extends View {
 
         long latestEndTimeOfLastLine = currentEntryEndTime;
 
-        if (targetPitch == 0) {
+        if (targetPitch == -1) {
             currentPitchStartTime = -1;
             currentPitchEndTime = -1;
             if (time > currentEntryEndTime) {
@@ -630,10 +630,11 @@ public class PitchView extends View {
         }
         mCurrentOriginalPitch = targetPitch;
 
-        // Last line(No line switch any more), should do extra check
-        if (time > lrcEndTime && latestEndTimeOfLastLine == lrcEndTime) {
+        if (mIndexOfCurrentLine >= 0 && time > mMarkOfLineEndEventFire) { // Line switch
             returnIndexOfLastLine[0] = mIndexOfCurrentLine;
             returnNewLine[0] = true;
+            mIndexOfCurrentLine = -1;
+            mMarkOfLineEndEventFire = -1;
         }
 
         return targetPitch;
@@ -659,7 +660,7 @@ public class PitchView extends View {
             return;
         }
 
-        if (pitch == 0 || pitch < pitchMin || pitch > pitchMax) {
+        if (pitch <= 0 || pitch < pitchMin || pitch > pitchMax) {
             assureAnimationForPitchPivot(0);
             mHandler.postDelayed(mRemoveAnimationCallback, mThresholdOfOffPitchTime);
             return;
@@ -667,7 +668,7 @@ public class PitchView extends View {
 
         float currentOriginalPitch = mCurrentOriginalPitch;
 
-        if (currentOriginalPitch == 0) {
+        if (currentOriginalPitch <= 0) {
             return;
         }
 
@@ -865,6 +866,8 @@ public class PitchView extends View {
                     tone.resetHighlight();
                 }
             }
+            mIndexOfCurrentLine = -1;
+            mMarkOfLineEndEventFire = -1;
         }
 
         this.mCurrentTime = time;
@@ -873,7 +876,7 @@ public class PitchView extends View {
         int[] indexOfLastLine = new int[]{-1};
         if (time < currentPitchStartTime || time > currentPitchEndTime) {
             float currentOriginalPitch = findPitchByTime(time, newLine, indexOfLastLine);
-            if (currentOriginalPitch > 0) {
+            if (currentOriginalPitch > -1f) {
                 onSingScoreListener.onOriginalPitch(currentOriginalPitch, totalPitch);
             }
         }
@@ -888,6 +891,8 @@ public class PitchView extends View {
         if (onSingScoreListener != null) {
             onSingScoreListener = null;
         }
+        mIndexOfCurrentLine = -1;
+        mMarkOfLineEndEventFire = -1;
     }
 
     public static double pitchToTone(double pitch) {
