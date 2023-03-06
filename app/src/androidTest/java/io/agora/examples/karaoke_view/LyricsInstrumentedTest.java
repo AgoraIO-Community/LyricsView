@@ -543,26 +543,33 @@ public class LyricsInstrumentedTest {
     }
 
     @Test
-    public void parseTimestampOverlapForStartAndPreviousEndXmlFile() {
-        // specified to 147383.xml
-        // 147383.xml has 48 lines
+    public void findNonPerfectXML() {
+        String fileNameOfSong;
+        String songTitle;
+        int expectedNumberOfLines;
 
-//      String fileNameOfSong = "147383.xml";
-//      String songTitle = "光辉岁月";
-//      int expectedNumberOfLines = 48;
+        fileNameOfSong = "147383.xml";
+        songTitle = "光辉岁月";
+        expectedNumberOfLines = 48;
+        showWarningsForLyricsFile(fileNameOfSong, songTitle, expectedNumberOfLines);
 
-//      String fileNameOfSong = "660078.xml";
-//      String songTitle = "遇见";
-//      int expectedNumberOfLines = 25;
+        fileNameOfSong = "660078.xml";
+        songTitle = "遇见";
+        expectedNumberOfLines = 25;
+        showWarningsForLyricsFile(fileNameOfSong, songTitle, expectedNumberOfLines);
 
-//      String fileNameOfSong = "826125.xml";
-//      String songTitle = "恋歌";
-//      int expectedNumberOfLines = 26;
+        fileNameOfSong = "826125.xml";
+        songTitle = "恋歌";
+        expectedNumberOfLines = 26;
+        showWarningsForLyricsFile(fileNameOfSong, songTitle, expectedNumberOfLines);
 
-        String fileNameOfSong = "793566.xml";
-        String songTitle = "感谢你曾来过";
-        int expectedNumberOfLines = 86;
+        fileNameOfSong = "793566.xml";
+        songTitle = "感谢你曾来过";
+        expectedNumberOfLines = 86;
+        showWarningsForLyricsFile(fileNameOfSong, songTitle, expectedNumberOfLines);
+    }
 
+    private void showWarningsForLyricsFile(String fileNameOfSong, String songTitle, int expectedNumberOfLines) {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         String sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
         assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
