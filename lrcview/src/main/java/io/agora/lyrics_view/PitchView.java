@@ -61,8 +61,7 @@ public class PitchView extends View {
     private long currentPitchStartTime = -1;
     // 当前 Pitch 所在的字的结束时间
     private long currentPitchEndTime = -1;
-    // 当前 Pitch 所在的句的结束时间
-    private long currentEntryEndTime = -1;
+
     // Delta of time between updates
     private int mDeltaOfUpdate = 20;
     // Index of current line
@@ -516,7 +515,6 @@ public class PitchView extends View {
 
         currentPitchStartTime = -1;
         currentPitchEndTime = -1;
-        currentEntryEndTime = -1;
         everyPitchList.clear();
 
         cumulatedScore = mInitialScore;
@@ -582,11 +580,10 @@ public class PitchView extends View {
      * 根据当前播放时间获取 Pitch，并且更新
      * {@link this#currentPitchStartTime}
      * {@link this#currentPitchEndTime}
-     * {@link this#currentEntryEndTime}
      *
      * @return 当前时间歌词的 Pitch
      */
-    private float findPitchByTime(long time, final boolean[] returnNewLine, final int[] returnIndexOfLastLine) {
+    private float findPitchByTime(long time, final boolean[] returnNewLine, final int[] returnIndexOfLastLine, final long[] returnEndTimestampOfLastLine) {
         if (lrcData == null) return -1;
 
         float targetPitch = 0;
@@ -594,7 +591,6 @@ public class PitchView extends View {
         for (int i = 0; i < entryCount; i++) {
             LrcEntryData entry = lrcData.entrys.get(i);
             if (time >= entry.getStartTime() && time <= entry.getEndTime()) { // 索引
-                currentEntryEndTime = entry.getEndTime();
                 int toneCount = entry.tones.size();
                 for (int j = 0; j < toneCount; j++) {
                     LrcEntryData.Tone tone = entry.tones.get(j);
@@ -605,7 +601,7 @@ public class PitchView extends View {
 
                         if (j == toneCount - 1) { // Last tone in this line
                             mIndexOfCurrentLine = i;
-                            mMarkOfLineEndEventFire = currentEntryEndTime;
+                            mMarkOfLineEndEventFire = entry.getEndTime();
                         }
                         break;
                     }
@@ -614,17 +610,12 @@ public class PitchView extends View {
             }
         }
 
-        long latestEndTimeOfLastLine = currentEntryEndTime;
-
         if (targetPitch == -1) {
             currentPitchStartTime = -1;
             currentPitchEndTime = -1;
-            if (time > currentEntryEndTime) {
-                currentEntryEndTime = -1;
-            }
         } else {
             // 进入此行代码条件 ： 所唱歌词句开始时间 <= 当前时间 >= 所唱歌词句结束时间
-            // 强行加上一个　0 分 ，标识此为可打分句
+            // 强行加上一个 0 分 ，标识此为可打分句
             // 相当于歌词当中预期有 pitch，所以需要做好占位
             everyPitchList.put(time, 0d);
         }
@@ -633,6 +624,7 @@ public class PitchView extends View {
         if (mIndexOfCurrentLine >= 0 && time > mMarkOfLineEndEventFire) { // Line switch
             returnIndexOfLastLine[0] = mIndexOfCurrentLine;
             returnNewLine[0] = true;
+            returnEndTimestampOfLastLine[0] = mMarkOfLineEndEventFire;
             mIndexOfCurrentLine = -1;
             mMarkOfLineEndEventFire = -1;
         }
@@ -769,7 +761,7 @@ public class PitchView extends View {
      *
      * @param time 当前歌曲播放时间 毫秒
      */
-    private void updateScore(long time, boolean newLine, int indexOfLineJustFinished) {
+    private void updateScore(long time, boolean newLine, int indexOfLineJustFinished, long endTimestampOfLineJustFinished) {
         if (time < mTimestampForFirstTone) { // Not started
             return;
         }
@@ -785,7 +777,7 @@ public class PitchView extends View {
             int continuousZeroCount = 0;
             while (iterator.hasNext()) {
                 Long duration = iterator.next();
-                if (duration <= currentEntryEndTime) {
+                if (duration <= endTimestampOfLineJustFinished) {
                     tempScore = everyPitchList.get(duration);
                     if (tempScore == null || tempScore.floatValue() == 0.f) {
                         continuousZeroCount++;
@@ -874,13 +866,14 @@ public class PitchView extends View {
 
         boolean[] newLine = new boolean[1];
         int[] indexOfLastLine = new int[]{-1};
+        long[] endTimestampOfLastLine = new long[]{-1};
         if (time < currentPitchStartTime || time > currentPitchEndTime) {
-            float currentOriginalPitch = findPitchByTime(time, newLine, indexOfLastLine);
+            float currentOriginalPitch = findPitchByTime(time, newLine, indexOfLastLine, endTimestampOfLastLine);
             if (currentOriginalPitch > -1f) {
                 onSingScoreListener.onOriginalPitch(currentOriginalPitch, totalPitch);
             }
         }
-        updateScore(time, newLine[0], indexOfLastLine[0]);
+        updateScore(time, newLine[0], indexOfLastLine[0], endTimestampOfLastLine[0]);
 
         tryInvalidate();
     }
