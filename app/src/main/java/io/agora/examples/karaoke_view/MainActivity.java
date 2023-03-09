@@ -38,7 +38,7 @@ import java.util.zip.ZipInputStream;
 
 import io.agora.examples.karaoke_view.databinding.ActivityMainBinding;
 import io.agora.examples.utils.ResourceHelper;
-import io.agora.karaoke_view.DownloadManager;
+import io.agora.examples.utils.DownloadManager;
 
 import io.agora.karaoke_view.v11.KaraokeEvent;
 import io.agora.karaoke_view.v11.KaraokeView;
