@@ -437,8 +437,8 @@ public class LyricsInstrumentedTest {
         assertEquals(mRefPitch, 172, 0d);
 
         mRefPitch = -1;
-        scoringMachine.setProgress(29675); // Triggered by 28814
-        assertEquals(mRefPitch, -1, 0d);
+        scoringMachine.setProgress(29675); // Same with 28814
+        assertEquals(mRefPitch, 172, 0d);
 
         mRefPitch = -1;
         scoringMachine.setProgress(185160);
