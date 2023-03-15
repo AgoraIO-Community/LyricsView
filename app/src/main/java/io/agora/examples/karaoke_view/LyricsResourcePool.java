@@ -75,6 +75,8 @@ public class LyricsResourcePool {
 
     public static final String LRC_SAMPLE_LOCAL_FILE_793566 = "793566.xml";
 
+    public static final String LRC_SAMPLE_LOCAL_FILE_227732_2_INVALID = "237732-invalid-content-2.xml";
+
     public static final List<LyricsResource> asList() {
         ArrayList<LyricsResource> list = new ArrayList<>();
         list.add(new LyricsResource(0, LRC_SAMPLE_1, "DEPRECATED"));
@@ -89,6 +91,7 @@ public class LyricsResourcePool {
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_147383, "TS_PITCH_OVERLAP"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_151675, "PERFECT"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_793566, "PERFECT"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_227732_2_INVALID, "Unexpected Content"));
         return list;
     }
 }

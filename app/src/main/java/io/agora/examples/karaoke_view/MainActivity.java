@@ -104,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onDragTo(KaraokeView view, long position) {
                 mKaraokeView.setProgress(position);
                 mLyricsCurrentProgress = position;
+                updateCallback("Dragging, new progress " + position);
             }
 
             @Override
@@ -161,11 +162,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void loadTheLyrics(String lrcSample) {
         mKaraokeView.reset();
         mLyricsModel = null;
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                TextView tvDescription = findViewById(R.id.lyrics_description);
+                tvDescription.setText("Try to load " + lrcSample);
+            }
+        });
+
         if (lrcSample.startsWith("https://") || lrcSample.startsWith("http://")) {
             DownloadManager.getInstance().download(this, lrcSample, file -> {
                 file = extractFromZipFileIfPossible(file);
                 mLyricsModel = KaraokeView.parseLyricsData(file);
-                mKaraokeView.setLyricsData(mLyricsModel);
+
+                if (mLyricsModel != null) {
+                    mKaraokeView.setLyricsData(mLyricsModel);
+                }
 
                 updateLyricsDescription();
             }, error -> {
@@ -177,14 +190,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             File file = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcSample);
             file = extractFromZipFileIfPossible(file);
             mLyricsModel = KaraokeView.parseLyricsData(file);
-            mKaraokeView.setLyricsData(mLyricsModel);
+
+            if (mLyricsModel != null) {
+                mKaraokeView.setLyricsData(mLyricsModel);
+            }
 
             updateLyricsDescription();
         }
     }
 
     private void updateLyricsDescription() {
-        String lyricsSummary = mLyricsModel != null ? (mLyricsModel.title + ": " + mLyricsModel.artist + " " + mLyricsModel.startOfVerse + " " + mLyricsModel.lines.size() + " " + mLyricsModel.duration) : "Invalid Lyrics Mode";
+        String lyricsSummary = mLyricsModel != null ? (mLyricsModel.title + ": " + mLyricsModel.artist + " " + mLyricsModel.startOfVerse + " " + mLyricsModel.lines.size() + " " + mLyricsModel.duration) : "Invalid lyrics";
         final String description = lyricsSummary + "\n" + LyricsResourcePool.asList().get(mCurrentIndex).description;
         runOnUiThread(new Runnable() {
             @Override
@@ -397,6 +413,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 DownloadManager.getInstance().clearCache(getApplicationContext());
+
+                updateLyricsDescription();
+
                 loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
             }
         }, 0, TimeUnit.MILLISECONDS);
