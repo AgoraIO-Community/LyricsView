@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 
 /**
@@ -100,7 +101,7 @@ public class LyricsParser {
         } else if (type == LyricsModel.Type.Migu) {
             return LyricsParserMigu.parseLrc(file);
         } else {
-            Log.e(TAG, "Do not support the lyrics file type " + type);
+            LogManager.instance().error(TAG, "Do not support the lyrics file type " + type);
             return null;
         }
     }

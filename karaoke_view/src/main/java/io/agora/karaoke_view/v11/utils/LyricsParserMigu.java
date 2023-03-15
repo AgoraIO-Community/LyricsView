@@ -1,5 +1,6 @@
 package io.agora.karaoke_view.v11.utils;
 
+import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 
@@ -21,6 +23,8 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  * @date 2021/7/6
  */
 class LyricsParserMigu {
+    private static final String TAG = "LyricsParserXml";
+
     public static class Song {
         public SongGeneral general;
         public SongMidi midi;
@@ -46,6 +50,7 @@ class LyricsParserMigu {
      */
     public static LyricsModel parseLrc(File lrcFile) {
         if (lrcFile == null || !lrcFile.exists()) {
+            LogManager.instance().error(TAG, "unexpected lyrics file " + lrcFile);
             return null;
         }
 
@@ -56,6 +61,7 @@ class LyricsParserMigu {
             parser.nextTag();
             Song song = readLrc(parser);
             if (song.midi == null || song.midi.paragraphs == null) {
+                LogManager.instance().error(TAG, "no midi or paragraph");
                 return null;
             }
 
@@ -64,14 +70,21 @@ class LyricsParserMigu {
             for (Paragraph paragraph : song.midi.paragraphs) {
                 lines.addAll(paragraph.lines);
             }
+            if (lines.size() > 0) {
+                lyrics.duration = lines.get(lines.size() - 1).getEndTime();
+            }
             lyrics.startOfVerse = lines.get(0).getStartTime(); // Always the first line of lyrics
-            lyrics.duration = lines.get(lines.size() - 1).getEndTime();
             lyrics.title = song.general.name;
             lyrics.artist = song.general.singer;
             lyrics.lines = lines;
+
+            if (lyrics.duration <= 0 || lyrics.startOfVerse < 0) {
+                LogManager.instance().error(TAG, "no sentence or tone or unexpected timestamp of tone: " + lyrics.startOfVerse + " " + lyrics.duration);
+                return null; // Invalid lyrics
+            }
             return lyrics;
         } catch (Exception e) {
-            e.printStackTrace();
+            LogManager.instance().error(TAG, Log.getStackTraceString(e));
         }
 
         return null;

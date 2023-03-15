@@ -1,28 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
 <song>
 	<general>
-		<name>不是因为寂寞才想你(ModifiedForTesting)</name>
-		<singer>empty/no/invalid pitches/prompt</singer>
+		<name>不是因为寂寞才想你(Invalid Content)</name>
+		<singer>AI</singer>
 		<type>1</type>
 	</general>
 	<midi_lrc>
 		<paragraph>
 			<sentence>
-				<tone begin="0.0" end="0.307" lang="1" pitch="0" pronounce="">
-					<word>测</word>
-				</tone>
-				<tone begin="0.307" end="0.614" lang="1" pitch="0" pronounce="">
-					<word>试</word>
-				</tone>
-				<tone begin="0.614" end="0.921" lang="1" pitch="0" pronounce="">
-					<word>开</word>
-				</tone>
-				<tone begin="0.921" end="1.228" lang="1" pitch="0" pronounce="">
-					<word>始</word>
-				</tone>
-			</sentence>
-			<sentence>
-				<tone begin="14.338" end="14.794" lang="1" pitch="259" pronounce="">
+				<tone begin="-23.00" end="14.794" lang="1" pitch="259" pronounce="">
 					<word>相</word>
 				</tone>
 				<tone begin="14.794" end="15.098" lang="1" pitch="262" pronounce="">
@@ -463,40 +449,8 @@
 				<tone begin="79.373" end="79.776" lang="1" pitch="349" pronounce="">
 					<word>宽</word>
 				</tone>
-				<tone begin="79.776" end="80.484" lang="1" pitch="440" pronounce="">
+				<tone begin="79.776" end="82.3" lang="1" pitch="440" pronounce="">
 					<word>容</word>
-				</tone>
-			</sentence>
-			<sentence>
-				<tone begin="80.484" end="80.787" lang="1" pitch="0" pronounce="">
-					<word>因</word>
-				</tone>
-				<tone begin="80.787" end="80.989" lang="1" pitch="0" pronounce="">
-					<word>为</word>
-				</tone>
-				<tone begin="80.989" end="81.242" lang="1" pitch="0" pronounce="">
-					<word>思</word>
-				</tone>
-				<tone begin="81.242" end="81.495" lang="1" pitch="0" pronounce="">
-					<word>念</word>
-				</tone>
-				<tone begin="81.495" end="82.003" lang="1" pitch="0" pronounce="">
-					<word>时</word>
-				</tone>
-				<tone begin="82.003" end="82.206" lang="1" pitch="0" pronounce="">
-					<word>光</word>
-				</tone>
-				<tone begin="82.206" end="82.56" lang="1" pitch="0" pronounce="">
-					<word>走</word>
-				</tone>
-				<tone begin="82.56" end="82.914" lang="1" pitch="0" pronounce="">
-					<word>得</word>
-				</tone>
-				<tone begin="82.914" end="83.268" lang="1" pitch="0" pronounce="">
-					<word>匆</word>
-				</tone>
-				<tone begin="83.268" end="83.773" lang="1" pitch="0" pronounce="">
-					<word>匆</word>
 				</tone>
 			</sentence>
 		</paragraph>

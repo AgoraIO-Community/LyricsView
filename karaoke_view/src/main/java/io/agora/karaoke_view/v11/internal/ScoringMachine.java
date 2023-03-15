@@ -103,7 +103,7 @@ public class ScoringMachine {
     }
 
     public boolean isReady() {
-        return mLyricsModel != null && mTimestampOfFirstRefPitch > 0 && mNumberOfRefPitches > 0;
+        return mLyricsModel != null && mNumberOfRefPitches > 0;
     }
 
     public void setScoringAlgorithm(IScoringAlgorithm algorithm) {
@@ -190,6 +190,12 @@ public class ScoringMachine {
         scoreAfterNormalization = scoreAfterNormalization >= minimumScore ? scoreAfterNormalization : 0f;
         // 得分太大的置一
         scoreAfterNormalization = scoreAfterNormalization > 1 ? 1 : scoreAfterNormalization;
+
+        if (DEBUG) {
+            Log.d(TAG, "debugScoringAlgo/calculateScore2/REAL: minimumScore=" + minimumScore + ", pitch=" + pitch + ", refPitch=" + refPitch +
+                    ", scoreLevel=" + scoreLevel + ", compensationOffset=" + compensationOffset);
+        }
+
         return scoreAfterNormalization;
     }
 
@@ -199,7 +205,7 @@ public class ScoringMachine {
     }
 
     private void updateScoreForMostRecentLine(long timestamp, boolean newLine, int indexOfMostRecentLine) {
-        if (timestamp < mTimestampOfFirstRefPitch) { // Not started
+        if ((timestamp < mTimestampOfFirstRefPitch) || mTimestampOfFirstRefPitch == -1) { // Not started
             return;
         }
 

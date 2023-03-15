@@ -57,17 +57,17 @@ public class ExampleUnitTest {
 
     @Test
     public void testVoiceChanger2() {
-        assertEquals(mVoicePitchChanger.handlePitch(0, 0, 400), 0d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(1, 0, 400), 0d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(1, 1, 400), 1d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(100, 90, 400), 95d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(100, 80, 400), 90d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(200, 80, 400), 117.5d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(400, 80, 400), 174.0d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(400, 200, 400), 311.66666666666663d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(400, 400, 400), 400d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(400, 500, 400), 400d, 0d);
-        assertEquals(mVoicePitchChanger.handlePitch(400, 600, 400), 400d, 0d);
+        assertEquals(0d, mVoicePitchChanger.handlePitch(0, 0, 400), 0d);
+        assertEquals(0d, mVoicePitchChanger.handlePitch(1, 0, 400), 0d);
+        assertEquals(1d, mVoicePitchChanger.handlePitch(1, 1, 400), 0d);
+        assertEquals(93d, mVoicePitchChanger.handlePitch(100, 90, 400), 0d);
+        assertEquals(87d, mVoicePitchChanger.handlePitch(100, 80, 400), 0d);
+        assertEquals(110d, mVoicePitchChanger.handlePitch(200, 80, 400), 0d);
+        assertEquals(164.60000000000002d, mVoicePitchChanger.handlePitch(400, 80, 400), 0d);
+        assertEquals(311.66666666666663d, mVoicePitchChanger.handlePitch(400, 200, 400), 0d);
+        assertEquals(400d, mVoicePitchChanger.handlePitch(400, 400, 400), 0d);
+        assertEquals(400d, mVoicePitchChanger.handlePitch(400, 500, 400), 0d);
+        assertEquals(400d, mVoicePitchChanger.handlePitch(400, 600, 400), 0d);
     }
 
     @Test

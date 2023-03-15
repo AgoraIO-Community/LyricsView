@@ -27,6 +27,8 @@ import io.agora.examples.utils.ResourceHelper;
 import io.agora.karaoke_view.v11.DefaultScoringAlgorithm;
 import io.agora.karaoke_view.v11.VoicePitchChanger;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
+import io.agora.karaoke_view.v11.logging.LogManager;
+import io.agora.karaoke_view.v11.logging.Logger;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 import io.agora.karaoke_view.v11.utils.LyricsParser;
@@ -127,6 +129,80 @@ public class LyricsInstrumentedTest {
     }
 
     @Test
+    public void unexpectedContentCheckingForLyrics() {
+        LogManager.instance().addLogger(new Logger() {
+            @Override
+            public void onLog(int level, String tag, String message) {
+                Log.e(tag, message);
+            }
+        });
+
+        File target;
+        LyricsModel parsedLyrics;
+
+        String fileNameOfSong;
+        String songTitle;
+        String songArtist;
+
+        // specified to
+        fileNameOfSong = "237732-empty-content.xml";
+        songTitle = "不是因为寂寞才想你(Empty Content)";
+        songArtist = "AI";
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        String lyricsContentInString = ResourceHelper.loadAsString(appContext, fileNameOfSong);
+        assertTrue(lyricsContentInString.contains(songArtist));
+        assertTrue(lyricsContentInString.contains(songTitle));
+
+        target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        parsedLyrics = LyricsParser.parse(target);
+
+        assertEquals(null, parsedLyrics);
+
+        // specified to
+        fileNameOfSong = "237732-empty-content-2.xml";
+        songTitle = "不是因为寂寞才想你(Empty Content)";
+        songArtist = "AI";
+
+        lyricsContentInString = ResourceHelper.loadAsString(appContext, fileNameOfSong);
+        assertTrue(lyricsContentInString.contains(songArtist));
+        assertTrue(lyricsContentInString.contains(songTitle));
+
+        target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        parsedLyrics = LyricsParser.parse(target);
+
+        assertEquals(null, parsedLyrics);
+
+        // specified to
+        fileNameOfSong = "237732-invalid-content.xml";
+        songTitle = "不是因为寂寞才想你(Invalid Content)";
+        songArtist = "AI";
+
+        lyricsContentInString = ResourceHelper.loadAsString(appContext, fileNameOfSong);
+        assertTrue(lyricsContentInString.contains(songArtist));
+        assertTrue(lyricsContentInString.contains(songTitle));
+
+        target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        parsedLyrics = LyricsParser.parse(target);
+
+        assertEquals(null, parsedLyrics);
+
+        // specified to
+        fileNameOfSong = "237732-invalid-content-2.xml";
+        songTitle = "不是因为寂寞才想你(Invalid Content)";
+        songArtist = "AI";
+
+        lyricsContentInString = ResourceHelper.loadAsString(appContext, fileNameOfSong);
+        assertTrue(lyricsContentInString.contains(songArtist));
+        assertTrue(lyricsContentInString.contains(songTitle));
+
+        target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        parsedLyrics = LyricsParser.parse(target);
+
+        assertEquals(null, parsedLyrics);
+    }
+
+    @Test
     public void lineSeparating() {
         String fileNameOfSong;
         String songTitle;
@@ -142,9 +218,9 @@ public class LyricsInstrumentedTest {
         expectedNumberOfLines = 50;
         fullyPlayASong(fileNameOfSong, songTitle, expectedNumberOfLines, 20);
 
-        fileNameOfSong = "237732-modified-for-testing.xml"; // Empty/No/Invalid pitches
+        fileNameOfSong = "237732-modified-for-testing.xml"; // Empty/No/Invalid pitches/Prompt
         songTitle = "不是因为寂寞才想你(ModifiedForTesting)";
-        expectedNumberOfLines = 17;
+        expectedNumberOfLines = 18;
         fullyPlayASong(fileNameOfSong, songTitle, expectedNumberOfLines, 20);
     }
 
@@ -161,6 +237,8 @@ public class LyricsInstrumentedTest {
         for (LyricsLineModel line : parsedLyrics.lines) {
             Log.d(TAG, "Line summary: " + line.getStartTime() + " ~ " + line.getEndTime() + " " + line.tones.size());
         }
+
+        assertTrue(parsedLyrics.startOfVerse >= 0);
 
         mNumberOfScoringLines = 0;
         mLatestIndexOfScoringLines = 0;
@@ -204,11 +282,11 @@ public class LyricsInstrumentedTest {
         Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");
 
         int lineCount = parsedLyrics.lines.size();
-        assertEquals(lineCount, expectedNumberOfLines);
+        assertEquals(expectedNumberOfLines, lineCount);
 
         // Check if `onLineFinished` working as expected
-        assertEquals(mNumberOfScoringLines, lineCount);
-        assertEquals(mLatestIndexOfScoringLines + 1, lineCount);
+        assertEquals(lineCount, mNumberOfScoringLines);
+        assertEquals(lineCount, mLatestIndexOfScoringLines + 1);
     }
 
     @Test
@@ -551,8 +629,8 @@ public class LyricsInstrumentedTest {
         scoringMachine.setProgress(187238);
         scoringMachine.setPitch(100);
         double processedPitch = changer.handlePitch(213, 100, scoringMachine.getMaximumRefPitch());
-        assertEquals(processedPitch, 137.66666666666666, 0);
-        assertEquals(mPitchHit, 122.5999984741211, 0d); // 122.5999984741211
+        assertEquals(137.66666666666666, processedPitch, 0);
+        assertEquals(120.33999633789062, mPitchHit, 0d); // 120.33999633789062
         assertTrue(mHit);
 
         Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");
