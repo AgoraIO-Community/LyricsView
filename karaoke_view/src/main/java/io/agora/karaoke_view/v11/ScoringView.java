@@ -735,11 +735,17 @@ public class ScoringView extends View {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    assureAnimationForPitchPivot(0); // Force stop the animation when there is no new score for a long time(a full sentence)
                     ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
                 }
             });
         }
+
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                assureAnimationForPitchPivot(0); // Force stop the animation when line just finished
+            }
+        });
     }
 
     private boolean mInHighlightStatus;
