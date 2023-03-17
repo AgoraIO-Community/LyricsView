@@ -652,7 +652,7 @@ public class LyricsInstrumentedTest {
         // 01-12 11:03:51.835 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@79eec34 60 205 3000 2 30
         // 01-12 11:04:08.953 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@f0a3fd2 61 318 3000 4 30
         // 01-12 11:07:02.073 29186 29229 D LyricsInstrumentedTest: onLineFinished io.agora.*.model.LyricsLineModel@34e9f0b 55 1815 3000 29 30
-        // 01-12 11:07:03.073 29186 29229 D LyricsInstrumentedTest_MockPlayer: put the pivot back in space
+        // 01-12 11:07:03.073 29186 29229 D LyricsInstrumentedTest_MockPlayer: put the indicator back in space
         // 01-12 11:07:03.093 29186 29227 D LyricsInstrumentedTest_MockPlayer: Song finished
         // 01-12 11:07:03.098 29186 29229 D LyricsInstrumentedTest_MockPlayer: quit
         // 01-12 11:07:03.199 29186 29227 D LyricsInstrumentedTest: Started at Thu Jan 12 11:03:00 GMT+08:00 2023, takes 243170 ms
@@ -682,8 +682,8 @@ public class LyricsInstrumentedTest {
                     long lastPosition = mCurrentPosition;
                     scoringMachine.setProgress(mCurrentPosition);
                     scoringMachine.setPitch(0);
-                    Log.d(PLAYER_TAG, "put the pivot back in space");
-                    // Put the pivot back in space
+                    Log.d(PLAYER_TAG, "put the indicator back in space");
+                    // Put the indicator back in space
                 } else if (mCurrentPosition >= (DURATION_OF_SONG + 1000)) {
                     if (mFuture != null) {
                         mFuture.cancel(true);

@@ -44,7 +44,7 @@ public class KaraokeView {
                 }
 
                 if (mScoringView != null) {
-                    mScoringView.forceStopPivotAnimationWhenFullLineFinished(score);
+                    mScoringView.forceStopIndicatorAnimationWhenFullLineFinished(score);
                 }
 
                 if (mKaraokeEvent != null) {
@@ -61,7 +61,7 @@ public class KaraokeView {
                     mLyricsView.requestRefreshUi();
                 }
                 if (mScoringView != null) {
-                    mScoringView.forceStopPivotAnimationWhenReachingContinuousZeros();
+                    mScoringView.forceStopIndicatorAnimationWhenReachingContinuousZeros();
                     mScoringView.requestRefreshUi();
                 }
             }

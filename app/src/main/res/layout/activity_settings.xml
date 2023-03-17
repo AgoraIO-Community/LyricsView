@@ -534,24 +534,24 @@
                 app:layout_constraintTop_toTopOf="@id/enable_particle_effect_title" />
 
             <TextView
-                android:id="@+id/customized_pivot_and_particle_title"
+                android:id="@+id/customized_indicator_and_particle_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:lines="1"
-                android:text="Customized Pivot and Particle"
+                android:text="Customized Indicator and Particle"
                 app:layout_constraintHorizontal_bias="0.18"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/enable_particle_effect_title" />
 
             <androidx.appcompat.widget.AppCompatCheckBox
-                android:id="@+id/customized_pivot_and_particle_switch"
+                android:id="@+id/customized_indicator_and_particle_switch"
                 android:layout_width="0dp"
                 android:layout_height="20dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.82"
-                app:layout_constraintStart_toEndOf="@+id/customized_pivot_and_particle_title"
-                app:layout_constraintTop_toTopOf="@id/customized_pivot_and_particle_title" />
+                app:layout_constraintStart_toEndOf="@+id/customized_indicator_and_particle_title"
+                app:layout_constraintTop_toTopOf="@id/customized_indicator_and_particle_title" />
 
             <TextView
                 android:id="@+id/particle_hit_on_threshold_title"
@@ -562,7 +562,7 @@
                 android:text="Particle Threshold"
                 app:layout_constraintHorizontal_bias="0.18"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/customized_pivot_and_particle_title" />
+                app:layout_constraintTop_toBottomOf="@id/customized_indicator_and_particle_title" />
 
             <androidx.appcompat.widget.AppCompatSeekBar
                 android:id="@+id/particle_hit_on_threshold_tune"

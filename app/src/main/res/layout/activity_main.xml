@@ -21,7 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="120dp"
         android:layout_marginBottom="20dp"
-        android:background="#02FFFFFF"
+        android:background="@android:color/holo_orange_light"
         app:hitScoreThreshold="0.8"
         app:layout_constraintBottom_toTopOf="@id/lyrics_view"
         app:layout_constraintEnd_toEndOf="parent"
@@ -30,7 +30,7 @@
         app:pitchIndicatorRadius="6dp"
         app:pitchInitialScore="0"
         app:pitchStickHeight="6dp"
-        app:pivotHorizontalBias="0.4" />
+        app:startPointHorizontalBias="0.4" />
 
     <androidx.appcompat.widget.AppCompatCheckBox
         android:id="@+id/enable_scoring"

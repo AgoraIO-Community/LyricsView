@@ -1,6 +1,10 @@
 package io.agora.examples.karaoke_view.customized;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
@@ -13,6 +17,9 @@ import com.plattysoft.leonids.ParticleSystem;
 import io.agora.karaoke_view.v11.ScoringView;
 
 public class MyScoringView extends ScoringView {
+
+    private LinearGradient mStartLineLinearGradient;
+
     public MyScoringView(Context context) {
         super(context);
     }
@@ -27,6 +34,26 @@ public class MyScoringView extends ScoringView {
 
     public MyScoringView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        if (changed) {
+            mStartLineLinearGradient = new LinearGradient(0, 0, 0, bottom - top, new int[]{Color.RED, Color.WHITE, Color.YELLOW}, null, Shader.TileMode.CLAMP);
+        }
+    }
+
+    @Override
+    protected void drawOverpastWallAndStartLine(Canvas canvas) {
+        drawOverpastWall(canvas);
+
+        // Same as drawStartLine, but with extra gradient color on it
+        mStartLinePaint.setShader(mStartLineLinearGradient);
+        mStartLinePaint.setColor(mLocalPitchIndicatorColor);
+        mStartLinePaint.setAntiAlias(true);
+        mStartLinePaint.setStrokeWidth(3);
+        canvas.drawLine(mCenterXOfStartPoint, 0, mCenterXOfStartPoint, getHeight(), mStartLinePaint);
     }
 
     @Override

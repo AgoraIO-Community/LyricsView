@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.CornerPathEffect;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -43,31 +44,31 @@ public class ScoringView extends View {
 
     private static final boolean DEBUG = false;
 
-    private float mPivotHorizontalBias = 0.4f;
+    private float mStartPointHorizontalBias = 0.4f;
 
     private Handler mHandler;
 
-    private float mMovingPixelsPerMs; // 1ms 对应像素 px
+    private float mMovingPixelsPerMs;
 
-    private float mPitchStickHeight; // 每一项高度 px
+    protected float mPitchStickHeight;
 
-    // 音调指示器的半径
-    private float mLocalPitchIndicatorRadius;
+    protected float mLocalPitchIndicatorRadius;
+    protected int mLocalPitchIndicatorColor;
 
-    private final Paint mLocalPitchLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private int mLocalPitchPivotColor;
+    protected final Paint mLocalPitchIndicatorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected final CornerPathEffect mLocalPitchEffect = new CornerPathEffect(8);
 
-    private final Paint mLocalPitchPivotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected final Paint mStartLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    private final Paint mLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private LinearGradient mOverpastLinearGradient;
+    protected final Paint mOverpastLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected LinearGradient mOverpastLinearGradient;
 
-    private final Paint mPitchStickLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private int mDefaultRefPitchStickColor;
-    private final Paint mHighlightPitchStickLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mPitchStickPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    protected int mDefaultRefPitchStickColor;
+    private final Paint mHighlightPitchStickPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private int mHighlightPitchStickColor;
 
-    private float dotPointX = 0f; // 亮点坐标
+    protected float mCenterXOfStartPoint = 0f; // centerX of start point(portrait divider), same as local pitch indicator
 
     protected ParticleSystem mParticleSystem;
     protected int mParticlesPerSecond = 16;
@@ -129,7 +130,7 @@ public class ScoringView extends View {
         this.mHandler = new Handler(Looper.myLooper());
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.ScoringView);
         mLocalPitchIndicatorRadius = ta.getDimension(R.styleable.ScoringView_pitchIndicatorRadius, getResources().getDimension(R.dimen.local_pitch_indicator_radius));
-        mLocalPitchPivotColor = ta.getColor(R.styleable.ScoringView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
+        mLocalPitchIndicatorColor = ta.getColor(R.styleable.ScoringView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
         mInitialScore = ta.getFloat(R.styleable.ScoringView_pitchInitialScore, 0f);
 
         if (mInitialScore < 0) {
@@ -153,9 +154,9 @@ public class ScoringView extends View {
             throw new IllegalArgumentException("Invalid value for mMovingPixelsPerMs, must > 0 and <= 20, current is " + mThresholdOfHitScore);
         }
 
-        mPivotHorizontalBias = ta.getFloat(R.styleable.ScoringView_pivotHorizontalBias, 0.4f);
-        if (mPivotHorizontalBias <= 0 || mPivotHorizontalBias > 1f) {
-            throw new IllegalArgumentException("Invalid value for mPivotStartWeight, must > 0 and <= 1, current is " + mPivotHorizontalBias);
+        mStartPointHorizontalBias = ta.getFloat(R.styleable.ScoringView_startPointHorizontalBias, 0.4f);
+        if (mStartPointHorizontalBias <= 0 || mStartPointHorizontalBias > 1f) {
+            throw new IllegalArgumentException("Invalid value for mStartPointHorizontalBias, must > 0 and <= 1, current is " + mStartPointHorizontalBias);
         }
 
         mThresholdOfOffPitchTime = ta.getInt(R.styleable.ScoringView_offPitchTimeThreshold, 1000);
@@ -168,7 +169,7 @@ public class ScoringView extends View {
 
         int startColor = getResources().getColor(R.color.pitch_start);
         int endColor = getResources().getColor(R.color.pitch_end);
-        mOverpastLinearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
+        mOverpastLinearGradient = new LinearGradient(mCenterXOfStartPoint, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
     }
 
     @Override
@@ -182,11 +183,11 @@ public class ScoringView extends View {
         if (changed) {
             int w = right - left;
             int h = bottom - top;
-            dotPointX = w * mPivotHorizontalBias;
+            mCenterXOfStartPoint = w * mStartPointHorizontalBias;
 
             int startColor = getResources().getColor(R.color.pitch_start);
             int endColor = getResources().getColor(R.color.pitch_end);
-            mOverpastLinearGradient = new LinearGradient(dotPointX, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
+            mOverpastLinearGradient = new LinearGradient(mCenterXOfStartPoint, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
 
             tryInvalidate();
 
@@ -194,8 +195,8 @@ public class ScoringView extends View {
         }
     }
 
-    private boolean isCanvasNotReady() {
-        return dotPointX <= 0;
+    protected final boolean isCanvasNotReady() {
+        return mCenterXOfStartPoint <= 0;
     }
 
     private Object mDelayedTaskToken;
@@ -314,58 +315,51 @@ public class ScoringView extends View {
             return;
         }
 
-        drawStartLine(canvas);
+        drawOverpastWallAndStartLine(canvas);
         drawPitchSticks(canvas);
-        drawLocalPitchPivot(canvas);
+        drawLocalPitchIndicator(canvas);
     }
-    //</editor-fold>
 
-    //<editor-fold desc="Draw Related">
+    protected Bitmap mCustomizedLocalPitchIndicator;
 
-    private Bitmap mCustomizedLocalPitchPivot;
-
-    public void setLocalPitchPivot(Bitmap bitmap) {
+    public void setLocalPitchIndicator(Bitmap bitmap) {
         if (bitmap == null) {
-            if (mCustomizedLocalPitchPivot != null) {
-                mCustomizedLocalPitchPivot.recycle();
+            if (mCustomizedLocalPitchIndicator != null) {
+                mCustomizedLocalPitchIndicator.recycle();
             }
-            this.mCustomizedLocalPitchPivot = null;
+            this.mCustomizedLocalPitchIndicator = null;
         } else {
-            this.mCustomizedLocalPitchPivot = bitmap;
+            this.mCustomizedLocalPitchIndicator = bitmap;
         }
     }
 
-    private void drawLocalPitchPivot(Canvas canvas) {
-        mLocalPitchLinePaint.setShader(null);
-        mLocalPitchLinePaint.setColor(mLocalPitchPivotColor);
-        mLocalPitchLinePaint.setAntiAlias(true);
-        canvas.drawLine(dotPointX, 0, dotPointX, getHeight(), mLocalPitchLinePaint);
-
-        float value = getYForPitchPivot();
+    protected void drawLocalPitchIndicator(Canvas canvas) {
+        float value = getYForPitchIndicator();
         if (value >= 0) {
-            mLocalPitchPivotPaint.setColor(mLocalPitchPivotColor);
-            mLocalPitchPivotPaint.setStyle(Paint.Style.FILL_AND_STROKE);
-            mLocalPitchPivotPaint.setAntiAlias(true);
+            mLocalPitchIndicatorPaint.setColor(mLocalPitchIndicatorColor);
+            mLocalPitchIndicatorPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+            mLocalPitchIndicatorPaint.setAntiAlias(true);
 
-            if (mCustomizedLocalPitchPivot != null) {
-                int height = mCustomizedLocalPitchPivot.getHeight() / 2;
-                int width = mCustomizedLocalPitchPivot.getWidth() / 2;
-                canvas.drawBitmap(mCustomizedLocalPitchPivot, dotPointX - width, value - height, mLocalPitchPivotPaint);
+            if (mCustomizedLocalPitchIndicator != null) {
+                int height = mCustomizedLocalPitchIndicator.getHeight() / 2;
+                int width = mCustomizedLocalPitchIndicator.getWidth() / 2;
+                canvas.drawBitmap(mCustomizedLocalPitchIndicator, mCenterXOfStartPoint - width, value - height, mLocalPitchIndicatorPaint);
             } else {
+                mLocalPitchIndicatorPaint.setPathEffect(mLocalPitchEffect);
                 Path path = new Path();
-                path.moveTo(dotPointX, value);
-                path.lineTo(dotPointX - mLocalPitchIndicatorRadius, value - mLocalPitchIndicatorRadius);
-                path.lineTo(dotPointX - mLocalPitchIndicatorRadius, value + mLocalPitchIndicatorRadius);
+                path.moveTo(mCenterXOfStartPoint, value);
+                path.lineTo(mCenterXOfStartPoint - mLocalPitchIndicatorRadius, value - mLocalPitchIndicatorRadius * 2 / 3);
+                path.lineTo(mCenterXOfStartPoint - mLocalPitchIndicatorRadius, value + mLocalPitchIndicatorRadius * 2 / 3);
                 path.close();
-                canvas.drawPath(path, mLocalPitchPivotPaint);
+                canvas.drawPath(path, mLocalPitchIndicatorPaint);
             }
         }
     }
 
-    private float getYForPitchPivot() {
+    protected float getYForPitchIndicator() {
         float targetY = 0;
 
-        if (ifNotInitialized()) { // Not initialized
+        if (ifNotInitializedOrNoLyrics()) { // Not initialized
             targetY = getHeight() - this.mLocalPitchIndicatorRadius;
         } else if (this.mLocalPitch >= this.mScoringMachine.getMinimumRefPitch() && this.mScoringMachine.getMaximumRefPitch() != 0) { // Has value, not the default case
             float realPitchMax = this.mScoringMachine.getMaximumRefPitch() + 5;
@@ -385,27 +379,41 @@ public class ScoringView extends View {
         return targetY;
     }
 
-    private void drawStartLine(Canvas canvas) {
-        mLinearGradientPaint.setShader(null);
-        mLinearGradientPaint.setShader(mOverpastLinearGradient);
-        mLinearGradientPaint.setAntiAlias(true);
-        canvas.drawRect(0, 0, dotPointX, getHeight(), mLinearGradientPaint);
+    protected void drawOverpastWallAndStartLine(Canvas canvas) {
+        drawOverpastWall(canvas);
 
         if (DEBUG) {
-            canvas.drawText("" + this.mScoringMachine.toString() + ", y: " + (int) (getYForPitchPivot()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mHighlightPitchStickLinearGradientPaint);
+            canvas.drawText("" + this.mScoringMachine.toString() + ", y: " + (int) (getYForPitchIndicator()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mHighlightPitchStickPaint);
         }
+
+        drawStartLine(canvas);
+    }
+
+    protected final void drawOverpastWall(Canvas canvas) {
+        mOverpastLinearGradientPaint.setShader(null);
+        mOverpastLinearGradientPaint.setShader(mOverpastLinearGradient);
+        mOverpastLinearGradientPaint.setAntiAlias(true);
+        canvas.drawRect(0, 0, mCenterXOfStartPoint, getHeight(), mOverpastLinearGradientPaint);
+    }
+
+    protected final void drawStartLine(Canvas canvas) {
+        mStartLinePaint.setShader(null);
+        mStartLinePaint.setColor(mLocalPitchIndicatorColor);
+        mStartLinePaint.setAntiAlias(true);
+        mStartLinePaint.setStrokeWidth(3);
+        canvas.drawLine(mCenterXOfStartPoint, 0, mCenterXOfStartPoint, getHeight(), mStartLinePaint);
     }
 
     private void drawPitchSticks(Canvas canvas) {
-        mPitchStickLinearGradientPaint.setShader(null);
-        mPitchStickLinearGradientPaint.setColor(mDefaultRefPitchStickColor);
-        mPitchStickLinearGradientPaint.setAntiAlias(true);
+        mPitchStickPaint.setShader(null);
+        mPitchStickPaint.setColor(mDefaultRefPitchStickColor);
+        mPitchStickPaint.setAntiAlias(true);
 
-        mHighlightPitchStickLinearGradientPaint.setShader(null);
-        mHighlightPitchStickLinearGradientPaint.setColor(mHighlightPitchStickColor);
-        mHighlightPitchStickLinearGradientPaint.setAntiAlias(true);
+        mHighlightPitchStickPaint.setShader(null);
+        mHighlightPitchStickPaint.setColor(mHighlightPitchStickColor);
+        mHighlightPitchStickPaint.setAntiAlias(true);
 
-        if (ifNotInitialized()) {
+        if (ifNotInitializedOrNoLyrics()) {
             return;
         }
 
@@ -441,16 +449,16 @@ public class ScoringView extends View {
                 // stop the current animation now
                 long nextEntryStartTime = mLyricsModel.lines.get(i + 1).getStartTime();
                 if ((nextEntryStartTime - line.getEndTime() >= 2 * 1000) && this.mScoringMachine.getCurrentProgress() > line.getEndTime() && this.mScoringMachine.getCurrentProgress() < nextEntryStartTime) { // Two seconds after this entry stop
-                    assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
+                    assureAnimationForPitchIndicator(0); // Force stop the animation when there is a too long stop between two entrys
                     if (mTimestampForLastAnimationDecrease < 0 || this.mScoringMachine.getCurrentProgress() - mTimestampForLastAnimationDecrease > 4 * 1000) {
-                        ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
+                        ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch indicator
                         mTimestampForLastAnimationDecrease = this.mScoringMachine.getCurrentProgress();
                     }
                 }
             }
 
             float pixelsAwayFromPilot = (startTime - this.mScoringMachine.getCurrentProgress()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
-            float x = dotPointX + pixelsAwayFromPilot;
+            float x = mCenterXOfStartPoint + pixelsAwayFromPilot;
 
             if (endTimeOfPreviousLine != 0) { // If has empty divider before
                 // Not used so far
@@ -468,7 +476,7 @@ public class ScoringView extends View {
                 LyricsLineModel.Tone tone = tones.get(toneIndex);
 
                 pixelsAwayFromPilot = (tone.begin - this.mScoringMachine.getCurrentProgress()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
-                x = dotPointX + pixelsAwayFromPilot;
+                x = mCenterXOfStartPoint + pixelsAwayFromPilot;
                 widthOfPitchStick = mMovingPixelsPerMs * tone.getDuration();
                 float endX = x + widthOfPitchStick;
 
@@ -483,17 +491,17 @@ public class ScoringView extends View {
 
                 y = (realPitchMax - tone.pitch) * mItemHeightPerPitchLevel;
 
-                if (Math.abs(x - dotPointX) <= 2 * mLocalPitchIndicatorRadius || Math.abs(endX - dotPointX) <= 2 * mLocalPitchIndicatorRadius) { // Only mark item around local pitch pivot
+                if (Math.abs(x - mCenterXOfStartPoint) <= 2 * mLocalPitchIndicatorRadius || Math.abs(endX - mCenterXOfStartPoint) <= 2 * mLocalPitchIndicatorRadius) { // Only mark item around local pitch indicator
                     boolean isJustHighlightTriggered = (!tone.highlight) && mInHighlightStatus;
-                    if (isJustHighlightTriggered && Math.abs(x - dotPointX) <= 400 * mMovingPixelsPerMs) {
-                        tone.highlightOffset = Math.abs(dotPointX - x);
+                    if (isJustHighlightTriggered && Math.abs(x - mCenterXOfStartPoint) <= 400 * mMovingPixelsPerMs) {
+                        tone.highlightOffset = Math.abs(mCenterXOfStartPoint - x);
                         if (tone.highlightOffset >= widthOfPitchStick) {
                             tone.highlightOffset = 0.5f * widthOfPitchStick;
                         }
                     }
                     boolean isJustDeHighlightTriggered = (tone.highlight) && !mInHighlightStatus;
                     if (isJustDeHighlightTriggered && tone.highlightWidth < 0) {
-                        tone.highlightWidth = Math.abs(dotPointX - x - tone.highlightOffset);
+                        tone.highlightWidth = Math.abs(mCenterXOfStartPoint - x - tone.highlightOffset);
                         if (tone.highlightWidth >= widthOfPitchStick) {
                             tone.highlightWidth = 0.5f * widthOfPitchStick;
                         }
@@ -507,37 +515,37 @@ public class ScoringView extends View {
                         tones.get(0).highlight = true;
                     }
 
-                    if (x >= dotPointX) {
+                    if (x >= mCenterXOfStartPoint) {
                         RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
-                        canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
-                    } else if (x < dotPointX && endX > dotPointX) {
-                        RectF rNormalRightHalf = buildRectF(dotPointX, y, endX, y + mPitchStickHeight);
-                        canvas.drawRoundRect(rNormalRightHalf, 8, 8, mPitchStickLinearGradientPaint);
+                        canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
+                    } else if (x < mCenterXOfStartPoint && endX > mCenterXOfStartPoint) {
+                        RectF rNormalRightHalf = buildRectF(mCenterXOfStartPoint, y, endX, y + mPitchStickHeight);
+                        canvas.drawRoundRect(rNormalRightHalf, 8, 8, mPitchStickPaint);
 
-                        RectF rNormalLeftHalf = buildRectF(x, y, dotPointX, y + mPitchStickHeight);
-                        canvas.drawRoundRect(rNormalLeftHalf, 8, 8, mPitchStickLinearGradientPaint);
+                        RectF rNormalLeftHalf = buildRectF(x, y, mCenterXOfStartPoint, y + mPitchStickHeight);
+                        canvas.drawRoundRect(rNormalLeftHalf, 8, 8, mPitchStickPaint);
 
                         if (tone.highlightOffset >= 0) { // Partially draw
                             float highlightStartX = x + tone.highlightOffset;
-                            float highlightEndX = dotPointX;
+                            float highlightEndX = mCenterXOfStartPoint;
                             if (tone.highlightWidth >= 0) {
                                 highlightEndX = x + tone.highlightOffset + tone.highlightWidth;
-                                if (highlightEndX > dotPointX) {
-                                    highlightEndX = dotPointX;
+                                if (highlightEndX > mCenterXOfStartPoint) {
+                                    highlightEndX = mCenterXOfStartPoint;
                                 }
                             }
 
                             RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
-                            if (tone.highlightOffset <= 0 || highlightEndX == dotPointX) {
-                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
+                            if (tone.highlightOffset <= 0 || highlightEndX == mCenterXOfStartPoint) {
+                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickPaint);
                             } else {
                                 // Should be drawRect
-                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
+                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickPaint);
                             }
                         }
-                    } else if (endX <= dotPointX) {
+                    } else if (endX <= mCenterXOfStartPoint) {
                         RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
-                        canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
+                        canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
 
                         if (tone.highlightOffset >= 0) { // Partially draw
                             float highlightStartX = x + tone.highlightOffset;
@@ -548,22 +556,22 @@ public class ScoringView extends View {
 
                             RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
                             if (tone.highlightOffset <= 0 && tone.highlightWidth <= 0 || highlightEndX == endX) {
-                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
+                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickPaint);
                             } else {
                                 // Should be drawRect
-                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickLinearGradientPaint);
+                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickPaint);
                             }
                         }
                     }
                     fineTuneTheHighlightAnimation(endX);
                 } else {
                     RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
-                    canvas.drawRoundRect(rNormal, 8, 8, mPitchStickLinearGradientPaint);
+                    canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
                     if (DEBUG) {
-                        mHighlightPitchStickLinearGradientPaint.setTextSize(28);
-                        canvas.drawText(tone.word, x, 30, mHighlightPitchStickLinearGradientPaint);
-                        canvas.drawText((int) (x) + "", x, 60, mHighlightPitchStickLinearGradientPaint);
-                        canvas.drawText((int) (endX) + "", x, 90, mHighlightPitchStickLinearGradientPaint);
+                        mHighlightPitchStickPaint.setTextSize(28);
+                        canvas.drawText(tone.word, x, 30, mHighlightPitchStickPaint);
+                        canvas.drawText((int) (x) + "", x, 60, mHighlightPitchStickPaint);
+                        canvas.drawText((int) (endX) + "", x, 90, mHighlightPitchStickPaint);
                     }
                 }
 
@@ -579,18 +587,18 @@ public class ScoringView extends View {
         if (!mEnableParticleEffect) {
             return;
         }
-        if (endX > dotPointX) { // Animation Enhancement, If still to far from end, just keep the animation ongoing and update the coordinate
-            float value = getYForPitchPivot();
+        if (endX > mCenterXOfStartPoint) { // Animation Enhancement, If still to far from end, just keep the animation ongoing and update the coordinate
+            float value = getYForPitchIndicator();
             // It works with an emision range
             int[] location = new int[2];
             this.getLocationInWindow(location);
             if (mEmittingInitialized && mParticleSystem != null) {
-                mParticleSystem.updateEmitPoint((int) (location[0] + dotPointX), location[1] + (int) (value));
+                mParticleSystem.updateEmitPoint((int) (location[0] + mCenterXOfStartPoint), location[1] + (int) (value));
             }
         }
     }
 
-    private volatile float mLocalPitch = 0.0F;
+    protected volatile float mLocalPitch = 0.0F;
 
     private long mTimestampForLastAnimationDecrease = -1;
 
@@ -600,9 +608,9 @@ public class ScoringView extends View {
 
     private long mLastViewInvalidateTs;
 
-    private ScoringMachine mScoringMachine;
+    protected ScoringMachine mScoringMachine;
 
-    private LyricsModel mLyricsModel;
+    protected LyricsModel mLyricsModel;
 
     public void attachToScoringMachine(ScoringMachine machine) {
         if (!machine.isReady()) {
@@ -642,22 +650,22 @@ public class ScoringView extends View {
     private final Runnable mRemoveAnimationCallback = new Runnable() {
         @Override
         public void run() {
-            assureAnimationForPitchPivot(0); // Force stop the animation when there is a too long stop between two entrys
-            ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch pivot
+            assureAnimationForPitchIndicator(0); // Force stop the animation when there is a too long stop between two entrys
+            ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch indicator
         }
     };
 
-    private boolean ifNotInitialized() {
+    protected final boolean ifNotInitializedOrNoLyrics() {
         return mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty();
     }
 
     public void updatePitchAndScore(final float pitch, final double scoreAfterNormalization, final boolean betweenCurrentPitch) {
-        if (ifNotInitialized()) {
+        if (ifNotInitializedOrNoLyrics()) {
             return;
         }
 
         if (pitch == 0 || pitch < this.mScoringMachine.getMinimumRefPitch() || pitch > this.mScoringMachine.getMaximumRefPitch()) {
-            assureAnimationForPitchPivot(0);
+            assureAnimationForPitchIndicator(0);
             mHandler.postDelayed(mRemoveAnimationCallback, mThresholdOfOffPitchTime);
             return;
         }
@@ -668,26 +676,26 @@ public class ScoringView extends View {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    performPivotAnimationIfNecessary(pitch, scoreAfterNormalization);
+                    performIndicatorAnimationIfNecessary(pitch, scoreAfterNormalization);
                 }
             });
         } else {
-            performPivotAnimationIfNecessary(pitch, scoreAfterNormalization);
+            performIndicatorAnimationIfNecessary(pitch, scoreAfterNormalization);
         }
     }
 
     private long lastCurrentTs = 0;
 
-    private void performPivotAnimationIfNecessary(float pitch, double scoreAfterNormalization) {
+    private void performIndicatorAnimationIfNecessary(float pitch, double scoreAfterNormalization) {
         if (System.currentTimeMillis() - lastCurrentTs > 200) {
             int duration = (ScoringView.this.mLocalPitch == 0 && pitch > 0) ? 20 : 80;
             ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, pitch).setDuration(duration).start();
             lastCurrentTs = System.currentTimeMillis();
-            assureAnimationForPitchPivot(scoreAfterNormalization);
+            assureAnimationForPitchIndicator(scoreAfterNormalization);
         }
     }
 
-    private void assureAnimationForPitchPivot(double scoreAfterNormalization) {
+    private void assureAnimationForPitchIndicator(double scoreAfterNormalization) {
         if (!mEnableParticleEffect) {
             return;
         }
@@ -695,15 +703,15 @@ public class ScoringView extends View {
         // Animation for particle
         if (scoreAfterNormalization >= mThresholdOfHitScore) {
             if (mParticleSystem != null) {
-                float value = getYForPitchPivot();
+                float value = getYForPitchIndicator();
                 // It works with an emision range
                 int[] location = new int[2];
                 this.getLocationInWindow(location);
                 if (!mEmittingInitialized) {
                     mEmittingInitialized = true;
-                    mParticleSystem.emit((int) (location[0] + dotPointX), location[1] + (int) (value), mParticlesPerSecond);
+                    mParticleSystem.emit((int) (location[0] + mCenterXOfStartPoint), location[1] + (int) (value), mParticlesPerSecond);
                 } else {
-                    mParticleSystem.updateEmitPoint((int) (location[0] + dotPointX), location[1] + (int) (value));
+                    mParticleSystem.updateEmitPoint((int) (location[0] + mCenterXOfStartPoint), location[1] + (int) (value));
                 }
                 mParticleSystem.resumeEmitting();
             }
@@ -716,26 +724,26 @@ public class ScoringView extends View {
         }
     }
 
-    public void forceStopPivotAnimationWhenReachingContinuousZeros() {
+    public void forceStopIndicatorAnimationWhenReachingContinuousZeros() {
         mInHighlightStatus = false;
         if (this.mLocalPitch != 0) {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
-                    ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
+                    assureAnimationForPitchIndicator(0); // Force stop the animation when reach 8 continuous zeros
+                    ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch indicator
                 }
             });
         }
     }
 
-    public void forceStopPivotAnimationWhenFullLineFinished(double score) {
+    public void forceStopIndicatorAnimationWhenFullLineFinished(double score) {
         if (score == 0 && this.mLocalPitch != 0) {
             mInHighlightStatus = false;
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch pivot
+                    ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch indicator
                 }
             });
         }
@@ -743,7 +751,7 @@ public class ScoringView extends View {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                assureAnimationForPitchPivot(0); // Force stop the animation when line just finished
+                assureAnimationForPitchIndicator(0); // Force stop the animation when line just finished
             }
         });
     }
@@ -756,8 +764,8 @@ public class ScoringView extends View {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                assureAnimationForPitchPivot(0); // Force stop the animation when reach 8 continuous zeros
-                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch pivot
+                assureAnimationForPitchIndicator(0); // Force stop the animation when reach 8 continuous zeros
+                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch indicator
                 invalidateForSureAndMarkTheTimestamp();
             }
         });

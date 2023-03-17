@@ -270,13 +270,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         boolean particleEffectOn = prefs.getBoolean(getString(R.string.prefs_key_particle_effect_switch), true);
         binding.scoringView.enableParticleEffect(particleEffectOn);
 
-        boolean customizedPivotAndParticleOn = prefs.getBoolean(getString(R.string.prefs_key_customized_pivot_and_particle_switch), false);
-        if (customizedPivotAndParticleOn) {
-            Bitmap bitmap = drawableToBitmap(getDrawable(R.drawable.pitch_pivot));
-            binding.scoringView.setLocalPitchPivot(bitmap);
+        boolean customizedIndicatorAndParticleOn = prefs.getBoolean(getString(R.string.prefs_key_customized_indicator_and_particle_switch), false);
+        if (customizedIndicatorAndParticleOn) {
+            Bitmap bitmap = drawableToBitmap(getDrawable(R.drawable.pitch_indicator));
+            binding.scoringView.setLocalPitchIndicator(bitmap);
             setParticles(false);
         } else {
-            binding.scoringView.setLocalPitchPivot(null);
+            binding.scoringView.setLocalPitchIndicator(null);
             setParticles(true);
         }
     }
@@ -288,7 +288,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (defaultOrCustomized) {
                     binding.scoringView.setParticles(null);
                 } else {
-                    Drawable[] drawables = new Drawable[]{getDrawable(R.drawable.pitch_pivot), getDrawable(R.drawable.pitch_pivot_yellow), getDrawable(R.drawable.ic_launcher_background), getDrawable(R.drawable.star7), getDrawable(R.drawable.star8)};
+                    Drawable[] drawables = new Drawable[]{getDrawable(R.drawable.pitch_indicator), getDrawable(R.drawable.pitch_indicator_yellow), getDrawable(R.drawable.ic_launcher_background), getDrawable(R.drawable.star7), getDrawable(R.drawable.star8)};
                     binding.scoringView.setParticles(drawables);
                 }
             }
@@ -467,8 +467,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     long lastPosition = mLyricsCurrentProgress;
                     mKaraokeView.setProgress(mLyricsCurrentProgress);
                     mKaraokeView.setPitch(0);
-                    Log.d(PLAYER_TAG, "put the pivot back in space");
-                    // Put the pivot back in space
+                    Log.d(PLAYER_TAG, "put the indicator back in space");
+                    // Put the indicator back in space
                 } else if (mLyricsCurrentProgress >= (DURATION_OF_SONG + 1000)) {
                     if (mFuture != null) {
                         mFuture.cancel(true);
