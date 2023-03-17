@@ -36,7 +36,7 @@ android {
 
 dependencies {
     implementation project(':karaoke_view')
-//  implementation 'com.github.AgoraIO-Community:LyricsView:1.1.1-beta.2'
+//  implementation 'com.github.AgoraIO-Community:LyricsView:1.1.1-beta.4'
 
     api 'com.github.guohai:Leonids:9f5a9190f6'
 
