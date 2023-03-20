@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         binding.switchToNext.setOnClickListener(this);
         binding.play.setOnClickListener(this);
+        binding.pause.setOnClickListener(this);
         binding.skipTheIntro.setOnClickListener(this);
         binding.settings.setOnClickListener(this);
 
@@ -435,10 +436,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private ScheduledFuture mFuture;
 
+    private Player_State mState = Player_State.Uninitialized;
+
+    private enum Player_State {
+        Uninitialized(-1),
+        Idle(0),
+        Playing(1),
+        Pause(2);
+
+        private int state;
+
+        private Player_State(int def) {
+            this.state = def;
+        }
+
+        public int getState() {
+            return state;
+        }
+    }
+
     private void doMockPlay() {
         if (mLyricsModel == null) {
             Toast.makeText(getBaseContext(), "Not READY for Play, please switch again", Toast.LENGTH_LONG).show();
             mLyricsCurrentProgress = 0;
+            mState = Player_State.Uninitialized;
             mKaraokeView.setProgress(0);
             mKaraokeView.setPitch(0);
             if (mFuture != null) {
@@ -449,6 +470,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         final long DURATION_OF_SONG = mLyricsModel.lines.get(mLyricsModel.lines.size() - 1).getEndTime();
         mLyricsCurrentProgress = 0;
+        mState = Player_State.Idle;
         mKaraokeView.reset();
         mKaraokeView.setLyricsData(mLyricsModel);
         final String PLAYER_TAG = TAG + "_MockPlayer";
@@ -460,6 +482,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mFuture = mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
+                if (mState == Player_State.Pause) { // mock player pausing
+                    return;
+                }
+
                 if (mLyricsCurrentProgress >= 0 && mLyricsCurrentProgress < DURATION_OF_SONG) {
                     mKaraokeView.setProgress(mLyricsCurrentProgress); // zero for first time
                     Log.d(PLAYER_TAG, "timer mCurrentPosition: " + mLyricsCurrentProgress + " " + Thread.currentThread());
@@ -474,6 +500,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         mFuture.cancel(true);
                     }
                     mLyricsCurrentProgress = 0;
+                    mState = Player_State.Idle;
                     mKaraokeView.reset();
                     Log.d(PLAYER_TAG, "quit");
                     return;
@@ -488,6 +515,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
             }
         }, 0, 20, TimeUnit.MILLISECONDS);
+
+        mState = Player_State.Playing;
     }
 
     private void forwardToSettings() {
@@ -500,13 +529,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Toast.makeText(getBaseContext(), "Not READY for SKIP INTRO, please Play first or no lyrics content", Toast.LENGTH_LONG).show();
             return;
         }
-        mLyricsCurrentProgress = mLyricsModel.startOfVerse - 500; // Jump to slight earlier
+        mLyricsCurrentProgress = mLyricsModel.startOfVerse - 1000; // Jump to slight earlier
+        mState = Player_State.Playing;
+    }
+
+    private void doMockPause() {
+        if (mState == Player_State.Playing) {
+            mState = Player_State.Pause;
+        } else if (mState == Player_State.Pause) {
+            mState = Player_State.Playing;
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         mLyricsCurrentProgress = 0;
+        mState = Player_State.Uninitialized;
+
         if (mKaraokeView != null) {
             mKaraokeView.setProgress(0);
             mKaraokeView.setPitch(0);
@@ -525,11 +565,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.switch_to_next:
                 updateCallback("Next");
                 mLyricsCurrentProgress = 0; // Replay if already playing
+                mState = Player_State.Playing;
                 doClearCacheAndLoadTheLyrics();
                 break;
             case R.id.play:
                 updateCallback("Play");
                 doMockPlay();
+                break;
+            case R.id.pause:
+                if (mState != Player_State.Playing && mState != Player_State.Pause) {
+                    return;
+                }
+                updateCallback("Pause");
+                doMockPause();
                 break;
             case R.id.skip_the_intro:
                 updateCallback("Skip Intro");

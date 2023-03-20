@@ -30,7 +30,7 @@
         <attr name="movingPixelsPerMs" format="float" />
         <attr name="hitScoreThreshold" format="float" />
         <attr name="startPointHorizontalBias" format="float" />
-        <attr name="offPitchTimeThreshold" format="integer" />
+        <attr name="offProgressTimeThreshold" format="integer" />
         <attr name="enableParticleEffect" format="boolean" />
     </declare-styleable>
 </resources>

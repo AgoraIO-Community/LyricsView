@@ -79,7 +79,7 @@ public class ScoringView extends View {
 
     private boolean mEnableParticleEffect;
 
-    private long mThresholdOfOffPitchTime;
+    private long mThresholdOfOffProgressTime;
 
     //<editor-fold desc="Init Related">
     public ScoringView(Context context) {
@@ -107,7 +107,7 @@ public class ScoringView extends View {
         }
         this.mDefaultRefPitchStickColor = color;
 
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     public void setHighlightRefPitchStickColor(int color) {
@@ -116,7 +116,7 @@ public class ScoringView extends View {
         }
         this.mHighlightPitchStickColor = color;
 
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     public void setRefPitchStickHeight(float height) {
@@ -159,10 +159,10 @@ public class ScoringView extends View {
             throw new IllegalArgumentException("Invalid value for mStartPointHorizontalBias, must > 0 and <= 1, current is " + mStartPointHorizontalBias);
         }
 
-        mThresholdOfOffPitchTime = ta.getInt(R.styleable.ScoringView_offPitchTimeThreshold, 1000);
+        mThresholdOfOffProgressTime = ta.getInt(R.styleable.ScoringView_offProgressTimeThreshold, 1000);
 
-        if (mThresholdOfOffPitchTime <= 0 || mThresholdOfOffPitchTime > 5000f) {
-            throw new IllegalArgumentException("Invalid value for offPitchTimeThreshold(time of off pitch), must > 0 and <= 5000, current is " + mThresholdOfOffPitchTime);
+        if (mThresholdOfOffProgressTime <= 0 || mThresholdOfOffProgressTime > 5000f) {
+            throw new IllegalArgumentException("Invalid value for offProgressTimeThreshold(time of off/no progress), must > 0 and <= 5000, current is " + mThresholdOfOffProgressTime);
         }
 
         ta.recycle();
@@ -189,7 +189,7 @@ public class ScoringView extends View {
             int endColor = getResources().getColor(R.color.pitch_end);
             mOverpastLinearGradient = new LinearGradient(mCenterXOfStartPoint, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
 
-            tryInvalidate();
+            performInvalidateIfNecessary();
 
             tryEnableParticleEffect();
         }
@@ -359,7 +359,7 @@ public class ScoringView extends View {
     protected float getYForPitchIndicator() {
         float targetY = 0;
 
-        if (ifNotInitializedOrNoLyrics()) { // Not initialized
+        if (uninitializedOrNoLyrics()) { // Not initialized
             targetY = getHeight() - this.mLocalPitchIndicatorRadius;
         } else if (this.mLocalPitch >= this.mScoringMachine.getMinimumRefPitch() && this.mScoringMachine.getMaximumRefPitch() != 0) { // Has value, not the default case
             float realPitchMax = this.mScoringMachine.getMaximumRefPitch() + 5;
@@ -413,7 +413,7 @@ public class ScoringView extends View {
         mHighlightPitchStickPaint.setColor(mHighlightPitchStickColor);
         mHighlightPitchStickPaint.setAntiAlias(true);
 
-        if (ifNotInitializedOrNoLyrics()) {
+        if (uninitializedOrNoLyrics()) {
             return;
         }
 
@@ -449,7 +449,7 @@ public class ScoringView extends View {
                 // stop the current animation now
                 long nextEntryStartTime = mLyricsModel.lines.get(i + 1).getStartTime();
                 if ((nextEntryStartTime - line.getEndTime() >= 2 * 1000) && this.mScoringMachine.getCurrentProgress() > line.getEndTime() && this.mScoringMachine.getCurrentProgress() < nextEntryStartTime) { // Two seconds after this entry stop
-                    assureAnimationForPitchIndicator(0); // Force stop the animation when there is a too long stop between two entrys
+                    assureAnimationForPitchIndicator(0); // Force stop the animation when there is a too long stop between two lines
                     if (mTimestampForLastAnimationDecrease < 0 || this.mScoringMachine.getCurrentProgress() - mTimestampForLastAnimationDecrease > 4 * 1000) {
                         ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch indicator
                         mTimestampForLastAnimationDecrease = this.mScoringMachine.getCurrentProgress();
@@ -563,7 +563,7 @@ public class ScoringView extends View {
                             }
                         }
                     }
-                    fineTuneTheHighlightAnimation(endX);
+                    tweakTheHighlightAnimation(endX);
                 } else {
                     RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
                     canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
@@ -583,7 +583,7 @@ public class ScoringView extends View {
 
     private volatile boolean mEmittingInitialized = false;
 
-    private void fineTuneTheHighlightAnimation(float endX) {
+    private void tweakTheHighlightAnimation(float endX) {
         if (!mEnableParticleEffect) {
             return;
         }
@@ -612,7 +612,7 @@ public class ScoringView extends View {
 
     protected LyricsModel mLyricsModel;
 
-    public void attachToScoringMachine(ScoringMachine machine) {
+    public final void attachToScoringMachine(ScoringMachine machine) {
         if (!machine.isReady()) {
             throw new IllegalStateException("Must call ScoringMachine.prepare before attaching");
         }
@@ -623,11 +623,18 @@ public class ScoringView extends View {
         this.mScoringMachine.setInitialScore(mInitialScore);
     }
 
-    public void requestRefreshUi() {
-        tryInvalidate();
+    public final void requestRefreshUi() {
+        if (mScoringMachine == null) {
+            return;
+        }
+
+        mHandler.removeCallbacks(mRemoveNoPitchAnimationCallback);
+        mHandler.postDelayed(mRemoveNoPitchAnimationCallback, mThresholdOfOffProgressTime);
+
+        performInvalidateIfNecessary();
     }
 
-    private void tryInvalidate() {
+    private void performInvalidateIfNecessary() {
         long delta = System.currentTimeMillis() - mLastViewInvalidateTs;
         if (delta <= 16) {
             return;
@@ -647,30 +654,34 @@ public class ScoringView extends View {
         mLastViewInvalidateTs = System.currentTimeMillis();
     }
 
-    private final Runnable mRemoveAnimationCallback = new Runnable() {
+    private final Runnable mRemoveNoPitchAnimationCallback = new Runnable() { // No pitch
         @Override
         public void run() {
-            assureAnimationForPitchIndicator(0); // Force stop the animation when there is a too long stop between two entrys
-            ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch indicator
+            assureAnimationForPitchIndicator(0); // Force stop the animation when there is no pitch
+            int duration = 600;
+            ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(duration).start(); // Decrease the local pitch indicator
+
+            int tryN = 20;
+            while (tryN-- > 0) { // Workaround: when no `setProgress` any more, start self-triggering
+                postInvalidateDelayed((20 - tryN) * (duration / 20L));
+            }
         }
     };
 
-    protected final boolean ifNotInitializedOrNoLyrics() {
+    protected final boolean uninitializedOrNoLyrics() {
         return mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty();
     }
 
-    public void updatePitchAndScore(final float pitch, final double scoreAfterNormalization, final boolean betweenCurrentPitch) {
-        if (ifNotInitializedOrNoLyrics()) {
+    public final void updatePitchAndScore(final float pitch, final double scoreAfterNormalization, final boolean betweenCurrentPitch) {
+        if (uninitializedOrNoLyrics()) {
             return;
         }
 
-        if (pitch == 0 || pitch < this.mScoringMachine.getMinimumRefPitch() || pitch > this.mScoringMachine.getMaximumRefPitch()) {
-            assureAnimationForPitchIndicator(0);
-            mHandler.postDelayed(mRemoveAnimationCallback, mThresholdOfOffPitchTime);
+        if (pitch <= 0 || pitch < this.mScoringMachine.getMinimumRefPitch() || pitch > this.mScoringMachine.getMaximumRefPitch()) {
+            // Actually no pitch <= 0 comes here
+            assureAnimationForPitchIndicator(0); // When invalid pitches coming, we just stop animation
             return;
         }
-
-        mHandler.removeCallbacks(mRemoveAnimationCallback);
 
         if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
             mHandler.post(new Runnable() {
@@ -695,7 +706,9 @@ public class ScoringView extends View {
         }
     }
 
-    private void assureAnimationForPitchIndicator(double scoreAfterNormalization) {
+    protected final void assureAnimationForPitchIndicator(double scoreAfterNormalization) {
+        // Be very careful if you wanna add condition case
+        // Should not related with lyrics or other status
         if (!mEnableParticleEffect) {
             return;
         }
@@ -724,20 +737,20 @@ public class ScoringView extends View {
         }
     }
 
-    public void forceStopIndicatorAnimationWhenReachingContinuousZeros() {
+    public final void forceStopIndicatorAnimationWhenReachingContinuousZeros() {
         mInHighlightStatus = false;
         if (this.mLocalPitch != 0) {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    assureAnimationForPitchIndicator(0); // Force stop the animation when reach 8 continuous zeros
+                    assureAnimationForPitchIndicator(0); // Force stop the animation when reaching continuous zeros
                     ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch indicator
                 }
             });
         }
     }
 
-    public void forceStopIndicatorAnimationWhenFullLineFinished(double score) {
+    public final void forceStopIndicatorAnimationWhenFullLineFinished(double score) {
         if (score == 0 && this.mLocalPitch != 0) {
             mInHighlightStatus = false;
             mHandler.post(new Runnable() {
@@ -764,8 +777,8 @@ public class ScoringView extends View {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                assureAnimationForPitchIndicator(0); // Force stop the animation when reach 8 continuous zeros
-                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch indicator
+                assureAnimationForPitchIndicator(0); // Force stop the animation when resetting
+                ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", 0.0f).setDuration(10).start(); // Decrease the local pitch indicator
                 invalidateForSureAndMarkTheTimestamp();
             }
         });

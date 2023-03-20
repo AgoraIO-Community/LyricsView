@@ -106,7 +106,7 @@ public class LyricsView extends View {
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             mOffset += -distanceY;
-            tryInvalidate();
+            performInvalidateIfNecessary();
             return true;
         }
     };
@@ -248,7 +248,7 @@ public class LyricsView extends View {
 
         mPastTextColor = color;
 
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     public void setUpcomingTextColor(@ColorInt int color) {
@@ -258,7 +258,7 @@ public class LyricsView extends View {
 
         mUpcomingTextColor = color;
 
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     /**
@@ -267,7 +267,7 @@ public class LyricsView extends View {
     public void setDefaultTextSize(float size) {
         mDefaultTextSize = size;
         mNewLine = true;
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     /**
@@ -276,7 +276,7 @@ public class LyricsView extends View {
     public void setCurrentTextSize(float size) {
         mCurrentTextSize = size;
         mNewLine = true;
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     /**
@@ -289,7 +289,7 @@ public class LyricsView extends View {
         mCurrentLineTextColor = color;
         mPaintBG.setColor(mCurrentLineTextColor);
         mNewLine = true;
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     /**
@@ -302,7 +302,7 @@ public class LyricsView extends View {
         mCurrentHighlightedTextColor = color;
         mPaintFG.setColor(mCurrentHighlightedTextColor);
         mNewLine = true;
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     /**
@@ -310,7 +310,7 @@ public class LyricsView extends View {
      */
     public void setLabelShownWhenNoLyrics(String label) {
         mNoLyricsLabel = label;
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     public void setLabelShownWhenNoLyricsTextSize(float size) {
@@ -370,7 +370,7 @@ public class LyricsView extends View {
 
         if (!hasLrc()) {
             if ((mCurrentTime / 1000) % 2 == 0) {
-                tryInvalidate();
+                performInvalidateIfNecessary();
             }
             return;
         }
@@ -381,7 +381,7 @@ public class LyricsView extends View {
             mCurrentLine = line;
         }
 
-        tryInvalidate();
+        performInvalidateIfNecessary();
     }
 
     @Override
@@ -422,7 +422,7 @@ public class LyricsView extends View {
             mRectDst.right = getPaddingStart() + getLrcWidth();
             mRectDst.bottom = getPaddingTop() + getLrcHeight();
 
-            tryInvalidate();
+            performInvalidateIfNecessary();
         }
     }
 
@@ -749,7 +749,7 @@ public class LyricsView extends View {
 
     private long mLastViewInvalidateTs;
 
-    private void tryInvalidate() {
+    private void performInvalidateIfNecessary() {
         long delta = System.currentTimeMillis() - mLastViewInvalidateTs;
         if (delta <= 16) {
             return;
