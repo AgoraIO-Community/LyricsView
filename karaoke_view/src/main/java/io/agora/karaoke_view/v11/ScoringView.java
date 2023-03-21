@@ -70,6 +70,8 @@ public class ScoringView extends View {
 
     protected float mCenterXOfStartPoint = 0f; // centerX of start point(portrait divider), same as local pitch indicator
 
+    protected final Paint mLeadingLinesPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
     protected ParticleSystem mParticleSystem;
     protected int mParticlesPerSecond = 16;
 
@@ -127,6 +129,7 @@ public class ScoringView extends View {
         if (attrs == null) {
             return;
         }
+
         this.mHandler = new Handler(Looper.myLooper());
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.ScoringView);
         mLocalPitchIndicatorRadius = ta.getDimension(R.styleable.ScoringView_pitchIndicatorRadius, getResources().getDimension(R.dimen.local_pitch_indicator_radius));
@@ -151,7 +154,7 @@ public class ScoringView extends View {
 
         mMovingPixelsPerMs = ta.getFloat(R.styleable.ScoringView_movingPixelsPerMs, 0.4F);
         if (mMovingPixelsPerMs <= 0 || mMovingPixelsPerMs > 20f) {
-            throw new IllegalArgumentException("Invalid value for mMovingPixelsPerMs, must > 0 and <= 20, current is " + mThresholdOfHitScore);
+            throw new IllegalArgumentException("Invalid value for mMovingPixelsPerMs, must > 0 and <= 20, current is " + mMovingPixelsPerMs);
         }
 
         mStartPointHorizontalBias = ta.getFloat(R.styleable.ScoringView_startPointHorizontalBias, 0.4f);
@@ -160,7 +163,6 @@ public class ScoringView extends View {
         }
 
         mThresholdOfOffProgressTime = ta.getInt(R.styleable.ScoringView_offProgressTimeThreshold, 1000);
-
         if (mThresholdOfOffProgressTime <= 0 || mThresholdOfOffProgressTime > 5000f) {
             throw new IllegalArgumentException("Invalid value for offProgressTimeThreshold(time of off/no progress), must > 0 and <= 5000, current is " + mThresholdOfOffProgressTime);
         }
@@ -170,6 +172,8 @@ public class ScoringView extends View {
         int startColor = getResources().getColor(R.color.pitch_start);
         int endColor = getResources().getColor(R.color.pitch_end);
         mOverpastLinearGradient = new LinearGradient(mCenterXOfStartPoint, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
+
+        mLeadingLinesPaint.setColor(getResources().getColor(R.color.leading_lines_color));
     }
 
     @Override
@@ -315,6 +319,7 @@ public class ScoringView extends View {
             return;
         }
 
+        drawLeadingLines(canvas);
         drawOverpastWallAndStartLine(canvas);
         drawPitchSticks(canvas);
         drawLocalPitchIndicator(canvas);
@@ -377,6 +382,28 @@ public class ScoringView extends View {
             targetY -= this.mLocalPitchIndicatorRadius;
         }
         return targetY;
+    }
+
+    protected void drawLeadingLines(Canvas canvas) {
+        int height = getHeight();
+        int width = getWidth();
+
+        int heightOfLine0 = height * 0 / 5;
+        int heightOfLine1 = height * 1 / 5;
+        int heightOfLine2 = height * 2 / 5;
+        int heightOfLine3 = height * 3 / 5;
+        int heightOfLine4 = height * 4 / 5;
+        int heightOfLine5 = height * 5 / 5;
+
+        mLeadingLinesPaint.setShader(null);
+        mLeadingLinesPaint.setAntiAlias(true);
+
+        canvas.drawLine(0, heightOfLine0, width, heightOfLine0, mLeadingLinesPaint);
+        canvas.drawLine(0, heightOfLine1, width, heightOfLine1, mLeadingLinesPaint);
+        canvas.drawLine(0, heightOfLine2, width, heightOfLine2, mLeadingLinesPaint);
+        canvas.drawLine(0, heightOfLine3, width, heightOfLine3, mLeadingLinesPaint);
+        canvas.drawLine(0, heightOfLine4, width, heightOfLine4, mLeadingLinesPaint);
+        canvas.drawLine(0, heightOfLine5, width, heightOfLine5, mLeadingLinesPaint);
     }
 
     protected void drawOverpastWallAndStartLine(Canvas canvas) {

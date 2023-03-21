@@ -45,6 +45,11 @@ public class MyScoringView extends ScoringView {
     }
 
     @Override
+    protected void drawLeadingLines(Canvas canvas) {
+        // Disable leading lines
+    }
+
+    @Override
     protected void drawOverpastWallAndStartLine(Canvas canvas) {
         drawOverpastWall(canvas);
 

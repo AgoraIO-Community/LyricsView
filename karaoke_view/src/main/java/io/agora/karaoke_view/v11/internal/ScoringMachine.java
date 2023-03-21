@@ -251,6 +251,7 @@ public class ScoringMachine {
                 // TODO(Hai_Guo) Need to show warning information when this method called not smoothly
             }
         }
+
         this.mCurrentProgress = progress;
         if (progress == 0L) {
             resetStats();
