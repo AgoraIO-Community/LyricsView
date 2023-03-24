@@ -6,13 +6,13 @@ import io.agora.karaoke_view.v11.model.LyricsLineModel;
 
 public interface IScoringAlgorithm {
     /**
-     * normalization score for the pitch
+     * normalized score(0, 1) for the pitch
      *
      * @param currentPitch
      * @param currentRefPitch
      * @return
      */
-    float pitchToScore(float currentPitch, float currentRefPitch);
+    float getPitchScore(float currentPitch, float currentRefPitch);
 
     /**
      * score for the line just finished
@@ -22,7 +22,7 @@ public interface IScoringAlgorithm {
      * @param lineJustFinished
      * @return
      */
-    int calcLineScore(LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished);
+    int getLineScore(LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished);
 
     int getMaximumScoreForLine();
 

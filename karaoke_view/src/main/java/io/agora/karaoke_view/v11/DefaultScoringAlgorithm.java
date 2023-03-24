@@ -24,13 +24,13 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
     private int mScoringCompensationOffset = 0; // -100~100
 
     @Override
-    public float pitchToScore(float currentPitch, float currentRefPitch) {
+    public float getPitchScore(float currentPitch, float currentRefPitch) {
         final float scoreAfterNormalization = ScoringMachine.calculateScore2(0, mScoringLevel, mScoringCompensationOffset, currentPitch, currentRefPitch);
         return scoreAfterNormalization;
     }
 
     @Override
-    public int calcLineScore(final LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished) {
+    public int getLineScore(final LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished) {
         float totalScoreForThisLine = 0;
         int scoreCount = 0;
 

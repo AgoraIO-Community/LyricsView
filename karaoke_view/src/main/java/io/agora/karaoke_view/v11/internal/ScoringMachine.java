@@ -221,7 +221,7 @@ public class ScoringMachine {
 
         if (newLine && !mPitchesForLine.isEmpty()) {
             LyricsLineModel lineJustFinished = mLyricsModel.lines.get(indexOfMostRecentLine);
-            int scoreThisTime = mScoringAlgo.calcLineScore(mPitchesForLine, indexOfMostRecentLine, lineJustFinished);
+            int scoreThisTime = mScoringAlgo.getLineScore(mPitchesForLine, indexOfMostRecentLine, lineJustFinished);
 
             // 统计到累计分数
             mCumulativeScore += scoreThisTime;
@@ -334,7 +334,7 @@ public class ScoringMachine {
             pitchAfterProcess = pitch;
         }
 
-        float scoreAfterNormalization = mScoringAlgo.pitchToScore(pitch, currentRefPitch);
+        float scoreAfterNormalization = mScoringAlgo.getPitchScore(pitch, currentRefPitch);
         float score = scoreAfterNormalization * mScoringAlgo.getMaximumScoreForLine();
 
         mPitchesForLine.put(progress, score);

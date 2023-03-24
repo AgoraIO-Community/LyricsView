@@ -169,9 +169,9 @@ public class ScoringView extends View {
 
         ta.recycle();
 
-        int startColor = getResources().getColor(R.color.pitch_start);
-        int endColor = getResources().getColor(R.color.pitch_end);
-        mOverpastLinearGradient = new LinearGradient(mCenterXOfStartPoint, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
+        mOverpastLinearGradient = new LinearGradient(mCenterXOfStartPoint, 0, 0, 0,
+                getResources().getColor(R.color.overpast_wall_start_color),
+                getResources().getColor(R.color.overpast_wall_end_color), Shader.TileMode.CLAMP);
 
         mLeadingLinesPaint.setColor(getResources().getColor(R.color.leading_lines_color));
     }
@@ -189,9 +189,9 @@ public class ScoringView extends View {
             int h = bottom - top;
             mCenterXOfStartPoint = w * mStartPointHorizontalBias;
 
-            int startColor = getResources().getColor(R.color.pitch_start);
-            int endColor = getResources().getColor(R.color.pitch_end);
-            mOverpastLinearGradient = new LinearGradient(mCenterXOfStartPoint, 0, 0, 0, startColor, endColor, Shader.TileMode.CLAMP);
+            mOverpastLinearGradient = new LinearGradient(mCenterXOfStartPoint, 0, 0, 0,
+                    getResources().getColor(R.color.overpast_wall_start_color),
+                    getResources().getColor(R.color.overpast_wall_end_color), Shader.TileMode.CLAMP);
 
             performInvalidateIfNecessary();
 
