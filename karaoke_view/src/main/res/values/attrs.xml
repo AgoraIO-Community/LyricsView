@@ -6,7 +6,7 @@
         <attr name="startOfVerseIndicatorColor" format="reference|color" />
         <attr name="paddingTop" format="dimension" />
         <attr name="lineSpacing" format="dimension" />
-        <attr name="defaultTextSize" format="dimension" />
+        <attr name="normalTextSize" format="dimension" />
         <attr name="currentTextColor" format="reference|color" />
         <attr name="pastTextColor" format="reference|color" />
         <attr name="upcomingTextColor" format="reference|color" />
@@ -24,7 +24,7 @@
     <declare-styleable name="ScoringView">
         <attr name="pitchIndicatorColor" format="reference|color" />
         <attr name="pitchIndicatorRadius" format="dimension" />
-        <attr name="pitchStickHighlightColor" format="reference|color" />
+        <attr name="pitchStickHighlightedColor" format="reference|color" />
         <attr name="pitchStickHeight" format="dimension" />
         <attr name="pitchInitialScore" format="float" />
         <attr name="movingPixelsPerMs" format="float" />

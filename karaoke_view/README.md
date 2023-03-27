@@ -18,8 +18,6 @@ Build KTV app effortlessly with KaraokeView
 
 根据演唱结果进行打分以及显示对应的视图效果
 
-`实现方法`
-
 ## 集成 KaraokeView 控件
 
 ### JitPack 方式(默认推荐)
@@ -194,7 +192,7 @@ public interface KaraokeEvent {
     // 即将显示的歌词颜色
     app:upcomingTextColor="@color/ktv_lrc_nomal"
     // 默认歌词字体大小
-    app:defaultTextSize="16sp"
+    app:normalTextSize="16sp"
     // 歌词文字显示对齐方式
     app:textGravity="center" />
 ```
@@ -206,7 +204,7 @@ public interface KaraokeEvent {
     android:id="@+id/scoring_view
     app:pitchInitialScore="0"
     app:pitchStickHeight="4dp"
-    app:pitchStickHighlightColor="@color/pink_b4"
+    app:pitchStickHighlightedColor="@color/pink_b4"
   />
 ```
 

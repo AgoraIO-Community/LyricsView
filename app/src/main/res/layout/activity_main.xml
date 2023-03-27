@@ -51,7 +51,7 @@
         app:currentHighlightedTextColor="#FFF44336"
         app:currentTextColor="#FFFFFF"
         app:currentTextSize="20sp"
-        app:defaultTextSize="12sp"
+        app:normalTextSize="12sp"
         app:labelWhenNoLyrics=""
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"

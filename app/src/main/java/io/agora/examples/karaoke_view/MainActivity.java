@@ -228,12 +228,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int indicatorPaddingTop = prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_padding_top), 6);
         binding.lyricsView.setStartOfVerseIndicatorPaddingTop(dp2pix(indicatorPaddingTop));
 
-        String defaultTextColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "Default");
+        String defaultTextColor = prefs.getString(getString(R.string.prefs_key_normal_line_text_color), "Default");
         binding.lyricsView.setPastTextColor(colorInStringToDex(defaultTextColor));
         binding.lyricsView.setUpcomingTextColor(colorInStringToDex(defaultTextColor));
 
-        int defaultTextSize = prefs.getInt(getString(R.string.prefs_key_default_line_text_size), 14);
-        binding.lyricsView.setDefaultTextSize(sp2pix(defaultTextSize));
+        int normalTextSize = prefs.getInt(getString(R.string.prefs_key_normal_line_text_size), 14);
+        binding.lyricsView.setNormalTextSize(sp2pix(normalTextSize));
 
         String currentTextColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "White");
         binding.lyricsView.setCurrentTextColor(colorInStringToDex(currentTextColor));
@@ -263,10 +263,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.scoringView.setRefPitchStickHeight(dp2pix(Float.parseFloat(heightOfRefPitch.replace("dp", ""))));
 
         String defaultRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_default_ref_pitch_stick_color), "Default");
-        binding.scoringView.setDefaultRefPitchStickColor(colorInStringToDex(defaultRefPitchStickColor));
+        binding.scoringView.setRefPitchStickDefaultColor(colorInStringToDex(defaultRefPitchStickColor));
 
         String highlightedRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_highlighted_ref_pitch_stick_color), "Default");
-        binding.scoringView.setHighlightRefPitchStickColor(colorInStringToDex(highlightedRefPitchStickColor));
+        binding.scoringView.setRefPitchStickHighlightedColor(colorInStringToDex(highlightedRefPitchStickColor));
 
         boolean particleEffectOn = prefs.getBoolean(getString(R.string.prefs_key_particle_effect_switch), true);
         binding.scoringView.enableParticleEffect(particleEffectOn);

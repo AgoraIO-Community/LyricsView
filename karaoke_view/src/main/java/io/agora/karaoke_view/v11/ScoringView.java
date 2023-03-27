@@ -64,9 +64,9 @@ public class ScoringView extends View {
     protected LinearGradient mOverpastLinearGradient;
 
     private final Paint mPitchStickPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    protected int mDefaultRefPitchStickColor;
-    private final Paint mHighlightPitchStickPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private int mHighlightPitchStickColor;
+    protected int mRefPitchStickDefaultColor;
+    private final Paint mPitchStickHighlightedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private int mPitchStickHighlightedColor;
 
     protected float mCenterXOfStartPoint = 0f; // centerX of start point(portrait divider), same as local pitch indicator
 
@@ -103,20 +103,20 @@ public class ScoringView extends View {
         init(attrs);
     }
 
-    public void setDefaultRefPitchStickColor(int color) {
+    public void setRefPitchStickDefaultColor(int color) {
         if (color == 0) {
             color = getResources().getColor(R.color.default_popular_color);
         }
-        this.mDefaultRefPitchStickColor = color;
+        this.mRefPitchStickDefaultColor = color;
 
         performInvalidateIfNecessary();
     }
 
-    public void setHighlightRefPitchStickColor(int color) {
+    public void setRefPitchStickHighlightedColor(int color) {
         if (color == 0) {
-            color = getResources().getColor(R.color.pitch_stick_highlight_color);
+            color = getResources().getColor(R.color.pitch_stick_highlighted_color);
         }
-        this.mHighlightPitchStickColor = color;
+        this.mPitchStickHighlightedColor = color;
 
         performInvalidateIfNecessary();
     }
@@ -140,8 +140,8 @@ public class ScoringView extends View {
             throw new IllegalArgumentException("Invalid value for pitchInitialScore, must >= 0, current is " + mInitialScore);
         }
 
-        mDefaultRefPitchStickColor = getResources().getColor(R.color.default_popular_color);
-        mHighlightPitchStickColor = ta.getColor(R.styleable.ScoringView_pitchStickHighlightColor, getResources().getColor(R.color.pitch_stick_highlight_color));
+        mRefPitchStickDefaultColor = getResources().getColor(R.color.default_popular_color);
+        mPitchStickHighlightedColor = ta.getColor(R.styleable.ScoringView_pitchStickHighlightedColor, getResources().getColor(R.color.pitch_stick_highlighted_color));
 
         mPitchStickHeight = ta.getDimension(R.styleable.ScoringView_pitchStickHeight, getResources().getDimension(R.dimen.pitch_stick_height));
 
@@ -410,7 +410,7 @@ public class ScoringView extends View {
         drawOverpastWall(canvas);
 
         if (DEBUG) {
-            canvas.drawText("" + this.mScoringMachine.toString() + ", y: " + (int) (getYForPitchIndicator()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mHighlightPitchStickPaint);
+            canvas.drawText("" + this.mScoringMachine.toString() + ", y: " + (int) (getYForPitchIndicator()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mPitchStickHighlightedPaint);
         }
 
         drawStartLine(canvas);
@@ -433,12 +433,12 @@ public class ScoringView extends View {
 
     private void drawPitchSticks(Canvas canvas) {
         mPitchStickPaint.setShader(null);
-        mPitchStickPaint.setColor(mDefaultRefPitchStickColor);
+        mPitchStickPaint.setColor(mRefPitchStickDefaultColor);
         mPitchStickPaint.setAntiAlias(true);
 
-        mHighlightPitchStickPaint.setShader(null);
-        mHighlightPitchStickPaint.setColor(mHighlightPitchStickColor);
-        mHighlightPitchStickPaint.setAntiAlias(true);
+        mPitchStickHighlightedPaint.setShader(null);
+        mPitchStickHighlightedPaint.setColor(mPitchStickHighlightedColor);
+        mPitchStickHighlightedPaint.setAntiAlias(true);
 
         if (uninitializedOrNoLyrics()) {
             return;
@@ -564,10 +564,10 @@ public class ScoringView extends View {
 
                             RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
                             if (tone.highlightOffset <= 0 || highlightEndX == mCenterXOfStartPoint) {
-                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickPaint);
+                                canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
                             } else {
                                 // Should be drawRect
-                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickPaint);
+                                canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
                             }
                         }
                     } else if (endX <= mCenterXOfStartPoint) {
@@ -583,10 +583,10 @@ public class ScoringView extends View {
 
                             RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
                             if (tone.highlightOffset <= 0 && tone.highlightWidth <= 0 || highlightEndX == endX) {
-                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickPaint);
+                                canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
                             } else {
                                 // Should be drawRect
-                                canvas.drawRoundRect(rHighlight, 8, 8, mHighlightPitchStickPaint);
+                                canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
                             }
                         }
                     }
@@ -595,10 +595,10 @@ public class ScoringView extends View {
                     RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
                     canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
                     if (DEBUG) {
-                        mHighlightPitchStickPaint.setTextSize(28);
-                        canvas.drawText(tone.word, x, 30, mHighlightPitchStickPaint);
-                        canvas.drawText((int) (x) + "", x, 60, mHighlightPitchStickPaint);
-                        canvas.drawText((int) (endX) + "", x, 90, mHighlightPitchStickPaint);
+                        mPitchStickHighlightedPaint.setTextSize(28);
+                        canvas.drawText(tone.word, x, 30, mPitchStickHighlightedPaint);
+                        canvas.drawText((int) (x) + "", x, 60, mPitchStickHighlightedPaint);
+                        canvas.drawText((int) (endX) + "", x, 90, mPitchStickHighlightedPaint);
                     }
                 }
 

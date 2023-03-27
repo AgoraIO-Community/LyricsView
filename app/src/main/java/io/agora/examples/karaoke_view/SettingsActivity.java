@@ -167,18 +167,18 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        String[] availableColorsOfDefaultLine = getResources().getStringArray(R.array.available_default_line_text_colors);
-        String defaultLineColor = prefs.getString(getString(R.string.prefs_key_default_line_text_color), "Default");
-        for (int idx = 0; idx < availableColorsOfDefaultLine.length; idx++) {
-            if (defaultLineColor.equals(availableColorsOfDefaultLine[idx])) {
-                binding.defaultLineColorSelector.setSelection(idx, false);
+        String[] availableColorsOfNormalLine = getResources().getStringArray(R.array.available_text_colors);
+        String defaultLineColor = prefs.getString(getString(R.string.prefs_key_normal_line_text_color), "Default");
+        for (int idx = 0; idx < availableColorsOfNormalLine.length; idx++) {
+            if (defaultLineColor.equals(availableColorsOfNormalLine[idx])) {
+                binding.normalLineColorSelector.setSelection(idx, false);
                 break;
             }
         }
-        binding.defaultLineColorSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        binding.normalLineColorSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                editor.putString(getString(R.string.prefs_key_default_line_text_color), availableColorsOfDefaultLine[position]);
+                editor.putString(getString(R.string.prefs_key_normal_line_text_color), availableColorsOfNormalLine[position]);
                 editor.apply();
             }
 
@@ -188,18 +188,18 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        String[] availableSizeOfDefaultLineText = getResources().getStringArray(R.array.available_text_size);
-        int sizeOfDefaultLineText = prefs.getInt(getString(R.string.prefs_key_default_line_text_size), 12);
-        for (int idx = 0; idx < availableSizeOfDefaultLineText.length; idx++) {
-            if (sizeOfDefaultLineText == Integer.parseInt(availableSizeOfDefaultLineText[idx])) {
-                binding.sizeOfDefaultTextSelector.setSelection(idx, false);
+        String[] availableSizeOfNormalLineText = getResources().getStringArray(R.array.available_text_size);
+        int sizeOfNormalLineText = prefs.getInt(getString(R.string.prefs_key_normal_line_text_size), 12);
+        for (int idx = 0; idx < availableSizeOfNormalLineText.length; idx++) {
+            if (sizeOfNormalLineText == Integer.parseInt(availableSizeOfNormalLineText[idx])) {
+                binding.sizeOfNormalTextSelector.setSelection(idx, false);
                 break;
             }
         }
-        binding.sizeOfDefaultTextSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        binding.sizeOfNormalTextSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                editor.putInt(getString(R.string.prefs_key_default_line_text_size), Integer.parseInt(availableSizeOfDefaultLineText[position]));
+                editor.putInt(getString(R.string.prefs_key_normal_line_text_size), Integer.parseInt(availableSizeOfNormalLineText[position]));
                 editor.apply();
             }
 
@@ -230,7 +230,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        String[] availableColorsOfCurrentLine = getResources().getStringArray(R.array.available_default_line_text_colors);
+        String[] availableColorsOfCurrentLine = getResources().getStringArray(R.array.available_text_colors);
         String currentLineColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "White");
         for (int idx = 0; idx < availableColorsOfCurrentLine.length; idx++) {
             if (currentLineColor.equals(availableColorsOfCurrentLine[idx])) {
@@ -322,7 +322,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         String tipColorWhenNoLyricsAvailable = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text_color), "Default");
-        String[] availableColorsOfTipsWhenNoLyricsAvailable = getResources().getStringArray(R.array.available_default_line_text_colors);
+        String[] availableColorsOfTipsWhenNoLyricsAvailable = getResources().getStringArray(R.array.available_text_colors);
         for (int idx = 0; idx < availableColorsOfTipsWhenNoLyricsAvailable.length; idx++) {
             if (tipColorWhenNoLyricsAvailable.equals(availableColorsOfTipsWhenNoLyricsAvailable[idx])) {
                 binding.lyricsNotAvailableColorSelector.setSelection(idx, false);
@@ -386,7 +386,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        String[] availableColorsOfDefaultRefPitchStick = getResources().getStringArray(R.array.available_default_line_text_colors);
+        String[] availableColorsOfDefaultRefPitchStick = getResources().getStringArray(R.array.available_text_colors);
         String defaultRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_default_ref_pitch_stick_color), "Default");
         for (int idx = 0; idx < availableColorsOfDefaultRefPitchStick.length; idx++) {
             if (defaultRefPitchStickColor.equals(availableColorsOfDefaultRefPitchStick[idx])) {

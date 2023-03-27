@@ -49,7 +49,7 @@ public class LyricsView extends View {
 
     private int mPastTextColor;
     private int mUpcomingTextColor;
-    private float mDefaultTextSize;
+    private float mNormalTextSize;
 
     private int mCurrentLineTextColor;
     private float mCurrentTextSize;
@@ -134,10 +134,10 @@ public class LyricsView extends View {
         this.mHandler = new Handler(Looper.myLooper());
 
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.LyricsView);
-        mDefaultTextSize = ta.getDimension(R.styleable.LyricsView_defaultTextSize, getResources().getDimension(R.dimen.default_text_size));
+        mNormalTextSize = ta.getDimension(R.styleable.LyricsView_normalTextSize, getResources().getDimension(R.dimen.normal_text_size));
         mCurrentTextSize = ta.getDimension(R.styleable.LyricsView_currentTextSize, getResources().getDimension(R.dimen.current_text_size));
         if (mCurrentTextSize == 0) {
-            mCurrentTextSize = mDefaultTextSize;
+            mCurrentTextSize = mNormalTextSize;
         }
 
         mLineSpacing = ta.getDimension(R.styleable.LyricsView_lineSpacing, getResources().getDimension(R.dimen.line_spacing));
@@ -262,10 +262,26 @@ public class LyricsView extends View {
     }
 
     /**
+     * Convenient method, set color of past and upcoming text at once
+     *
+     * @param color
+     */
+    public void setNormalTextColor(@ColorInt int color) {
+        if (color == 0) {
+            color = getResources().getColor(R.color.normal_text_color);
+        }
+
+        mPastTextColor = color;
+        mUpcomingTextColor = color;
+
+        performInvalidateIfNecessary();
+    }
+
+    /**
      * 设置普通歌词文本字体大小
      */
-    public void setDefaultTextSize(float size) {
-        mDefaultTextSize = size;
+    public void setNormalTextSize(float size) {
+        mNormalTextSize = size;
         mNewLine = true;
         performInvalidateIfNecessary();
     }
@@ -493,10 +509,10 @@ public class LyricsView extends View {
                     mPaintBG.setTextSize(mCurrentTextSize);
                 } else if (i < mCurrentLine) {
                     mPaintBG.setColor(mPastTextColor);
-                    mPaintBG.setTextSize(mDefaultTextSize);
+                    mPaintBG.setTextSize(mNormalTextSize);
                 } else {
                     mPaintBG.setColor(mUpcomingTextColor);
-                    mPaintBG.setTextSize(mDefaultTextSize);
+                    mPaintBG.setTextSize(mNormalTextSize);
                 }
 
                 LyricsLineModel mIEntry = lyricsModel.lines.get(i);
@@ -630,7 +646,7 @@ public class LyricsView extends View {
         float y;
         LyricsLineModel line;
         LyricsLineDrawerHelper mLrcEntry;
-        mPaintBG.setTextSize(mDefaultTextSize);
+        mPaintBG.setTextSize(mNormalTextSize);
         mPaintBG.setColor(mPastTextColor);
 
         mCanvasBG.save();
@@ -676,7 +692,7 @@ public class LyricsView extends View {
         float y;
         LyricsLineModel data;
         LyricsLineDrawerHelper mLrcEntry;
-        mPaintBG.setTextSize(mDefaultTextSize);
+        mPaintBG.setTextSize(mNormalTextSize);
         mPaintBG.setColor(mUpcomingTextColor);
 
         mCanvasBG.save();

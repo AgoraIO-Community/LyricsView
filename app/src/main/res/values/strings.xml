@@ -10,8 +10,8 @@
     <string name="prefs_key_start_of_verse_indicator_radius" translatable="false">prefs_key_start_of_verse_indicator_radius</string>
     <string name="prefs_key_start_of_verse_indicator_padding_top" translatable="false">prefs_key_start_of_verse_indicator_padding_top</string>
 
-    <string name="prefs_key_default_line_text_color" translatable="false">prefs_key_default_line_text_color</string>
-    <string name="prefs_key_default_line_text_size" translatable="false">prefs_key_default_line_text_size</string>
+    <string name="prefs_key_normal_line_text_color" translatable="false">prefs_key_normal_line_text_color</string>
+    <string name="prefs_key_normal_line_text_size" translatable="false">prefs_key_normal_line_text_size</string>
     <string name="prefs_key_current_line_text_color" translatable="false">prefs_key_current_line_text_color</string>
     <string name="prefs_key_current_line_text_size" translatable="false">prefs_key_current_line_text_size</string>
     <string name="prefs_key_highlighted_text_color" translatable="false">prefs_key_highlighted_text_color</string>
@@ -62,7 +62,7 @@
         <item>16dp</item>
     </string-array>
 
-    <string-array name="available_default_line_text_colors">
+    <string-array name="available_text_colors">
         <item>Default</item>
         <item>White</item>
         <item>Yellow</item>
