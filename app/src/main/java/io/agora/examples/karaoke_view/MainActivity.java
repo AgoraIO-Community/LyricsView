@@ -214,10 +214,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void loadPreferences() {
         SharedPreferences prefs = getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
-        int scoreLevel = prefs.getInt(getString(R.string.prefs_key_scoring_level), mKaraokeView.getScoreLevel());
-        mKaraokeView.setScoreLevel(scoreLevel);
-        int scoreOffset = prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), mKaraokeView.getScoreCompensationOffset());
-        mKaraokeView.setScoreCompensationOffset(scoreOffset);
+        int scoringLevel = prefs.getInt(getString(R.string.prefs_key_scoring_level), mKaraokeView.getScoringLevel());
+        mKaraokeView.setScoringLevel(scoringLevel);
+        int scoringOffset = prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), mKaraokeView.getScoringCompensationOffset());
+        mKaraokeView.setScoringCompensationOffset(scoringOffset);
 
         boolean indicatorOn = prefs.getBoolean(getString(R.string.prefs_key_start_of_verse_indicator_switch), true);
         binding.lyricsView.enableStartOfVerseIndicator(indicatorOn);

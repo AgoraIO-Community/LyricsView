@@ -34,7 +34,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.1-beta.5'
+    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.1-beta.7'
 }
 ```
 
@@ -231,17 +231,8 @@ public class MyScoringView extends ScoringView {
 
 ### 重写打分逻辑:
 ```Java
-public class DefaultScoringAlgorithm implements IScoringAlgorithm {
-    // Maximum score for one line, 100 for maximum and 0 for minimum
-    private final int mMaximumScoreForLine = 100;
-
-    private ScoringMachine.OnScoringListener mListener;
-
-    // Indicating the difficulty in scoring(can change by app)
-    private int mScoringLevel = 10; // 0~100
-    private int mScoringCompensationOffset = 0; // -100~100
-
-    public DefaultScoringAlgorithm() {
+public class MyScoringAlgorithm implements IScoringAlgorithm {
+    public MyScoringAlgorithm() {
     }
 
     @Override
@@ -253,33 +244,9 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
     @Override
     public int getLineScore(final LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished) {
-        // 计算歌词当前句的分数 = 单字打分总和 / 分数个数
-        // 其中单字打分 = pitchToScore(...) * mMaximumScoreForLine
-        float totalScoreForThisLine = 0;
-        int scoreCount = 0;
-
-        Float scoreForOnePitch;
-        Iterator<Long> iterator = pitchesForLine.keySet().iterator();
-
-        while (iterator.hasNext()) {
-            Long myKeyTimestamp = iterator.next();
-            if (myKeyTimestamp <= lineJustFinished.getEndTime()) { // 如果时间戳在需要打分的行范围内，就参与打分
-                scoreForOnePitch = pitchesForLine.get(myKeyTimestamp);
-
-                iterator.remove();
-                pitchesForLine.remove(myKeyTimestamp);
-
-                if (scoreForOnePitch != null) {
-                    totalScoreForThisLine += scoreForOnePitch; // 计算当前行总分
-                }
-                scoreCount++;
-            }
-        }
-
-        scoreCount = Math.max(1, scoreCount);
-
-        int scoreThisLine = (int) totalScoreForThisLine / scoreCount;
-
+        ...
+        scoreThisLine = ...
+        ...
         return scoreThisLine;
     }
 }

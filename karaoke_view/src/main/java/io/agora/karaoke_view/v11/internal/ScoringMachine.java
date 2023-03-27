@@ -179,12 +179,12 @@ public class ScoringMachine {
         return referencePitch; // -1, 0, valid pitches
     }
 
-    public static float calculateScore2(double minimumScore, int scoreLevel, int compensationOffset, double pitch, double refPitch) {
+    public static float calculateScore2(double minimumScore, int scoringLevel, int scoringCompensationOffset, double pitch, double refPitch) {
         float tone = (float) pitchToTone(pitch);
         float refTone = (float) pitchToTone(refPitch);
 
         float scoreAfterNormalization; // [0, 1]
-        scoreAfterNormalization = (float) (1.f - (scoreLevel * Math.abs(tone - refTone)) / 100.f + compensationOffset * 1.0 / 100.f);
+        scoreAfterNormalization = (float) (1.f - (scoringLevel * Math.abs(tone - refTone)) / 100.f + scoringCompensationOffset * 1.0 / 100.f);
 
         // 得分线以下的分数归零
         scoreAfterNormalization = scoreAfterNormalization >= minimumScore ? scoreAfterNormalization : 0f;
@@ -193,7 +193,7 @@ public class ScoringMachine {
 
         if (DEBUG) {
             Log.d(TAG, "debugScoringAlgo/calculateScore2/REAL: minimumScore=" + minimumScore + ", pitch=" + pitch + ", refPitch=" + refPitch +
-                    ", scoreLevel=" + scoreLevel + ", compensationOffset=" + compensationOffset);
+                    ", level=" + scoringLevel + ", compensationOffset=" + scoringCompensationOffset);
         }
 
         return scoreAfterNormalization;

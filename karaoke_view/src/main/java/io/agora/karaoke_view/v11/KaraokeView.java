@@ -213,19 +213,19 @@ public class KaraokeView {
         this.mScoringMachine.setScoringAlgorithm(this.mScoringAlgorithm);
     }
 
-    public void setScoreLevel(int level) {
+    public void setScoringLevel(int level) {
         this.mScoringAlgorithm.setScoringLevel(level);
     }
 
-    public int getScoreLevel() {
+    public int getScoringLevel() {
         return this.mScoringAlgorithm.getScoringLevel();
     }
 
-    public void setScoreCompensationOffset(int offset) {
+    public void setScoringCompensationOffset(int offset) {
         this.mScoringAlgorithm.setScoringCompensationOffset(offset);
     }
 
-    public int getScoreCompensationOffset() {
+    public int getScoringCompensationOffset() {
         return this.mScoringAlgorithm.getScoringCompensationOffset();
     }
 }
