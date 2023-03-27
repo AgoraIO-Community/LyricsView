@@ -28,7 +28,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:movingPixelsPerMs="0.4"
         app:pitchIndicatorRadius="6dp"
-        app:pitchInitialScore="0"
         app:pitchStickHeight="6dp"
         app:startPointHorizontalBias="0.4" />
 

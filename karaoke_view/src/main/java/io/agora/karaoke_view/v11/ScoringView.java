@@ -134,10 +134,10 @@ public class ScoringView extends View {
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.ScoringView);
         mLocalPitchIndicatorRadius = ta.getDimension(R.styleable.ScoringView_pitchIndicatorRadius, getResources().getDimension(R.dimen.local_pitch_indicator_radius));
         mLocalPitchIndicatorColor = ta.getColor(R.styleable.ScoringView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
-        mInitialScore = ta.getFloat(R.styleable.ScoringView_pitchInitialScore, 0f);
+        mInitialScore = ta.getFloat(R.styleable.ScoringView_initialScore, 0f);
 
         if (mInitialScore < 0) {
-            throw new IllegalArgumentException("Invalid value for pitchInitialScore, must >= 0, current is " + mInitialScore);
+            throw new IllegalArgumentException("Invalid value for initialScore, must >= 0, current is " + mInitialScore);
         }
 
         mRefPitchStickDefaultColor = getResources().getColor(R.color.default_popular_color);
@@ -203,6 +203,23 @@ public class ScoringView extends View {
         return mCenterXOfStartPoint <= 0;
     }
 
+    /**
+     * Enable particle effect or not
+     * <p>
+     * Do not call this regularly, this is expensive
+     *
+     * @param enable
+     */
+    public void enableParticleEffect(boolean enable) {
+        this.mEnableParticleEffect = enable;
+
+        if (enable) {
+            tryEnableParticleEffect();
+        } else {
+            tryDisableParticleEffect();
+        }
+    }
+
     private Object mDelayedTaskToken;
 
     private void tryEnableParticleEffect() {
@@ -240,7 +257,9 @@ public class ScoringView extends View {
     }
 
     /**
-     * Do not call this regularly, this is very heavy
+     * Set particles if do not use the default ones
+     * <p>
+     * Do not call this regularly, this is expensive
      *
      * @param particles
      */
@@ -282,23 +301,6 @@ public class ScoringView extends View {
         mParticleSystem.setRotationSpeedRange(90, 180).setScaleRange(0.7f, 1.6f)
                 .setSpeedModuleAndAngleRange(0.10f, 0.20f, 130, 230)
                 .setFadeOut(300, new AccelerateInterpolator());
-    }
-
-    /**
-     * enable particle effect or not
-     * <p>
-     * Do not call this regularly, this is very heavy
-     *
-     * @param enable
-     */
-    public void enableParticleEffect(boolean enable) {
-        this.mEnableParticleEffect = enable;
-
-        if (enable) {
-            tryEnableParticleEffect();
-        } else {
-            tryDisableParticleEffect();
-        }
     }
 
     private final RectF mRectFAvoidingNewObject = new RectF(0, 0, 0, 0);

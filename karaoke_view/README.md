@@ -189,9 +189,9 @@ public interface KaraokeEvent {
     app:labelWhenNoLyrics="暂无歌词"
     // 已经唱过歌词颜色
     app:pastTextColor="@color/ktv_lrc_nomal"
-    // 即将显示的歌词颜色
+    // 即将显示歌词颜色
     app:upcomingTextColor="@color/ktv_lrc_nomal"
-    // 默认歌词字体大小
+    // 歌词字体大小
     app:normalTextSize="16sp"
     // 歌词文字显示对齐方式
     app:textGravity="center" />
@@ -202,8 +202,9 @@ public interface KaraokeEvent {
 ```xml
 <io.agora.karaoke_view.v11.ScoringView
     android:id="@+id/scoring_view
-    app:pitchInitialScore="0"
+    // 基准音条高度
     app:pitchStickHeight="4dp"
+    // 基准音条高亮状态颜色
     app:pitchStickHighlightedColor="@color/pink_b4"
   />
 ```

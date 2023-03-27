@@ -26,7 +26,7 @@
         <attr name="pitchIndicatorRadius" format="dimension" />
         <attr name="pitchStickHighlightedColor" format="reference|color" />
         <attr name="pitchStickHeight" format="dimension" />
-        <attr name="pitchInitialScore" format="float" />
+        <attr name="initialScore" format="float" />
         <attr name="movingPixelsPerMs" format="float" />
         <attr name="hitScoreThreshold" format="float" />
         <attr name="startPointHorizontalBias" format="float" />
