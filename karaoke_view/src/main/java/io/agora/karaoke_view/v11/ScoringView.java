@@ -629,11 +629,18 @@ public class ScoringView extends View {
 
     protected volatile float mLocalPitch = 0.0F;
 
-    private long mTimestampForLastAnimationDecrease = -1;
-
-    private void setMLocalPitch(float localPitch) {
-        this.mLocalPitch = localPitch;
+    /**
+     * Called automatically when animation of local indicator triggered
+     * <p>
+     * Mark it protected for implicit accessing from subclass
+     *
+     * @param pitch
+     */
+    protected final void setMLocalPitch(float pitch) {
+        this.mLocalPitch = pitch;
     }
+
+    private long mTimestampForLastAnimationDecrease = -1;
 
     private long mLastViewInvalidateTs;
 
@@ -766,20 +773,20 @@ public class ScoringView extends View {
         }
     }
 
-    public final void forceStopIndicatorAnimationWhenReachingContinuousZeros() {
+    public final void resetPitchIndicatorAndAnimation() {
         mInHighlightStatus = false;
         if (this.mLocalPitch != 0) {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    assureAnimationForPitchIndicator(0); // Force stop the animation when reaching continuous zeros
+                    assureAnimationForPitchIndicator(0);
                     ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(200).start(); // Decrease the local pitch indicator
                 }
             });
         }
     }
 
-    public final void forceStopIndicatorAnimationWhenFullLineFinished(double score) {
+    public final void resetPitchIndicatorAndAnimationWhenFullLineFinished(double score) {
         if (score == 0 && this.mLocalPitch != 0) {
             mInHighlightStatus = false;
             mHandler.post(new Runnable() {

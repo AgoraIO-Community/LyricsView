@@ -100,7 +100,7 @@ public class LiveActivity extends RtcBaseActivity {
             }
 
             @Override
-            public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulatedScore, int index, int total) {
+            public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulatedScore, int index, int numberOfLines) {
                 ...
             }
         });
@@ -157,9 +157,9 @@ public interface KaraokeEvent {
      * @param score           当前句得分
      * @param cumulativeScore 累计的分数 初始分累计到当前的分数
      * @param index           当前句索引
-     * @param total           整个歌词总句数
+     * @param numberOfLines   整个歌词总句数
      */
-    public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulativeScore, int index, int total);
+    public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulativeScore, int index, int numberOfLines);
 }
 
 ```
@@ -180,19 +180,19 @@ public interface KaraokeEvent {
     // 当前行歌词颜色
     app:currentTextColor="@color/ktv_lrc_current"
     // 当前行歌词字体大小
-    app:currentTextSize="26sp"
+    app:currentLineTextSize="26sp"
     // 当前行歌词高亮颜色
-    app:currentHighlightedTextColor="@color/ktv_lrc_highlight"
+    app:currentLineHighlightedTextColor="@color/ktv_lrc_highlight"
     // 歌词行间距
     app:lineSpacing="20dp"
     // 无歌词情况下的默认文字
     app:labelWhenNoLyrics="暂无歌词"
     // 已经唱过歌词颜色
-    app:pastTextColor="@color/ktv_lrc_nomal"
+    app:previousLineTextColor="@color/ktv_lrc_nomal"
     // 即将显示歌词颜色
-    app:upcomingTextColor="@color/ktv_lrc_nomal"
+    app:upcomingLineTextColor="@color/ktv_lrc_nomal"
     // 歌词字体大小
-    app:normalTextSize="16sp"
+    app:textSize="16sp"
     // 歌词文字显示对齐方式
     app:textGravity="center" />
 ```

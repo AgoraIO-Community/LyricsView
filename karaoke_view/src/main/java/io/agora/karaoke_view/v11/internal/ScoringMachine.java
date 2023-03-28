@@ -457,6 +457,16 @@ public class ScoringMachine {
     }
 
     public interface OnScoringListener {
+        /**
+         * Called automatically when the line is finished
+         *
+         * @param line
+         * @param score
+         * @param cumulativeScore
+         * @param perfectScore
+         * @param index
+         * @param numberOfLines
+         */
         public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines);
 
         public void resetUi();

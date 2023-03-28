@@ -14,7 +14,7 @@
     <string name="prefs_key_normal_line_text_size" translatable="false">prefs_key_normal_line_text_size</string>
     <string name="prefs_key_current_line_text_color" translatable="false">prefs_key_current_line_text_color</string>
     <string name="prefs_key_current_line_text_size" translatable="false">prefs_key_current_line_text_size</string>
-    <string name="prefs_key_highlighted_text_color" translatable="false">prefs_key_highlighted_text_color</string>
+    <string name="prefs_key_current_line_highlighted_text_color" translatable="false">prefs_key_current_line_highlighted_text_color</string>
 
     <string name="prefs_key_line_spacing" translatable="false">prefs_key_line_spacing</string>
 
@@ -70,7 +70,7 @@
         <item>Brown</item>
     </string-array>
 
-    <string-array name="available_highlighted_line_text_colors">
+    <string-array name="available_highlighted_text_colors">
         <item>Default</item>
         <item>Orange</item>
         <item>Red</item>

@@ -6,12 +6,13 @@
         <attr name="startOfVerseIndicatorColor" format="reference|color" />
         <attr name="paddingTop" format="dimension" />
         <attr name="lineSpacing" format="dimension" />
-        <attr name="normalTextSize" format="dimension" />
-        <attr name="currentTextColor" format="reference|color" />
-        <attr name="pastTextColor" format="reference|color" />
-        <attr name="upcomingTextColor" format="reference|color" />
-        <attr name="currentTextSize" format="dimension" />
-        <attr name="currentHighlightedTextColor" format="reference|color" />
+        <attr name="textSize" format="dimension" />
+        <attr name="textColor" format="reference|color" />
+        <attr name="currentLineTextColor" format="reference|color" />
+        <attr name="previousLineTextColor" format="reference|color" />
+        <attr name="upcomingLineTextColor" format="reference|color" />
+        <attr name="currentLineTextSize" format="dimension" />
+        <attr name="currentLineHighlightedTextColor" format="reference|color" />
         <attr name="labelWhenNoLyrics" format="string" />
         <attr name="enableDragging" format="boolean" />
         <attr name="textGravity">

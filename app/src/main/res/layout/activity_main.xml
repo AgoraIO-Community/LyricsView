@@ -47,18 +47,16 @@
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
         android:paddingBottom="10dp"
-        app:currentHighlightedTextColor="#FFF44336"
-        app:currentTextColor="#FFFFFF"
-        app:currentTextSize="20sp"
-        app:normalTextSize="12sp"
+        app:currentLineHighlightedTextColor="#FFF44336"
+        app:currentLineTextColor="#FFFFFF"
+        app:currentLineTextSize="20sp"
         app:labelWhenNoLyrics=""
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:lineSpacing="6dp"
         app:paddingTop="8dp"
-        app:pastTextColor="#99FFFFFF"
         app:textGravity="center"
-        app:upcomingTextColor="#33FFFFFF" />
+        app:textSize="12sp" />
 
     <androidx.appcompat.widget.AppCompatCheckBox
         android:id="@+id/enable_lyrics"

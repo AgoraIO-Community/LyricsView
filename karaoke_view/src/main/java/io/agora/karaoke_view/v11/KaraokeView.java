@@ -44,7 +44,7 @@ public class KaraokeView {
                 }
 
                 if (mScoringView != null) {
-                    mScoringView.forceStopIndicatorAnimationWhenFullLineFinished(score);
+                    mScoringView.resetPitchIndicatorAndAnimationWhenFullLineFinished(score);
                 }
 
                 if (mKaraokeEvent != null) {
@@ -61,7 +61,7 @@ public class KaraokeView {
                     mLyricsView.requestRefreshUi();
                 }
                 if (mScoringView != null) {
-                    mScoringView.forceStopIndicatorAnimationWhenReachingContinuousZeros();
+                    mScoringView.resetPitchIndicatorAndAnimation();
                     mScoringView.requestRefreshUi();
                 }
             }
@@ -188,11 +188,11 @@ public class KaraokeView {
         if (mLyricsView != null) {
             mLyricsView.setSeekListener(new LyricsView.OnLyricsSeekListener() {
                 @Override
-                public void onProgressChanged(long time) {
+                public void onProgressChanged(long progress) {
                     if (mKaraokeEvent != null) {
-                        mKaraokeEvent.onDragTo(KaraokeView.this, time);
+                        mKaraokeEvent.onDragTo(KaraokeView.this, progress);
                     }
-                    mScoringMachine.whenDraggingHappen(time);
+                    mScoringMachine.whenDraggingHappen(progress);
                 }
 
                 @Override

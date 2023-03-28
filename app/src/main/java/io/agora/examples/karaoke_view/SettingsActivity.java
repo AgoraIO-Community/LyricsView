@@ -209,18 +209,18 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        String[] availableColorsOfHighlightedLine = getResources().getStringArray(R.array.available_highlighted_line_text_colors);
-        String highlightedLineColor = prefs.getString(getString(R.string.prefs_key_highlighted_text_color), "Default");
-        for (int idx = 0; idx < availableColorsOfHighlightedLine.length; idx++) {
-            if (highlightedLineColor.equals(availableColorsOfHighlightedLine[idx])) {
-                binding.highlightedLineColorSelector.setSelection(idx, false);
+        String[] availableColorsOfLineHighlighted = getResources().getStringArray(R.array.available_highlighted_text_colors);
+        String highlightedLineColor = prefs.getString(getString(R.string.prefs_key_current_line_highlighted_text_color), "Default");
+        for (int idx = 0; idx < availableColorsOfLineHighlighted.length; idx++) {
+            if (highlightedLineColor.equals(availableColorsOfLineHighlighted[idx])) {
+                binding.lineHighlightedColorSelector.setSelection(idx, false);
                 break;
             }
         }
-        binding.highlightedLineColorSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        binding.lineHighlightedColorSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                editor.putString(getString(R.string.prefs_key_highlighted_text_color), availableColorsOfHighlightedLine[position]);
+                editor.putString(getString(R.string.prefs_key_current_line_highlighted_text_color), availableColorsOfLineHighlighted[position]);
                 editor.apply();
             }
 
@@ -407,7 +407,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        String[] availableColorsOfHighlightedRefPitchStick = getResources().getStringArray(R.array.available_highlighted_line_text_colors);
+        String[] availableColorsOfHighlightedRefPitchStick = getResources().getStringArray(R.array.available_highlighted_text_colors);
         String highlightedRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_highlighted_ref_pitch_stick_color), "Default");
         for (int idx = 0; idx < availableColorsOfHighlightedRefPitchStick.length; idx++) {
             if (highlightedRefPitchStickColor.equals(availableColorsOfHighlightedRefPitchStick[idx])) {

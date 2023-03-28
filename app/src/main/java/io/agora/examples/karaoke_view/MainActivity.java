@@ -229,20 +229,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.lyricsView.setStartOfVerseIndicatorPaddingTop(dp2pix(indicatorPaddingTop));
 
         String defaultTextColor = prefs.getString(getString(R.string.prefs_key_normal_line_text_color), "Default");
-        binding.lyricsView.setPastTextColor(colorInStringToDex(defaultTextColor));
-        binding.lyricsView.setUpcomingTextColor(colorInStringToDex(defaultTextColor));
+        binding.lyricsView.setPreviousLineTextColor(colorInStringToDex(defaultTextColor));
+        binding.lyricsView.setUpcomingLineTextColor(colorInStringToDex(defaultTextColor));
 
-        int normalTextSize = prefs.getInt(getString(R.string.prefs_key_normal_line_text_size), 14);
-        binding.lyricsView.setNormalTextSize(sp2pix(normalTextSize));
+        int defaultTextSize = prefs.getInt(getString(R.string.prefs_key_normal_line_text_size), 14);
+        binding.lyricsView.setTextSize(sp2pix(defaultTextSize));
 
         String currentTextColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "White");
-        binding.lyricsView.setCurrentTextColor(colorInStringToDex(currentTextColor));
+        binding.lyricsView.setCurrentLineTextColor(colorInStringToDex(currentTextColor));
 
-        String highlightedTextColor = prefs.getString(getString(R.string.prefs_key_highlighted_text_color), "Red");
-        binding.lyricsView.setCurrentHighlightedTextColor(colorInStringToDex(highlightedTextColor));
+        String highlightedTextColor = prefs.getString(getString(R.string.prefs_key_current_line_highlighted_text_color), "Red");
+        binding.lyricsView.setCurrentLineHighlightedTextColor(colorInStringToDex(highlightedTextColor));
 
         int currentTextSize = prefs.getInt(getString(R.string.prefs_key_current_line_text_size), 18);
-        binding.lyricsView.setCurrentTextSize(sp2pix(currentTextSize));
+        binding.lyricsView.setCurrentLineTextSize(sp2pix(currentTextSize));
 
         String lineSpacing = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");
         binding.lyricsView.setLineSpacing(dp2pix(Float.parseFloat(lineSpacing.replace("dp", ""))));

@@ -37,7 +37,7 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  */
 @SuppressLint("StaticFieldLeak")
 public class LyricsView extends View {
-    private static final String TAG = "LrcView";
+    private static final String TAG = "LyricsView";
 
     private volatile LyricsModel mLyricsModel;
 
@@ -47,18 +47,18 @@ public class LyricsView extends View {
     private final TextPaint mPaintFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint mPaintBG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
 
-    private int mPastTextColor;
-    private int mUpcomingTextColor;
-    private float mNormalTextSize;
+    private int mPreviousLineTextColor;
+    private int mUpcomingLineTextColor;
+    private float mTextSize;
 
     private int mCurrentLineTextColor;
-    private float mCurrentTextSize;
-    private int mCurrentHighlightedTextColor;
+    private float mCurrentLineTextSize;
+    private int mCurrentLineHighlightedTextColor;
 
     private float mLineSpacing;
     private float mPaddingTop;
     private String mNoLyricsLabel;
-    private int mCurrentLine = 0;
+    private int mIndexOfCurrentLine = 0;
 
     private boolean mEnableStartOfVerseIndicator = true;
     private float mStartOfVerseIndicatorPaddingTop;
@@ -134,19 +134,19 @@ public class LyricsView extends View {
         this.mHandler = new Handler(Looper.myLooper());
 
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.LyricsView);
-        mNormalTextSize = ta.getDimension(R.styleable.LyricsView_normalTextSize, getResources().getDimension(R.dimen.normal_text_size));
-        mCurrentTextSize = ta.getDimension(R.styleable.LyricsView_currentTextSize, getResources().getDimension(R.dimen.current_text_size));
-        if (mCurrentTextSize == 0) {
-            mCurrentTextSize = mNormalTextSize;
+        mTextSize = ta.getDimension(R.styleable.LyricsView_textSize, getResources().getDimension(R.dimen.normal_text_size));
+        mCurrentLineTextSize = ta.getDimension(R.styleable.LyricsView_currentLineTextSize, getResources().getDimension(R.dimen.current_text_size));
+        if (mCurrentLineTextSize == 0) {
+            mCurrentLineTextSize = mTextSize;
         }
 
         mLineSpacing = ta.getDimension(R.styleable.LyricsView_lineSpacing, getResources().getDimension(R.dimen.line_spacing));
         mPaddingTop = ta.getDimension(R.styleable.LyricsView_paddingTop, getResources().getDimension(R.dimen.padding_top));
 
-        mCurrentLineTextColor = ta.getColor(R.styleable.LyricsView_currentTextColor, Color.WHITE);
-        mPastTextColor = ta.getColor(R.styleable.LyricsView_pastTextColor, getResources().getColor(R.color.past_text_color));
-        mUpcomingTextColor = ta.getColor(R.styleable.LyricsView_upcomingTextColor, getResources().getColor(R.color.upcoming_text_color));
-        mCurrentHighlightedTextColor = ta.getColor(R.styleable.LyricsView_currentHighlightedTextColor, getResources().getColor(R.color.highlighted_text_color));
+        mCurrentLineTextColor = ta.getColor(R.styleable.LyricsView_currentLineTextColor, Color.WHITE);
+        mPreviousLineTextColor = ta.getColor(R.styleable.LyricsView_previousLineTextColor, getResources().getColor(R.color.previous_text_color));
+        mUpcomingLineTextColor = ta.getColor(R.styleable.LyricsView_upcomingLineTextColor, getResources().getColor(R.color.upcoming_text_color));
+        mCurrentLineHighlightedTextColor = ta.getColor(R.styleable.LyricsView_currentLineHighlightedTextColor, getResources().getColor(R.color.highlighted_text_color));
 
         mNoLyricsLabel = ta.getString(R.styleable.LyricsView_labelWhenNoLyrics);
         mNoLyricsLabel = TextUtils.isEmpty(mNoLyricsLabel) ? getContext().getString(R.string.no_lyrics_label) : mNoLyricsLabel;
@@ -163,17 +163,17 @@ public class LyricsView extends View {
         mStartOfVerseIndicator.setColor(mStartOfVerseIndicatorColor);
         mStartOfVerseIndicator.setAntiAlias(true);
 
-        mPaintNoLyricsFG.setTextSize(mCurrentTextSize);
-        mPaintNoLyricsFG.setColor(mCurrentHighlightedTextColor);
+        mPaintNoLyricsFG.setTextSize(mCurrentLineTextSize);
+        mPaintNoLyricsFG.setColor(mCurrentLineHighlightedTextColor);
         mPaintNoLyricsFG.setAntiAlias(true);
         mPaintNoLyricsFG.setTextAlign(Paint.Align.LEFT);
 
-        mPaintFG.setTextSize(mCurrentTextSize);
-        mPaintFG.setColor(mCurrentHighlightedTextColor);
+        mPaintFG.setTextSize(mCurrentLineTextSize);
+        mPaintFG.setColor(mCurrentLineHighlightedTextColor);
         mPaintFG.setAntiAlias(true);
         mPaintFG.setTextAlign(Paint.Align.LEFT);
 
-        mPaintBG.setTextSize(mCurrentTextSize);
+        mPaintBG.setTextSize(mCurrentLineTextSize);
         mPaintBG.setColor(mCurrentLineTextColor);
         mPaintBG.setAntiAlias(true);
         mPaintBG.setTextAlign(Paint.Align.LEFT);
@@ -241,64 +241,76 @@ public class LyricsView extends View {
         mDuration = duration;
     }
 
-    public void setPastTextColor(@ColorInt int color) {
+    public void setPreviousLineTextColor(@ColorInt int color) {
         if (color == 0) {
-            color = getResources().getColor(R.color.past_text_color);
+            color = getResources().getColor(R.color.previous_text_color);
         }
 
-        mPastTextColor = color;
+        mPreviousLineTextColor = color;
 
         performInvalidateIfNecessary();
     }
 
-    public void setUpcomingTextColor(@ColorInt int color) {
+    public void setUpcomingLineTextColor(@ColorInt int color) {
         if (color == 0) {
             color = getResources().getColor(R.color.upcoming_text_color);
         }
 
-        mUpcomingTextColor = color;
+        mUpcomingLineTextColor = color;
+
+        performInvalidateIfNecessary();
+    }
+
+    public void setTextColor(@ColorInt int color) {
+        if (color == 0) {
+            color = getResources().getColor(R.color.default_popular_color);
+        }
+
+        mPreviousLineTextColor = color;
+        mUpcomingLineTextColor = color;
 
         performInvalidateIfNecessary();
     }
 
     /**
-     * Convenient method, set color of past and upcoming text at once
+     * Convenient method, set color of previous and upcoming text at once
      *
      * @param color
      */
-    public void setNormalTextColor(@ColorInt int color) {
-        if (color == 0) {
-            color = getResources().getColor(R.color.normal_text_color);
-        }
+    public void setInactiveLineTextColor(@ColorInt int color) {
+        setTextColor(color);
+    }
 
-        mPastTextColor = color;
-        mUpcomingTextColor = color;
+    public void setActiveLinePlayedTextColor(@ColorInt int color) {
+        setCurrentLineHighlightedTextColor(color);
+    }
 
-        performInvalidateIfNecessary();
+    public void setActiveLineUpcomingTextColor(@ColorInt int color) {
+        setCurrentLineTextColor(color);
     }
 
     /**
-     * 设置普通歌词文本字体大小
+     * Set text size of previous and upcoming text
      */
-    public void setNormalTextSize(float size) {
-        mNormalTextSize = size;
+    public void setTextSize(float size) {
+        mTextSize = size;
         mNewLine = true;
         performInvalidateIfNecessary();
     }
 
     /**
-     * 设置当前行歌词文本字体大小
+     * Set text size of current line text
      */
-    public void setCurrentTextSize(float size) {
-        mCurrentTextSize = size;
+    public void setCurrentLineTextSize(float size) {
+        mCurrentLineTextSize = size;
         mNewLine = true;
         performInvalidateIfNecessary();
     }
 
     /**
-     * 设置当前行歌词字体颜色
+     * Set text color of current line text
      */
-    public void setCurrentTextColor(@ColorInt int color) {
+    public void setCurrentLineTextColor(@ColorInt int color) {
         if (color == 0) {
             color = Color.WHITE;
         }
@@ -309,14 +321,14 @@ public class LyricsView extends View {
     }
 
     /**
-     * 设置当前行高亮歌词字体颜色
+     * Set text color of current line highlighted text
      */
-    public void setCurrentHighlightedTextColor(@ColorInt int color) {
+    public void setCurrentLineHighlightedTextColor(@ColorInt int color) {
         if (color == 0) {
             color = getResources().getColor(R.color.highlighted_text_color);
         }
-        mCurrentHighlightedTextColor = color;
-        mPaintFG.setColor(mCurrentHighlightedTextColor);
+        mCurrentLineHighlightedTextColor = color;
+        mPaintFG.setColor(mCurrentLineHighlightedTextColor);
         mNewLine = true;
         performInvalidateIfNecessary();
     }
@@ -364,11 +376,6 @@ public class LyricsView extends View {
         this.mStartOfVerseIndicator.setColor(color);
     }
 
-    /**
-     * 歌词是否有效
-     *
-     * @return true，如果歌词有效，否则 false
-     */
     private boolean hasLrc() {
         return mLyricsModel != null && mLyricsModel.lines != null && !mLyricsModel.lines.isEmpty();
     }
@@ -392,9 +399,9 @@ public class LyricsView extends View {
         }
 
         int line = findShowLine(mCurrentTime);
-        if (line != mCurrentLine) {
+        if (line != mIndexOfCurrentLine) {
             mNewLine = true;
-            mCurrentLine = line;
+            mIndexOfCurrentLine = line;
         }
 
         performInvalidateIfNecessary();
@@ -505,14 +512,14 @@ public class LyricsView extends View {
             float y = 0;
             float yReal;
             for (int i = 0; i < lyricsModel.lines.size(); i++) {
-                if (i == mCurrentLine) {
-                    mPaintBG.setTextSize(mCurrentTextSize);
-                } else if (i < mCurrentLine) {
-                    mPaintBG.setColor(mPastTextColor);
-                    mPaintBG.setTextSize(mNormalTextSize);
+                if (i == mIndexOfCurrentLine) {
+                    mPaintBG.setTextSize(mCurrentLineTextSize);
+                } else if (i < mIndexOfCurrentLine) {
+                    mPaintBG.setColor(mPreviousLineTextColor);
+                    mPaintBG.setTextSize(mTextSize);
                 } else {
-                    mPaintBG.setColor(mUpcomingTextColor);
-                    mPaintBG.setTextSize(mNormalTextSize);
+                    mPaintBG.setColor(mUpcomingLineTextColor);
+                    mPaintBG.setTextSize(mTextSize);
                 }
 
                 LyricsLineModel mIEntry = lyricsModel.lines.get(i);
@@ -535,7 +542,7 @@ public class LyricsView extends View {
                 lyricsLineDrawerHelper.draw(mCanvasBG);
                 mCanvasBG.restore();
 
-                if (i == mCurrentLine) {
+                if (i == mIndexOfCurrentLine) {
                     Rect[] drawRects = lyricsLineDrawerHelper.getDrawRectByTime(mCurrentTime);
 
                     for (Rect dr : drawRects) {
@@ -571,13 +578,13 @@ public class LyricsView extends View {
 
             canvas.drawLine(0, centerY, getWidth(), centerY + 1, mPaintFG);
         } else {
-            LyricsLineModel currentLine = lyricsModel.lines.get(mCurrentLine);
+            LyricsLineModel currentLine = lyricsModel.lines.get(mIndexOfCurrentLine);
             if (mNewLine) {
                 mPaintBG.setColor(mCurrentLineTextColor);
-                mPaintBG.setTextSize(mCurrentTextSize);
+                mPaintBG.setTextSize(mCurrentLineTextSize);
 
-                mPaintFG.setColor(mCurrentHighlightedTextColor);
-                mPaintFG.setTextSize(mCurrentTextSize);
+                mPaintFG.setColor(mCurrentLineHighlightedTextColor);
+                mPaintFG.setTextSize(mCurrentLineTextSize);
 
                 mLyricsLineDrawerHelper = new LyricsLineDrawerHelper(currentLine, mPaintFG, mPaintBG, getLrcWidth(), mTextGravity);
 
@@ -586,7 +593,7 @@ public class LyricsView extends View {
                     mBitmapBG.eraseColor(0);
                 }
 
-                if (mCurrentLine < 0 || mCurrentLine >= lyricsModel.lines.size()) {
+                if (mIndexOfCurrentLine < 0 || mIndexOfCurrentLine >= lyricsModel.lines.size()) {
                     mNewLine = false;
                     return;
                 }
@@ -646,13 +653,13 @@ public class LyricsView extends View {
         float y;
         LyricsLineModel line;
         LyricsLineDrawerHelper mLrcEntry;
-        mPaintBG.setTextSize(mNormalTextSize);
-        mPaintBG.setColor(mPastTextColor);
+        mPaintBG.setTextSize(mTextSize);
+        mPaintBG.setColor(mPreviousLineTextColor);
 
         mCanvasBG.save();
         mCanvasBG.translate(0, curPointY);
 
-        for (int i = mCurrentLine - 1; i >= 0; i--) {
+        for (int i = mIndexOfCurrentLine - 1; i >= 0; i--) {
             line = lyricsModel.lines.get(i);
             mLrcEntry = new LyricsLineDrawerHelper(line, mPaintBG, getLrcWidth(), mTextGravity);
 
@@ -692,13 +699,13 @@ public class LyricsView extends View {
         float y;
         LyricsLineModel data;
         LyricsLineDrawerHelper mLrcEntry;
-        mPaintBG.setTextSize(mNormalTextSize);
-        mPaintBG.setColor(mUpcomingTextColor);
+        mPaintBG.setTextSize(mTextSize);
+        mPaintBG.setColor(mUpcomingLineTextColor);
 
         mCanvasBG.save();
         mCanvasBG.translate(0, curPointY);
 
-        for (int i = mCurrentLine + 1; i < lyricsModel.lines.size(); i++) {
+        for (int i = mIndexOfCurrentLine + 1; i < lyricsModel.lines.size(); i++) {
             data = lyricsModel.lines.get(i);
             mLrcEntry = new LyricsLineDrawerHelper(data, mPaintBG, getLrcWidth(), mTextGravity);
 
@@ -787,7 +794,7 @@ public class LyricsView extends View {
 
     private void resetInternal() {
         mLyricsModel = null;
-        mCurrentLine = 0;
+        mIndexOfCurrentLine = 0;
         mNewLine = true;
         mCurrentTime = 0;
         mOffset = 0;
@@ -833,21 +840,10 @@ public class LyricsView extends View {
 
     @MainThread
     public interface OnLyricsSeekListener {
-        /**
-         * 进度条改变回调
-         *
-         * @param time 毫秒
-         */
-        void onProgressChanged(long time);
+        void onProgressChanged(long progress);
 
-        /**
-         * 开始拖动
-         */
         void onStartTrackingTouch();
 
-        /**
-         * 结束拖动
-         */
         void onStopTrackingTouch();
     }
 }
