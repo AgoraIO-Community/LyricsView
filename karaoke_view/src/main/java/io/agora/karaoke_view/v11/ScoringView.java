@@ -325,6 +325,14 @@ public class ScoringView extends View {
         drawOverpastWallAndStartLine(canvas);
         drawPitchSticks(canvas);
         drawLocalPitchIndicator(canvas);
+
+        if (DEBUG) {
+            mPitchStickHighlightedPaint.setTextSize(28);
+            canvas.drawText("id:" + System.identityHashCode(this.mScoringMachine) + ", current=" + System.currentTimeMillis()
+                            + ", progress: " + (int) (mScoringMachine.getCurrentProgress())
+                            + ", y: " + (int) (getYForPitchIndicator()) + ", pitch: " + (int) (mLocalPitch),
+                    20, getHeight() - 30, mPitchStickHighlightedPaint);
+        }
     }
 
     protected Bitmap mCustomizedLocalPitchIndicator;
@@ -410,10 +418,6 @@ public class ScoringView extends View {
 
     protected void drawOverpastWallAndStartLine(Canvas canvas) {
         drawOverpastWall(canvas);
-
-        if (DEBUG) {
-            canvas.drawText("" + this.mScoringMachine.toString() + ", y: " + (int) (getYForPitchIndicator()) + ", pitch: " + (int) (mLocalPitch), 20, getHeight() - 30, mPitchStickHighlightedPaint);
-        }
 
         drawStartLine(canvas);
     }
@@ -596,15 +600,15 @@ public class ScoringView extends View {
                 } else {
                     RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
                     canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
-                    if (DEBUG) {
-                        mPitchStickHighlightedPaint.setTextSize(28);
-                        canvas.drawText(tone.word, x, 30, mPitchStickHighlightedPaint);
-                        canvas.drawText((int) (x) + "", x, 60, mPitchStickHighlightedPaint);
-                        canvas.drawText((int) (endX) + "", x, 90, mPitchStickHighlightedPaint);
-                    }
                 }
 
-
+                if (DEBUG) {
+                    mPitchStickHighlightedPaint.setTextSize(28);
+                    canvas.drawText(tone.word , x, 30, mPitchStickHighlightedPaint);
+                    canvas.drawText((int) (x) + "_" + (int) (endX), x, 60, mPitchStickHighlightedPaint);
+                    canvas.drawText((int) (tone.begin) + "", x, 90, mPitchStickHighlightedPaint);
+                    canvas.drawText((int) (tone.end) + "", x, 120, mPitchStickHighlightedPaint);
+                }
             }
         }
     }
