@@ -252,13 +252,14 @@ public class ScoringMachine {
             }
         }
 
-        this.mCurrentProgress = progress;
-        if (progress == 0L) {
+        if (progress <= 0L) {
             resetStats();
             if (mListener != null) {
                 mListener.resetUi();
             }
         }
+
+        this.mCurrentProgress = progress;
 
         if (mLyricsModel == null) {
             if (mListener != null) {
