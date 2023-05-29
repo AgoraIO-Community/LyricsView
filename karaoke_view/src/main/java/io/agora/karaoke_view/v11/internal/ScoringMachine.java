@@ -78,13 +78,17 @@ public class ScoringMachine {
         this.mListener = listener;
     }
 
+    private static final LyricsModel EMPTY_LYRICS_MODEL = new LyricsModel(LyricsModel.Type.General);
+
     // Set data and prepare to rendering
     public void prepare(LyricsModel model) {
-        if (model == null || model.lines == null || model.lines.isEmpty()) {
-            throw new IllegalArgumentException("Invalid lyrics model");
-        }
-
         reset();
+
+        if (model == null || model.lines == null || model.lines.isEmpty()) {
+            Log.w(TAG, "Invalid lyrics model, use built-in EMPTY_LYRICS_MODEL");
+            mLyricsModel = EMPTY_LYRICS_MODEL;
+            return;
+        }
 
         mLyricsModel = model;
 
@@ -103,7 +107,7 @@ public class ScoringMachine {
     }
 
     public boolean isReady() {
-        return mLyricsModel != null && mNumberOfRefPitches > 0;
+        return mLyricsModel != null;
     }
 
     public void setScoringAlgorithm(IScoringAlgorithm algorithm) {
@@ -122,7 +126,7 @@ public class ScoringMachine {
      * @return 当前时间歌词的 Pitch 以及是否换行 returnNewLine 和 returnIndexOfMostRecentLine
      */
     private float findRefPitchByTime(long timestamp, final boolean[] returnNewLine, final int[] returnIndexOfMostRecentLine) {
-        if (mLyricsModel == null) {
+        if (mLyricsModel == null || mLyricsModel.lines == null) {
             return -1; // Not ready
         }
 

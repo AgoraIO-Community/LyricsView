@@ -388,13 +388,20 @@ public class LyricsView extends View {
         updateByProgress(mScoringMachine.getCurrentProgress());
     }
 
-    private void updateByProgress(long timestamp) {
-        mCurrentTime = timestamp;
-
+    private boolean refreshNoLyrics() {
         if (!hasLrc()) {
             if ((mCurrentTime / 1000) % 2 == 0) {
                 performInvalidateIfNecessary();
             }
+            return true;
+        }
+        return false;
+    }
+
+    private void updateByProgress(long timestamp) {
+        mCurrentTime = timestamp;
+
+        if (refreshNoLyrics()) {
             return;
         }
 
@@ -793,6 +800,7 @@ public class LyricsView extends View {
     }
 
     private void resetInternal() {
+        mScoringMachine = null;
         mLyricsModel = null;
         mIndexOfCurrentLine = 0;
         mNewLine = true;

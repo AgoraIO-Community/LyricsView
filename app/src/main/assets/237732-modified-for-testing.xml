@@ -468,13 +468,13 @@
 				</tone>
 			</sentence>
 			<sentence>
-				<tone begin="80.484" end="80.787" lang="1" pitch="0" pronounce="">
+				<tone begin="80.484" end="80.787" lang="1" pronounce="">
 					<word>因</word>
 				</tone>
-				<tone begin="80.787" end="80.989" lang="1" pitch="0" pronounce="">
+				<tone begin="80.787" end="80.989" lang="1" pronounce="">
 					<word>为</word>
 				</tone>
-				<tone begin="80.989" end="81.242" lang="1" pitch="0" pronounce="">
+				<tone begin="80.989" end="81.242" lang="1" pronounce="">
 					<word>思</word>
 				</tone>
 				<tone begin="81.242" end="81.495" lang="1" pitch="0" pronounce="">

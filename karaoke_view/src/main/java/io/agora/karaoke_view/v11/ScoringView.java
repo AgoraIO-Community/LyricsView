@@ -709,7 +709,7 @@ public class ScoringView extends View {
     };
 
     protected final boolean uninitializedOrNoLyrics() {
-        return mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty();
+        return mScoringMachine == null || mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty();
     }
 
     public final void updatePitchAndScore(final float pitch, final double scoreAfterNormalization, final boolean betweenCurrentPitch) {
@@ -812,8 +812,7 @@ public class ScoringView extends View {
     private boolean mInHighlightStatus;
 
     public void reset() {
-        mLyricsModel = null;
-        mInHighlightStatus = false;
+        resetInternal();
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -822,6 +821,12 @@ public class ScoringView extends View {
                 invalidateForSureAndMarkTheTimestamp();
             }
         });
+    }
+
+    private void resetInternal() {
+        mScoringMachine = null;
+        mLyricsModel = null;
+        mInHighlightStatus = false;
     }
 
     @Override
