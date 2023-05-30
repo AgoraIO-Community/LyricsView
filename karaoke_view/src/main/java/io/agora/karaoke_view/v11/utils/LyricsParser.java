@@ -46,6 +46,12 @@ public class LyricsParser {
     }
 
     @Nullable
+    public static LyricsModel parse(@NonNull File file, @Nullable File pitch) {
+        checkParameters(file);
+        return doParse(null, file);
+    }
+
+    @Nullable
     public static LyricsModel parse(@NonNull LyricsModel.Type type, @NonNull File file) {
         checkParameters(file);
         return doParse(type, file);

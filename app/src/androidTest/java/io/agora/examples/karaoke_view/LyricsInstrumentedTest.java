@@ -14,7 +14,12 @@ import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -771,6 +776,63 @@ public class LyricsInstrumentedTest {
 
         int lineCount = parsedLyrics.lines.size();
         assertEquals(lineCount, expectedNumberOfLines);
+    }
+
+    @Test
+    public void parsePitchDataFromPitchFile() {
+        // specified to
+        String fileNameOfPitchData = "pitch.bin";
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        File target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfPitchData);
+        assertNotNull(target);
+
+        try (DataInputStream inputStream = new DataInputStream(Files.newInputStream(target.toPath()))) {
+            // Read int32 values until the end of the file
+            int version = readLittleEndianInt(inputStream);
+            int interval = readLittleEndianInt(inputStream);
+            int reserved = readLittleEndianInt(inputStream);
+
+            Log.i(TAG, "Version for the pitch file: " + version);
+            Log.i(TAG, "Interval for the pitch file: " + interval);
+            Log.i(TAG, "Reserved for the pitch file: " + reserved);
+            while (inputStream.available() >= 8) { // Each pitch value at least takes 8 bits
+                double pitch = readLittleEndianDouble(inputStream);
+                DecimalFormat formatter = new DecimalFormat("#.###");
+                String formattedPitch = formatter.format(pitch);
+
+                Log.i(TAG, "Pitch data: " + pitch + " -> " + formattedPitch);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static int readLittleEndianInt(DataInputStream inputStream) throws IOException {
+        int b1 = inputStream.readUnsignedByte();
+        int b2 = inputStream.readUnsignedByte();
+        int b3 = inputStream.readUnsignedByte();
+        int b4 = inputStream.readUnsignedByte();
+
+        return (b4 << 24) | (b3 << 16) | (b2 << 8) | b1;
+    }
+
+    private static double readLittleEndianDouble(DataInputStream inputStream) throws IOException {
+        long bits = readLittleEndianLong(inputStream);
+        return Double.longBitsToDouble(bits);
+    }
+
+    private static long readLittleEndianLong(DataInputStream inputStream) throws IOException {
+        long b1 = inputStream.readUnsignedByte();
+        long b2 = inputStream.readUnsignedByte();
+        long b3 = inputStream.readUnsignedByte();
+        long b4 = inputStream.readUnsignedByte();
+        long b5 = inputStream.readUnsignedByte();
+        long b6 = inputStream.readUnsignedByte();
+        long b7 = inputStream.readUnsignedByte();
+        long b8 = inputStream.readUnsignedByte();
+
+        return (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) | b1;
     }
 
 }
