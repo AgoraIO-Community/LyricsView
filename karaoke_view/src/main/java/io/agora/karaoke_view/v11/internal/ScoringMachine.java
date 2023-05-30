@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import io.agora.karaoke_view.v11.DefaultScoringAlgorithm;
 import io.agora.karaoke_view.v11.IScoringAlgorithm;
 import io.agora.karaoke_view.v11.VoicePitchChanger;
+import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 
@@ -85,7 +86,7 @@ public class ScoringMachine {
         reset();
 
         if (model == null || model.lines == null || model.lines.isEmpty()) {
-            Log.w(TAG, "Invalid lyrics model, use built-in EMPTY_LYRICS_MODEL");
+            LogManager.instance().warn(TAG, "Invalid lyrics model, use built-in EMPTY_LYRICS_MODEL");
             mLyricsModel = EMPTY_LYRICS_MODEL;
             return;
         }
