@@ -1,3 +1,86 @@
 <resources>
-    <string name="app_name">Lyrics View Example</string>
+    <string name="app_name">Karaoke View Example</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <string name="prefs_key_scoring_level" translatable="false">prefs_key_scoring_level</string>
+    <string name="prefs_key_scoring_compensation_offset" translatable="false">prefs_key_scoring_compensation_offset</string>
+
+    <string name="prefs_key_start_of_verse_indicator_switch" translatable="false">prefs_key_start_of_verse_indicator_switch</string>
+    <string name="prefs_key_start_of_verse_indicator_color" translatable="false">prefs_key_start_of_verse_indicator_color</string>
+    <string name="prefs_key_start_of_verse_indicator_radius" translatable="false">prefs_key_start_of_verse_indicator_radius</string>
+    <string name="prefs_key_start_of_verse_indicator_padding_top" translatable="false">prefs_key_start_of_verse_indicator_padding_top</string>
+
+    <string name="prefs_key_normal_line_text_color" translatable="false">prefs_key_normal_line_text_color</string>
+    <string name="prefs_key_normal_line_text_size" translatable="false">prefs_key_normal_line_text_size</string>
+    <string name="prefs_key_current_line_text_color" translatable="false">prefs_key_current_line_text_color</string>
+    <string name="prefs_key_current_line_text_size" translatable="false">prefs_key_current_line_text_size</string>
+    <string name="prefs_key_current_line_highlighted_text_color" translatable="false">prefs_key_current_line_highlighted_text_color</string>
+
+    <string name="prefs_key_line_spacing" translatable="false">prefs_key_line_spacing</string>
+
+    <string name="prefs_key_lyrics_dragging_switch" translatable="false">prefs_key_lyrics_dragging_switch</string>
+
+    <string name="prefs_key_lyrics_not_available_text" translatable="false">prefs_key_lyrics_not_available_text</string>
+    <string name="prefs_key_lyrics_not_available_text_color" translatable="false">prefs_key_lyrics_not_available_text_color</string>
+    <string name="prefs_key_lyrics_not_available_text_size" translatable="false">prefs_key_lyrics_not_available_text_size</string>
+
+    <string name="prefs_key_default_ref_pitch_stick_color" translatable="false">prefs_key_default_ref_pitch_stick_color</string>
+    <string name="prefs_key_highlighted_ref_pitch_stick_color" translatable="false">prefs_key_highlighted_ref_pitch_stick_color</string>
+
+    <string name="prefs_key_ref_pitch_stick_height" translatable="false">prefs_key_ref_pitch_stick_height</string>
+    <string name="prefs_key_particle_effect_switch" translatable="false">prefs_key_particle_effect_switch</string>
+    <string name="prefs_key_customized_indicator_and_particle_switch" translatable="false">prefs_key_customized_indicator_and_particle_switch</string>
+    <string name="prefs_key_particle_hit_on_threshold" translatable="false">prefs_key_particle_hit_on_threshold</string>
+
+    <string-array name="available_indicator_colors">
+        <item>Default</item>
+        <item>Red</item>
+        <item>Yellow</item>
+        <item>Green</item>
+    </string-array>
+
+    <string-array name="available_indicator_radius">
+        <item>8dp</item>
+        <item>16dp</item>
+        <item>20dp</item>
+    </string-array>
+
+    <string-array name="available_text_size">
+        <item>12</item>
+        <item>14</item>
+        <item>16</item>
+        <item>18</item>
+        <item>26</item>
+        <item>32</item>
+    </string-array>
+
+    <string-array name="available_spacing_lines">
+        <item>2dp</item>
+        <item>4dp</item>
+        <item>6dp</item>
+        <item>8dp</item>
+        <item>16dp</item>
+    </string-array>
+
+    <string-array name="available_text_colors">
+        <item>Default</item>
+        <item>White</item>
+        <item>Yellow</item>
+        <item>Gray</item>
+        <item>Brown</item>
+    </string-array>
+
+    <string-array name="available_highlighted_text_colors">
+        <item>Default</item>
+        <item>Orange</item>
+        <item>Red</item>
+        <item>Blue</item>
+    </string-array>
+
+    <string-array name="text_when_no_lyrics_available">
+        <item>No Lyrics Available</item>
+        <item>无歌词</item>
+        <item>歌詞なし</item>
+    </string-array>
+
 </resources>

@@ -6,11 +6,11 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "io.agora.examples.lyrics_view"
+        applicationId "io.agora.examples.karaoke_view"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 8
+        versionName "1.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -26,16 +26,27 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    namespace 'io.agora.examples.karaoke_view'
+
+    buildFeatures {
+        viewBinding true
+    }
 }
 
 dependencies {
-    implementation project(':lrcview')
-//  implementation 'com.github.AgoraIO-Community:LyricsView:1.0.31'
+    implementation project(':karaoke_view')
+//  implementation 'com.github.AgoraIO-Community:LyricsView:1.1.1'
 
-    implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation 'com.google.android.material:material:1.6.1'
+    api 'com.github.guohai:Leonids:9f5a9190f6'
+
+    implementation 'com.squareup.okhttp3:okhttp:4.9.2'
+
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
