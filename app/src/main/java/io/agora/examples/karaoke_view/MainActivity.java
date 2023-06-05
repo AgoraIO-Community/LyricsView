@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    private void loadTheLyrics(String lrcSample, String pitchSample) {
+    private void loadTheLyrics(String lrcUri, String pitchUri) {
         mKaraokeView.reset();
         mLyricsModel = null;
 
@@ -168,12 +168,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 TextView tvDescription = findViewById(R.id.lyrics_description);
-                tvDescription.setText("Try to load " + lrcSample);
+                tvDescription.setText("Try to load " + lrcUri);
             }
         });
 
-        if (lrcSample.startsWith("https://") || lrcSample.startsWith("http://")) {
-            DownloadManager.getInstance().download(this, lrcSample, file -> {
+        if (lrcUri.startsWith("https://") || lrcUri.startsWith("http://")) {
+            DownloadManager.getInstance().download(this, lrcUri, file -> {
                 file = extractFromZipFileIfPossible(file);
                 mLyricsModel = KaraokeView.parseLyricsData(file);
 
@@ -188,10 +188,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 updateLyricsDescription();
             });
         } else {
-            File file = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcSample);
-            File pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchSample);
-            file = extractFromZipFileIfPossible(file);
-            mLyricsModel = KaraokeView.parseLyricsData(file, pitch);
+            File lrc = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
+            File pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
+            lrc = extractFromZipFileIfPossible(lrc);
+            mLyricsModel = KaraokeView.parseLyricsData(lrc, pitch);
 
             if (mLyricsModel != null) {
                 mKaraokeView.setLyricsData(mLyricsModel);
