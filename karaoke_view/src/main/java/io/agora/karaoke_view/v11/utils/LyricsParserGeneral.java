@@ -19,7 +19,7 @@ import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 
 /**
- * 通用歌词加载。
+ * 加载 lrc 歌词(逐句)
  * 样式：[00:08.15]一盏黄黄旧旧的灯
  *
  * @author chenhengfei(Aslanchen)

@@ -614,7 +614,10 @@ public class LyricsView extends View {
 
             canvas.drawBitmap(mBitmapBG, mRectSrc, mRectDst, null);
 
-            drawHighLight();
+            if (mLyricsModel.type != LyricsModel.Type.General) {
+                drawHighLight();
+            }
+
             canvas.drawBitmap(mBitmapFG, mRectSrc, mRectDst, null);
         }
 

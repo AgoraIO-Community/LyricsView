@@ -119,7 +119,7 @@ public class KaraokeView {
     }
 
     public static LyricsModel parseLyricsData(byte[] data) {
-        return new LyricsModel(LyricsModel.Type.Migu);
+        return new LyricsModel(LyricsModel.Type.Xml);
     }
 
     public void setLyricsData(LyricsModel model) {

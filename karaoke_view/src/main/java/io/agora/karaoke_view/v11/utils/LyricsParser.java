@@ -93,8 +93,8 @@ public class LyricsParser {
                     line.tones.add(tone);
                 }
             }
-        } else if (type == LyricsModel.Type.Migu) {
-            model = LyricsParserMigu.parseLrc(lyrics);
+        } else if (type == LyricsModel.Type.Xml) {
+            model = LyricsParserXml.parseLrc(lyrics);
 
             // Replace tones and set the pitch value
             // Each tone lasts for the specified time
@@ -120,7 +120,7 @@ public class LyricsParser {
                 bufferedReader = new BufferedReader(inputStreamReader);
                 String line = bufferedReader.readLine();
                 if (line != null && (line.contains("xml") || line.contains("<song>"))) {
-                    type = LyricsModel.Type.Migu;
+                    type = LyricsModel.Type.Xml;
                 } else {
                     type = LyricsModel.Type.General;
                 }

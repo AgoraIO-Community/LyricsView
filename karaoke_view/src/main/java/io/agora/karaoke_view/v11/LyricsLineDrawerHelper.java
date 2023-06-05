@@ -20,7 +20,7 @@ import io.agora.karaoke_view.v11.model.LyricsLineModel;
  * @date 2021/7/6
  */
 class LyricsLineDrawerHelper {
-    private static final String TAG = "LrcEntryData";
+    private static final String TAG = "LyricsLineDrawerHelper";
 
     private StaticLayout mLayoutBG; // 背景文字
     private StaticLayout mLayoutFG; // 前排高亮文字
@@ -30,7 +30,7 @@ class LyricsLineDrawerHelper {
     private Rect[] textRectTotalWords; // 每一段歌词
     private Rect[] textRectDisplayLines; // 每一行显示的歌词
 
-    private LyricsLineModel mEntry; // 数据源
+    private LyricsLineModel mLine; // 数据源
 
     public enum Gravity {
         CENTER(0), LEFT(1), RIGHT(2);
@@ -54,17 +54,17 @@ class LyricsLineDrawerHelper {
         }
     }
 
-    public LyricsLineDrawerHelper(LyricsLineModel mEntry, @NonNull TextPaint mTextPaintBG, int width, Gravity gravity) {
-        this.mEntry = mEntry;
-        this.init(null, mTextPaintBG, width, gravity);
+    public LyricsLineDrawerHelper(LyricsLineModel line, @NonNull TextPaint textPaintBG, int width, Gravity gravity) {
+        this.mLine = line;
+        this.init(null, textPaintBG, width, gravity);
     }
 
-    public LyricsLineDrawerHelper(LyricsLineModel mEntry, @Nullable TextPaint mTextPaintFG, @NonNull TextPaint mTextPaintBG, int width, Gravity gravity) {
-        this.mEntry = mEntry;
-        this.init(mTextPaintFG, mTextPaintBG, width, gravity);
+    public LyricsLineDrawerHelper(LyricsLineModel line, @Nullable TextPaint textPaintFG, @NonNull TextPaint textPaintBG, int width, Gravity gravity) {
+        this.mLine = line;
+        this.init(textPaintFG, textPaintBG, width, gravity);
     }
 
-    private void init(@Nullable TextPaint mTextPaintFG, @NonNull TextPaint mTextPaintBG, int width, Gravity gravity) {
+    private void init(@Nullable TextPaint textPaintFG, @NonNull TextPaint textPaintBG, int width, Gravity gravity) {
         Layout.Alignment align;
         switch (gravity) {
             case LEFT:
@@ -80,7 +80,7 @@ class LyricsLineDrawerHelper {
         }
 
         StringBuilder sb = new StringBuilder();
-        List<LyricsLineModel.Tone> tones = mEntry.tones;
+        List<LyricsLineModel.Tone> tones = mLine.tones;
         textRectTotalWords = new Rect[tones.size()];
         String text;
         for (int i = 0; i < tones.size(); i++) {
@@ -97,14 +97,14 @@ class LyricsLineDrawerHelper {
             sb.append(s);
 
             text = sb.toString();
-            mTextPaintBG.getTextBounds(text, 0, text.length(), rectTotal);
+            textPaintBG.getTextBounds(text, 0, text.length(), rectTotal);
         }
 
         text = sb.toString();
-        if (mTextPaintFG != null) {
-            mLayoutFG = new StaticLayout(text, mTextPaintFG, width, align, 1f, 0f, false);
+        if (textPaintFG != null) {
+            mLayoutFG = new StaticLayout(text, textPaintFG, width, align, 1f, 0f, false);
         }
-        mLayoutBG = new StaticLayout(text, mTextPaintBG, width, align, 1f, 0f, false);
+        mLayoutBG = new StaticLayout(text, textPaintBG, width, align, 1f, 0f, false);
 
         int totalLine = mLayoutBG.getLineCount();
         textRectDisplayLines = new Rect[totalLine];
@@ -139,7 +139,7 @@ class LyricsLineDrawerHelper {
         int doneLen = 0;
         float curLen = 0f;
 
-        List<LyricsLineModel.Tone> tones = mEntry.tones;
+        List<LyricsLineModel.Tone> tones = mLine.tones;
         for (int i = 0; i < tones.size(); i++) {
             LyricsLineModel.Tone tone = tones.get(i);
             if (time >= tone.end) {
