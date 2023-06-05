@@ -8,13 +8,16 @@ public class LyricsResourcePool {
     protected static class LyricsResource {
         public final int index;
 
-        public final String uri;
+        public final String lyrics;
+
+        public final String pitches;
 
         public final String description;
 
-        LyricsResource(int index, String uri, String description) {
+        LyricsResource(int index, String lyrics, String pitches, String description) {
             this.index = index;
-            this.uri = uri;
+            this.lyrics = lyrics;
+            this.pitches = pitches;
             this.description = description;
         }
     }
@@ -77,21 +80,25 @@ public class LyricsResourcePool {
 
     public static final String LRC_SAMPLE_LOCAL_FILE_227732_2_INVALID = "237732-invalid-content-2.xml";
 
+    public static final String LRC_SAMPLE_LOCAL_FILE_LRC_6246262727282260 = "6246262727282260.lrc";
+    public static final String LRC_SAMPLE_LOCAL_FILE_PITCH_6246262727282260 = "6246262727282260.bin";
+
     public static final List<LyricsResource> asList() {
         ArrayList<LyricsResource> list = new ArrayList<>();
-        list.add(new LyricsResource(0, LRC_SAMPLE_1, "DEPRECATED"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_2, "EMPTY_PITCH/WORD_MISSING"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_3, "ZIP/TS_PITCH_SAME"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_4, "EMPTY_PITCH/EMPTY_TITLE/EMPTY_ARTIST"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_5, "403/INVALID_REQUEST"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_6, "NON_PERFECT_XML"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_7, "404/NOT_FOUND"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_810507, "ONE_LINE"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_825003, "TS_PITCH_SAME"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_147383, "TS_PITCH_OVERLAP"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_151675, "PERFECT"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_793566, "PERFECT"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_227732_2_INVALID, "Unexpected Content"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_1, null, "DEPRECATED"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_2, null, "EMPTY_PITCH/WORD_MISSING"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_3, null, "ZIP/TS_PITCH_SAME"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_4, null, "EMPTY_PITCH/EMPTY_TITLE/EMPTY_ARTIST"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_5, null, "403/INVALID_REQUEST"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_6, null, "NON_PERFECT_XML"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_7, null, "404/NOT_FOUND"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_810507, null, "ONE_LINE"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_825003, null, "TS_PITCH_SAME"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_147383, null, "TS_PITCH_OVERLAP"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_151675, null, "PERFECT"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_793566, null, "PERFECT"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_227732_2_INVALID, null, "Unexpected Content"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_LRC_6246262727282260, LRC_SAMPLE_LOCAL_FILE_PITCH_6246262727282260, "Lrc file with extra standalone pitches"));
         return list;
     }
 }

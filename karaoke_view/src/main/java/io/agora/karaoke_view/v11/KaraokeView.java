@@ -114,6 +114,10 @@ public class KaraokeView {
         return LyricsParser.parse(file);
     }
 
+    public static LyricsModel parseLyricsData(File file, File pitch) {
+        return LyricsParser.parse(file, pitch);
+    }
+
     public static LyricsModel parseLyricsData(byte[] data) {
         return new LyricsModel(LyricsModel.Type.Migu);
     }

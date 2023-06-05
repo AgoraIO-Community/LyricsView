@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-        loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
+        loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).lyrics, LyricsResourcePool.asList().get(mCurrentIndex).pitches);
 
         loadPreferences();
 
@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    private void loadTheLyrics(String lrcSample) {
+    private void loadTheLyrics(String lrcSample, String pitchSample) {
         mKaraokeView.reset();
         mLyricsModel = null;
 
@@ -189,8 +189,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             });
         } else {
             File file = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcSample);
+            File pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchSample);
             file = extractFromZipFileIfPossible(file);
-            mLyricsModel = KaraokeView.parseLyricsData(file);
+            mLyricsModel = KaraokeView.parseLyricsData(file, pitch);
 
             if (mLyricsModel != null) {
                 mKaraokeView.setLyricsData(mLyricsModel);
@@ -417,7 +418,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 updateLyricsDescription();
 
-                loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
+                loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).lyrics, LyricsResourcePool.asList().get(mCurrentIndex).pitches);
             }
         }, 0, TimeUnit.MILLISECONDS);
     }

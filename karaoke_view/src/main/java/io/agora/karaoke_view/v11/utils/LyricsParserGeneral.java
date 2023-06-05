@@ -70,8 +70,9 @@ class LyricsParserGeneral {
         }
 
         if (lines.size() > 0) {
-            long fake = lines.get(lines.size() - 2).getEndTime();
-            lyrics.duration = fake + 2000; // We do not know the last end timestamp of song
+            long faked = lines.get(lines.size() - 1).getStartTime() + 8765;
+            lines.get(lines.size() - 1).tones.get(0).end = faked;
+            lyrics.duration = faked; // We do not know the last end timestamp of song
         }
 
         lyrics.startOfVerse = lines.get(0).getStartTime(); // Always the first line of lyrics
