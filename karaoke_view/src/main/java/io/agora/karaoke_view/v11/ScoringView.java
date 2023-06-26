@@ -21,6 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.UiThread;
@@ -103,7 +104,7 @@ public class ScoringView extends View {
         init(attrs);
     }
 
-    public void setRefPitchStickDefaultColor(int color) {
+    public void setRefPitchStickDefaultColor(@ColorInt int color) {
         if (color == 0) {
             color = getResources().getColor(R.color.default_popular_color);
         }
@@ -327,9 +328,16 @@ public class ScoringView extends View {
         drawLocalPitchIndicator(canvas);
 
         if (DEBUG) {
+            long progress = 0;
+            int id = 0;
+            if (!uninitializedOrNoLyrics()) {
+                progress = mScoringMachine.getCurrentProgress();
+                id = System.identityHashCode(this.mScoringMachine);
+            }
+
             mPitchStickHighlightedPaint.setTextSize(28);
-            canvas.drawText("id:" + System.identityHashCode(this.mScoringMachine) + ", current=" + System.currentTimeMillis()
-                            + ", progress: " + (int) (mScoringMachine.getCurrentProgress())
+            canvas.drawText("id: " + id + ", current=" + System.currentTimeMillis()
+                            + ", progress: " + (int) (progress)
                             + ", y: " + (int) (getYForPitchIndicator()) + ", pitch: " + (int) (mLocalPitch),
                     20, getHeight() - 30, mPitchStickHighlightedPaint);
         }
@@ -457,7 +465,7 @@ public class ScoringView extends View {
 
         float y;
         float widthOfPitchStick;
-        float mItemHeightPerPitchLevel = (getHeight() - mPitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);
+        float stickHeightPerPitchLevel = (getHeight() - mPitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);
 
         long endTimeOfPreviousLine = 0; // Not used so far
 
@@ -469,19 +477,19 @@ public class ScoringView extends View {
             }
 
             long startTime = line.getStartTime();
-            long durationOfCurrentEntry = line.getEndTime() - startTime;
+            long durationOfCurrentLine = line.getEndTime() - startTime;
 
-            if (this.mScoringMachine.getCurrentProgress() - startTime <= -(2 * durationOfCurrentEntry)) { // If still to early for current entry, we do not draw the sticks
+            if (this.mScoringMachine.getCurrentProgress() - startTime <= -(2 * durationOfCurrentLine)) { // If still to early for current line, we do not draw the sticks
                 // If we show the sticks too late, they will appear suddenly in the central of screen, not start from the right side
                 break;
             }
 
-            if (i + 1 < lines.size() && line.getStartTime() < this.mScoringMachine.getCurrentProgress()) { // Has next entry
-                // Get next entry
+            if (i + 1 < lines.size() && line.getStartTime() < this.mScoringMachine.getCurrentProgress()) { // Has next line
+                // Get next line
                 // If start for next is far away than 2 seconds
                 // stop the current animation now
-                long nextEntryStartTime = mLyricsModel.lines.get(i + 1).getStartTime();
-                if ((nextEntryStartTime - line.getEndTime() >= 2 * 1000) && this.mScoringMachine.getCurrentProgress() > line.getEndTime() && this.mScoringMachine.getCurrentProgress() < nextEntryStartTime) { // Two seconds after this entry stop
+                long startTimeOfNextLine = mLyricsModel.lines.get(i + 1).getStartTime();
+                if ((startTimeOfNextLine - line.getEndTime() >= 2 * 1000) && this.mScoringMachine.getCurrentProgress() > line.getEndTime() && this.mScoringMachine.getCurrentProgress() < startTimeOfNextLine) { // Two seconds after this line stops
                     assureAnimationForPitchIndicator(0); // Force stop the animation when there is a too long stop between two lines
                     if (mTimestampForLastAnimationDecrease < 0 || this.mScoringMachine.getCurrentProgress() - mTimestampForLastAnimationDecrease > 4 * 1000) {
                         ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch indicator
@@ -501,7 +509,7 @@ public class ScoringView extends View {
 
             endTimeOfPreviousLine = line.getEndTime();
 
-            if (x + 2 * durationOfCurrentEntry * mMovingPixelsPerMs < 0) { // Already past for long time enough
+            if (x + 2 * durationOfCurrentLine * mMovingPixelsPerMs < 0) { // Already past for long time enough
                 continue;
             }
 
@@ -513,30 +521,39 @@ public class ScoringView extends View {
                 widthOfPitchStick = mMovingPixelsPerMs * tone.getDuration();
                 float endX = x + widthOfPitchStick;
 
-                if (endX <= 0) {
+                if (endX <= 0) { // when moves out of the view port
                     tone.resetHighlight();
                     continue;
                 }
 
-                if (x >= getWidth()) {
+                if (x >= getWidth()) { // before moves into the view port
                     break;
                 }
 
-                y = (realPitchMax - tone.pitch) * mItemHeightPerPitchLevel;
+                y = (realPitchMax - tone.pitch) * stickHeightPerPitchLevel;
 
                 if (Math.abs(x - mCenterXOfStartPoint) <= 2 * mLocalPitchIndicatorRadius || Math.abs(endX - mCenterXOfStartPoint) <= 2 * mLocalPitchIndicatorRadius) { // Only mark item around local pitch indicator
                     boolean isJustHighlightTriggered = (!tone.highlight) && mInHighlightStatus;
-                    if (isJustHighlightTriggered && Math.abs(x - mCenterXOfStartPoint) <= 400 * mMovingPixelsPerMs) {
+                    if (isJustHighlightTriggered && Math.abs(x - mCenterXOfStartPoint) <= 400 * mMovingPixelsPerMs) { // Mark the instantaneous x as the offset of highlighted stick
                         tone.highlightOffset = Math.abs(mCenterXOfStartPoint - x);
-                        if (tone.highlightOffset >= widthOfPitchStick) {
+                        if (tone.highlightOffset >= widthOfPitchStick) { // Do some adjustment
                             tone.highlightOffset = 0.5f * widthOfPitchStick;
+                        }
+                        if (tone.highlightOffset > 0 && tone.highlightOffset <= widthOfPitchStick / 4) { // Do some adjustment
+                            tone.highlightOffset = 0.0f;
+                        }
+                        if (mLyricsModel.type == LyricsModel.Type.General) { // Do not enable partially draw for lrc mode
+                            tone.highlightOffset = 0.0f;
                         }
                     }
                     boolean isJustDeHighlightTriggered = (tone.highlight) && !mInHighlightStatus;
                     if (isJustDeHighlightTriggered && tone.highlightWidth < 0) {
                         tone.highlightWidth = Math.abs(mCenterXOfStartPoint - x - tone.highlightOffset);
                         if (tone.highlightWidth >= widthOfPitchStick) {
-                            tone.highlightWidth = 0.5f * widthOfPitchStick;
+                            tone.highlightWidth = widthOfPitchStick;
+                        }
+                        if (mLyricsModel.type == LyricsModel.Type.General) { // Do not enable partially draw for lrc mode
+                            tone.highlightWidth = widthOfPitchStick;
                         }
                     }
 
@@ -603,11 +620,13 @@ public class ScoringView extends View {
                 }
 
                 if (DEBUG) {
-                    mPitchStickHighlightedPaint.setTextSize(28);
-                    canvas.drawText(tone.word , x, 30, mPitchStickHighlightedPaint);
-                    canvas.drawText((int) (x) + "_" + (int) (endX), x, 60, mPitchStickHighlightedPaint);
-                    canvas.drawText((int) (tone.begin) + "", x, 90, mPitchStickHighlightedPaint);
-                    canvas.drawText((int) (tone.end) + "", x, 120, mPitchStickHighlightedPaint);
+                    if (tone.word != null) { // Ignore debugging information when no word especially in the lrc mode, or it shows massive debugging information on the screen
+                        mPitchStickHighlightedPaint.setTextSize(28);
+                        canvas.drawText(tone.word, x, 30, mPitchStickHighlightedPaint);
+                        canvas.drawText((int) (x) + "_" + (int) (endX), x, 60, mPitchStickHighlightedPaint);
+                        canvas.drawText((int) (tone.begin) + "", x, 90, mPitchStickHighlightedPaint);
+                        canvas.drawText((int) (tone.end) + "", x, 120, mPitchStickHighlightedPaint);
+                    }
                 }
             }
         }
