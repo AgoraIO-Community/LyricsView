@@ -663,11 +663,18 @@ public class LyricsView extends View {
     }
 
     private void doConfigCanvasAndTexts(float fraction) {
+        float textSize = (mCurrentLineTextSize - mTextSize) * fraction;
+        if (textSize < 0) {
+            textSize = mCurrentLineTextSize; // Supposedly we think `mCurrentLineTextSize` is larger than `mTextSize`
+        } else {
+            textSize += mTextSize;
+        }
+
         mPaintBG.setColor(mCurrentLineTextColor);
-        mPaintBG.setTextSize(mCurrentLineTextSize * fraction);
+        mPaintBG.setTextSize(textSize);
 
         mPaintFG.setColor(mCurrentLineHighlightedTextColor);
-        mPaintFG.setTextSize(mCurrentLineTextSize * fraction);
+        mPaintFG.setTextSize(textSize);
 
         if (mBitmapBG != null) {
             mBitmapBG.eraseColor(0);
