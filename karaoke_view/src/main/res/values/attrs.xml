@@ -5,9 +5,10 @@
         <attr name="startOfVerseIndicatorRadius" format="dimension" />
         <attr name="startOfVerseIndicatorColor" format="reference|color" />
         <attr name="paddingTop" format="dimension" />
+        <attr name="enablePreviousLines" format="boolean" />
+        <attr name="enableUpcomingLines" format="boolean" />
         <attr name="lineSpacing" format="dimension" />
         <attr name="textSize" format="dimension" />
-        <attr name="textColor" format="reference|color" />
         <attr name="currentLineTextColor" format="reference|color" />
         <attr name="previousLineTextColor" format="reference|color" />
         <attr name="upcomingLineTextColor" format="reference|color" />

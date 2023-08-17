@@ -60,6 +60,8 @@ public class LyricsResourcePool {
     public static final String LRC_SAMPLE_6 = "https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/fulldemoStatic/privacy/loadFil.xml"; // Non-perfect xml format
     public static final String LRC_SAMPLE_7 = "https://accktv.sd-rtn.com/202211091649/release/lyric/zip_utf8/3/901174.zip"; // File not available
 
+    public static final String LRC_SAMPLE_LOCAL_FILE_CJT44552 = "CJt1320044552.xml";
+
     public static final String LRC_SAMPLE_LOCAL_FILE_810507 = "810507.xml"; // Located under assets folder, one and only one line xml file
 
     public static final String LRC_SAMPLE_LOCAL_FILE_825003 = "825003.xml"; // Start and end(previous line) may have same timestamp
@@ -92,6 +94,7 @@ public class LyricsResourcePool {
         list.add(new LyricsResource(0, LRC_SAMPLE_5, null, "403/INVALID_REQUEST"));
         list.add(new LyricsResource(0, LRC_SAMPLE_6, null, "NON_PERFECT_XML"));
         list.add(new LyricsResource(0, LRC_SAMPLE_7, null, "404/NOT_FOUND"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_CJT44552, null, "FAST"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_810507, null, "ONE_LINE"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_825003, null, "TS_PITCH_SAME"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_147383, null, "TS_PITCH_OVERLAP"));

@@ -233,16 +233,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.lyricsView.setPreviousLineTextColor(colorInStringToDex(defaultTextColor));
         binding.lyricsView.setUpcomingLineTextColor(colorInStringToDex(defaultTextColor));
 
-        int defaultTextSize = prefs.getInt(getString(R.string.prefs_key_normal_line_text_size), 14);
+        int defaultTextSize = prefs.getInt(getString(R.string.prefs_key_normal_line_text_size), 13);
         binding.lyricsView.setTextSize(sp2pix(defaultTextSize));
 
-        String currentTextColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "White");
+        String currentTextColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "Yellow");
         binding.lyricsView.setCurrentLineTextColor(colorInStringToDex(currentTextColor));
 
         String highlightedTextColor = prefs.getString(getString(R.string.prefs_key_current_line_highlighted_text_color), "Red");
         binding.lyricsView.setCurrentLineHighlightedTextColor(colorInStringToDex(highlightedTextColor));
 
-        int currentTextSize = prefs.getInt(getString(R.string.prefs_key_current_line_text_size), 18);
+        int currentTextSize = prefs.getInt(getString(R.string.prefs_key_current_line_text_size), 24);
         binding.lyricsView.setCurrentLineTextSize(sp2pix(currentTextSize));
 
         String lineSpacing = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");

@@ -19,7 +19,7 @@ public final class ResourceHelper {
     public static File copyAssetsToCreateNewFile(@NonNull Context context, @NonNull String name) {
         final AssetManager assets = context.getAssets();
 
-        if (assets == null) {
+        if (assets == null || name == null || name.isEmpty()) {
             return null;
         }
 

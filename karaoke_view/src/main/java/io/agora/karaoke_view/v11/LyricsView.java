@@ -53,6 +53,9 @@ public class LyricsView extends View {
     private final TextPaint mPaintFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint mPaintBG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
 
+    private boolean mEnablePreviousLines = true;
+    private boolean mEnableUpcomingLines = true;
+
     private int mPreviousLineTextColor;
     private int mUpcomingLineTextColor;
     private float mTextSize;
@@ -159,6 +162,9 @@ public class LyricsView extends View {
         mPaddingTop = ta.getDimension(R.styleable.LyricsView_paddingTop,
                 getResources().getDimension(R.dimen.padding_top));
 
+        mEnablePreviousLines = ta.getBoolean(R.styleable.LyricsView_enablePreviousLines, true);
+        mEnableUpcomingLines = ta.getBoolean(R.styleable.LyricsView_enableUpcomingLines, true);
+
         mCurrentLineTextColor = ta.getColor(R.styleable.LyricsView_currentLineTextColor, Color.WHITE);
         mPreviousLineTextColor = ta.getColor(R.styleable.LyricsView_previousLineTextColor,
                 getResources().getColor(R.color.previous_text_color));
@@ -185,20 +191,24 @@ public class LyricsView extends View {
 
         mStartOfVerseIndicator.setColor(mStartOfVerseIndicatorColor);
         mStartOfVerseIndicator.setAntiAlias(true);
+        mStartOfVerseIndicator.setDither(true);
 
         mPaintNoLyricsFG.setTextSize(mCurrentLineTextSize);
         mPaintNoLyricsFG.setColor(mCurrentLineHighlightedTextColor);
         mPaintNoLyricsFG.setAntiAlias(true);
+        mPaintNoLyricsFG.setDither(true);
         mPaintNoLyricsFG.setTextAlign(Paint.Align.LEFT);
 
         mPaintFG.setTextSize(mCurrentLineTextSize);
         mPaintFG.setColor(mCurrentLineHighlightedTextColor);
         mPaintFG.setAntiAlias(true);
+        mPaintFG.setDither(true);
         mPaintFG.setTextAlign(Paint.Align.LEFT);
 
         mPaintBG.setTextSize(mCurrentLineTextSize);
         mPaintBG.setColor(mCurrentLineTextColor);
         mPaintBG.setAntiAlias(true);
+        mPaintBG.setDither(true);
         mPaintBG.setTextAlign(Paint.Align.LEFT);
 
         mGestureDetector = new GestureDetector(getContext(), mSimpleOnGestureListener);
@@ -635,16 +645,16 @@ public class LyricsView extends View {
                             doConfigCanvasAndTexts(fraction);
 
                             drawCurrent(mLyricsLineDrawerHelper, fraction);
-                            drawTop(lyricsModel, mLyricsLineDrawerHelper, fraction);
-                            drawBottom(lyricsModel, mLyricsLineDrawerHelper, fraction);
+                            drawPrevious(lyricsModel, mLyricsLineDrawerHelper, fraction);
+                            drawUpcoming(lyricsModel, mLyricsLineDrawerHelper, fraction);
 
                             drawHighLight(mLyricsLineDrawerHelper, fraction); // Will first `MAX_SMOOTH_SCROLL_DURATION` part of the highlight line
                         }
                     });
                 } else if ((mForceUpdateUI & UpdateUIType.UpdateUIType_NORMAL) == UpdateUIType.UpdateUIType_NORMAL) {
                     drawCurrent(mLyricsLineDrawerHelper, fraction);
-                    drawTop(lyricsModel, mLyricsLineDrawerHelper, fraction);
-                    drawBottom(lyricsModel, mLyricsLineDrawerHelper, fraction);
+                    drawPrevious(lyricsModel, mLyricsLineDrawerHelper, fraction);
+                    drawUpcoming(lyricsModel, mLyricsLineDrawerHelper, fraction);
                 }
 
                 mForceUpdateUI = UpdateUIType.UpdateUIType_NO_NEED;
@@ -741,7 +751,11 @@ public class LyricsView extends View {
         }
     }
 
-    private void drawTop(LyricsModel lyricsModel, LyricsLineDrawerHelper currentLineDrawHelper, float fraction) {
+    private void drawPrevious(LyricsModel lyricsModel, LyricsLineDrawerHelper currentLineDrawHelper, float fraction) {
+        if (!mEnablePreviousLines) {
+            return;
+        }
+
         if (currentLineDrawHelper == null || lyricsModel == null) {
             return;
         }
@@ -788,7 +802,11 @@ public class LyricsView extends View {
         mOffset = yOfTargetLine;
     }
 
-    private void drawBottom(LyricsModel lyricsModel, LyricsLineDrawerHelper currentLineDrawHelper, float fraction) {
+    private void drawUpcoming(LyricsModel lyricsModel, LyricsLineDrawerHelper currentLineDrawHelper, float fraction) {
+        if (!mEnableUpcomingLines) {
+            return;
+        }
+
         if (currentLineDrawHelper == null || lyricsModel == null) {
             return;
         }
@@ -826,20 +844,20 @@ public class LyricsView extends View {
         mBitmapFG.eraseColor(0);
 
         Rect[] drawRects = currentLineDrawHelper.getDrawRectByTime(mCurrentTime);
-        float y = (getLrcHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
+        float yOfTargetLine = (getLrcHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
 
         for (Rect dr : drawRects) {
             if (dr.left == dr.right)
                 continue;
 
             mRectClip.left = dr.left;
-            mRectClip.top = (int) (dr.top + y);
+            mRectClip.top = (int) (dr.top + yOfTargetLine);
             mRectClip.right = dr.right;
-            mRectClip.bottom = (int) (dr.bottom + y);
+            mRectClip.bottom = (int) (dr.bottom + yOfTargetLine);
 
             mCanvasFG.save();
             mCanvasFG.clipRect(mRectClip);
-            mCanvasFG.translate(0, y);
+            mCanvasFG.translate(0, yOfTargetLine);
             currentLineDrawHelper.drawFG(mCanvasFG);
             mCanvasFG.restore();
         }
