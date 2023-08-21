@@ -70,6 +70,9 @@ public class LyricsParser {
 
         if (type == LyricsModel.Type.General) {
             model = LyricsParserGeneral.parseLrc(lyrics);
+            if (model == null) {
+                return null;
+            }
 
             // Replace tones and set the pitch value
             // Each tone lasts for 100ms
@@ -95,6 +98,9 @@ public class LyricsParser {
             }
         } else if (type == LyricsModel.Type.Xml) {
             model = LyricsParserXml.parseLrc(lyrics);
+            if (model == null) {
+                return null;
+            }
 
             // Replace tones and set the pitch value
             // Each tone lasts for the specified time
