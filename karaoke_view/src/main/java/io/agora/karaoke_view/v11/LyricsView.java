@@ -89,6 +89,7 @@ public class LyricsView extends View {
     }
 
     private final Rect mRectClip = new Rect();
+    private int mLastRightOfRectClip = mRectClip.right;
     private final Rect mRectSrc = new Rect();
     private final Rect mRectDst = new Rect();
 
@@ -243,6 +244,7 @@ public class LyricsView extends View {
             mDraggingInProgress = false;
             mForceUpdateUI = UpdateUIType.UpdateUIType_NORMAL;
             mRectClip.setEmpty();
+            mLastRightOfRectClip = mRectClip.right;
 
             LyricsLineModel targetLine = lyricsModel.lines.get(targetIndex);
             updateByProgress(targetLine.getStartTime());
@@ -483,13 +485,13 @@ public class LyricsView extends View {
 
             mRectSrc.left = 0;
             mRectSrc.top = 0;
-            mRectSrc.right = getLrcWidth();
-            mRectSrc.bottom = getLrcHeight();
+            mRectSrc.right = getViewportWidth();
+            mRectSrc.bottom = getViewportHeight();
 
             mRectDst.left = getPaddingStart();
             mRectDst.top = getPaddingTop();
-            mRectDst.right = getPaddingStart() + getLrcWidth();
-            mRectDst.bottom = getPaddingTop() + getLrcHeight();
+            mRectDst.right = getPaddingStart() + getViewportWidth();
+            mRectDst.bottom = getPaddingTop() + getViewportHeight();
 
             performInvalidateIfNecessary();
         }
@@ -509,8 +511,9 @@ public class LyricsView extends View {
         return mBitmapBG == null || mCanvasBG == null || mBitmapFG == null || mCanvasFG == null;
     }
 
-    private LyricsLineDrawerHelper mLyricsLineDrawerHelper;
     private int targetIndex = 0;
+
+    private LyricsLineDrawerHelper mReuseLyricsLineDrawerHelper; // reuse when draw highlight part(performance optimization)
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -520,10 +523,9 @@ public class LyricsView extends View {
             return;
         }
 
-        // 无歌词文件
         if (!hasLrc()) {
-            int width = getLrcWidth();
-            int height = getLrcHeight();
+            int width = getViewportWidth();
+            int height = getViewportHeight();
             if (width == 0 || height == 0 || mCurrentTime <= 1000) {
                 return;
             }
@@ -547,7 +549,7 @@ public class LyricsView extends View {
 
         LyricsModel lyricsModel = mLyricsModel;
 
-        float centerY = getLrcHeight() / 2F + getPaddingTop() + mPaddingTop;
+        float centerY = getViewportHeight() / 2F + getPaddingTop() + mPaddingTop;
         if (mDraggingInProgress) {
             mBitmapBG.eraseColor(0);
             mBitmapFG.eraseColor(0);
@@ -568,7 +570,7 @@ public class LyricsView extends View {
                 }
 
                 LyricsLineModel lyricsTargetLineModel = lyricsModel.lines.get(i);
-                lyricsLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintFG, mPaintBG, getLrcWidth(),
+                lyricsLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintFG, mPaintBG, getViewportWidth(),
                         mTextGravity);
 
                 yReal = y + mOffset;
@@ -583,17 +585,14 @@ public class LyricsView extends View {
                     continue;
                 }
 
-                mCanvasBG.save();
-                mCanvasBG.translate(0, yReal);
-                lyricsLineDrawerHelper.draw(mCanvasBG);
-                mCanvasBG.restore();
-
                 if (i == mIndexOfCurrentLine) {
                     Rect[] drawRects = lyricsLineDrawerHelper.getDrawRectByTime(mCurrentTime);
 
                     for (Rect dr : drawRects) {
                         if (dr.left == dr.right)
                             continue;
+
+                        mLastRightOfRectClip = mRectClip.right;
 
                         mRectClip.left = dr.left;
                         mRectClip.top = (int) (dr.top + yReal);
@@ -602,11 +601,21 @@ public class LyricsView extends View {
 
                         mCanvasFG.save();
                         mCanvasFG.clipRect(mRectClip);
-                        mCanvasFG.translate(0, yReal);
+
+                        checkIfXTranslationShouldApply(lyricsLineDrawerHelper);
+
+                        mCanvasFG.translate(mCurrentLineTranslateX, yReal);
+
                         lyricsLineDrawerHelper.drawFG(mCanvasFG);
                         mCanvasFG.restore();
                     }
                 }
+
+                // Draw all background lines
+                mCanvasBG.save();
+                mCanvasBG.translate(i == mIndexOfCurrentLine ? mCurrentLineTranslateX : 0, yReal);
+                lyricsLineDrawerHelper.draw(mCanvasBG);
+                mCanvasBG.restore();
 
                 if ((y - mLineSpacing + getPaddingTop() + mOffset) <= centerY
                         && centerY <= (y + lyricsLineDrawerHelper.getHeight() + getPaddingTop() + mOffset)) {
@@ -614,7 +623,7 @@ public class LyricsView extends View {
                 }
 
                 y = y + lyricsLineDrawerHelper.getHeight() + mLineSpacing;
-                if (y + mOffset > getLrcHeight()) {
+                if (y + mOffset > getViewportHeight()) {
                     break;
                 }
             }
@@ -628,11 +637,12 @@ public class LyricsView extends View {
             float fraction = 1.0F; // NORMAL UPDATE
             if ((mForceUpdateUI & UpdateUIType.UpdateUIType_NORMAL) == UpdateUIType.UpdateUIType_NORMAL) {
                 doConfigCanvasAndTexts(fraction);
-
-                mLyricsLineDrawerHelper = new LyricsLineDrawerHelper(currentLine, mPaintFG, mPaintBG, getLrcWidth(),
+                mReuseLyricsLineDrawerHelper = new LyricsLineDrawerHelper(currentLine, mPaintFG, mPaintBG, getViewportWidth(),
                         mTextGravity);
 
+                LyricsLineDrawerHelper finalRefLyricsLineDrawerHelper = mReuseLyricsLineDrawerHelper;
                 if ((mForceUpdateUI & UpdateUIType.UpdateUIType_WITH_ANIMATION) == UpdateUIType.UpdateUIType_WITH_ANIMATION) {
+
                     doScrollWithAnimationTo(mIndexOfCurrentLine, new ValueAnimator.AnimatorUpdateListener() {
                         @Override
                         public void onAnimationUpdate(ValueAnimator animation) {
@@ -644,26 +654,30 @@ public class LyricsView extends View {
 
                             doConfigCanvasAndTexts(fraction);
 
-                            drawCurrent(mLyricsLineDrawerHelper, fraction);
-                            drawPrevious(lyricsModel, mLyricsLineDrawerHelper, fraction);
-                            drawUpcoming(lyricsModel, mLyricsLineDrawerHelper, fraction);
+                            drawCurrent(finalRefLyricsLineDrawerHelper, fraction);
+                            drawPrevious(lyricsModel, finalRefLyricsLineDrawerHelper, fraction);
+                            drawUpcoming(lyricsModel, finalRefLyricsLineDrawerHelper, fraction);
 
-                            drawHighLight(mLyricsLineDrawerHelper, fraction); // Will first `MAX_SMOOTH_SCROLL_DURATION` part of the highlight line
+                            drawHighLight(finalRefLyricsLineDrawerHelper, fraction); // Will first `MAX_SMOOTH_SCROLL_DURATION` part of the highlight line
                         }
                     });
                 } else if ((mForceUpdateUI & UpdateUIType.UpdateUIType_NORMAL) == UpdateUIType.UpdateUIType_NORMAL) {
-                    drawCurrent(mLyricsLineDrawerHelper, fraction);
-                    drawPrevious(lyricsModel, mLyricsLineDrawerHelper, fraction);
-                    drawUpcoming(lyricsModel, mLyricsLineDrawerHelper, fraction);
+                    drawCurrent(finalRefLyricsLineDrawerHelper, fraction);
+                    drawPrevious(lyricsModel, finalRefLyricsLineDrawerHelper, fraction);
+                    drawUpcoming(lyricsModel, finalRefLyricsLineDrawerHelper, fraction);
                 }
 
                 mForceUpdateUI = UpdateUIType.UpdateUIType_NO_NEED;
             }
 
+            if (isLyricsLineOverlong(mReuseLyricsLineDrawerHelper) && !mContentScrolling) {
+                mForceUpdateUI = UpdateUIType.UpdateUIType_NORMAL;
+            }
+
             canvas.drawBitmap(mBitmapBG, mRectSrc, mRectDst, null);
 
-            if (mLyricsModel.type != LyricsModel.Type.General && !mContentScrolling) {
-                drawHighLight(mLyricsLineDrawerHelper, fraction); // Continually to draw the rest part of highlight when scrolling stops
+            if (lyricsModel.type != LyricsModel.Type.General && !mContentScrolling) {
+                drawHighLight(mReuseLyricsLineDrawerHelper, fraction); // Continually to draw the rest part of highlight when scrolling stops
             }
 
             canvas.drawBitmap(mBitmapFG, mRectSrc, mRectDst, null);
@@ -760,7 +774,7 @@ public class LyricsView extends View {
             return;
         }
 
-        float yOfTargetLine = (getLrcHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
+        float yOfTargetLine = (getViewportHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
 
         LyricsLineModel lyricsTargetLineModel;
         LyricsLineDrawerHelper lyricsTargetLineDrawerHelper;
@@ -772,7 +786,7 @@ public class LyricsView extends View {
 
         for (int i = mIndexOfCurrentLine - 1; i >= 0; i--) {
             lyricsTargetLineModel = lyricsModel.lines.get(i);
-            lyricsTargetLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintBG, getLrcWidth(), mTextGravity);
+            lyricsTargetLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintBG, getViewportWidth(), mTextGravity);
 
             mOffset = mOffset - lyricsTargetLineDrawerHelper.getHeight() - mLineSpacing;
 
@@ -787,19 +801,44 @@ public class LyricsView extends View {
         mCanvasBG.restore();
     }
 
+    private float mCurrentLineTranslateX = 0;
+
+    private void checkIfXTranslationShouldApply(LyricsLineDrawerHelper currentLineDrawHelper) {
+        int halfWidthOfLyricsView = getViewportWidth() / 2;
+        if (isLyricsLineOverlong(currentLineDrawHelper) && !mContentScrolling) {
+            // When to start:
+            // 1. The highlight part is larger than half of the lyrics view
+            // 2. The rested part is larger than half of the lyrics view
+            if (mRectClip.width() > halfWidthOfLyricsView && currentLineDrawHelper.getWidth() - mRectClip.width() > halfWidthOfLyricsView) {
+                mCurrentLineTranslateX -= (mRectClip.right - mLastRightOfRectClip);
+            }
+        } else {
+            mCurrentLineTranslateX = 0;
+        }
+        if (DEBUG) {
+            Log.d(TAG, "checkIfXTranslationShouldApply xTranslation: " + mCurrentLineTranslateX + ", " +
+                    "widthOfHighlightRect: " + mRectClip.width() + ", mLastRightOfRectClip: " + mLastRightOfRectClip + ", " +
+                    "widthOfCurrentLine: " + currentLineDrawHelper.getWidth() + ", widthOfLyricsView: " + halfWidthOfLyricsView * 2);
+        }
+    }
+
     private void drawCurrent(LyricsLineDrawerHelper currentLineDrawHelper, float fraction) {
         if (currentLineDrawHelper == null) {
             return;
         }
 
-        float yOfTargetLine = (getLrcHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
+        float yOfTargetLine = (getViewportHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
 
         mCanvasBG.save();
-        mCanvasBG.translate(0, yOfTargetLine);
+
+        checkIfXTranslationShouldApply(currentLineDrawHelper);
+        mCanvasBG.translate(mCurrentLineTranslateX, yOfTargetLine);
         currentLineDrawHelper.draw(mCanvasBG);
         mCanvasBG.restore();
 
         mOffset = yOfTargetLine;
+
+        mLastRightOfRectClip = mRectClip.right;
     }
 
     private void drawUpcoming(LyricsModel lyricsModel, LyricsLineDrawerHelper currentLineDrawHelper, float fraction) {
@@ -811,7 +850,7 @@ public class LyricsView extends View {
             return;
         }
 
-        float yOfTargetLine = (getLrcHeight() + currentLineDrawHelper.getHeight() * (1 /** from far to near **/ + (1 - fraction))) / 2F + mLineSpacing + mPaddingTop;
+        float yOfTargetLine = (getViewportHeight() + currentLineDrawHelper.getHeight() * (1 /** from far to near **/ + (1 - fraction))) / 2F + mLineSpacing + mPaddingTop;
 
         LyricsLineModel lyricsTargetLineModel;
         LyricsLineDrawerHelper lyricsTargetLineDrawerHelper;
@@ -823,9 +862,9 @@ public class LyricsView extends View {
 
         for (int i = mIndexOfCurrentLine + 1; i < lyricsModel.lines.size(); i++) {
             lyricsTargetLineModel = lyricsModel.lines.get(i);
-            lyricsTargetLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintBG, getLrcWidth(), mTextGravity);
+            lyricsTargetLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintBG, getViewportWidth(), mTextGravity);
 
-            if (yOfTargetLine + lyricsTargetLineDrawerHelper.getHeight() > getLrcHeight())
+            if (yOfTargetLine + lyricsTargetLineDrawerHelper.getHeight() > getViewportHeight())
                 break;
 
             lyricsTargetLineDrawerHelper.draw(mCanvasBG);
@@ -844,7 +883,7 @@ public class LyricsView extends View {
         mBitmapFG.eraseColor(0);
 
         Rect[] drawRects = currentLineDrawHelper.getDrawRectByTime(mCurrentTime);
-        float yOfTargetLine = (getLrcHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
+        float yOfTargetLine = (getViewportHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
 
         for (Rect dr : drawRects) {
             if (dr.left == dr.right)
@@ -857,7 +896,7 @@ public class LyricsView extends View {
 
             mCanvasFG.save();
             mCanvasFG.clipRect(mRectClip);
-            mCanvasFG.translate(0, yOfTargetLine);
+            mCanvasFG.translate(mCurrentLineTranslateX, yOfTargetLine);
             currentLineDrawHelper.drawFG(mCanvasFG);
             mCanvasFG.restore();
         }
@@ -948,12 +987,16 @@ public class LyricsView extends View {
         return 0;
     }
 
-    private int getLrcWidth() {
+    private int getViewportWidth() {
         return Math.max(getWidth() - getPaddingStart() - getPaddingEnd(), 0);
     }
 
-    private int getLrcHeight() {
+    private int getViewportHeight() {
         return Math.max((getHeight() - getPaddingTop() - getPaddingBottom()), 0);
+    }
+
+    private boolean isLyricsLineOverlong(LyricsLineDrawerHelper lyricsLineDrawerHelper) {
+        return lyricsLineDrawerHelper != null && lyricsLineDrawerHelper.getWidth() > getViewportWidth();
     }
 
     @MainThread

@@ -101,6 +101,11 @@ class LyricsLineDrawerHelper {
         }
 
         text = sb.toString();
+
+        int theRealWidthMeasured = (int) textPaintBG.measureText(text);
+        if (width < theRealWidthMeasured) {
+            width = theRealWidthMeasured; // Reset width to the real width measured
+        }
         if (textPaintFG != null) {
             mLayoutFG = new StaticLayout(text, textPaintFG, width, align, 1f, 0f, false);
         }
@@ -125,6 +130,10 @@ class LyricsLineDrawerHelper {
             return 0;
         }
         return mLayoutBG.getHeight();
+    }
+
+    public int getWidth() {
+        return mLayoutBG.getWidth();
     }
 
     void draw(Canvas canvas) {
