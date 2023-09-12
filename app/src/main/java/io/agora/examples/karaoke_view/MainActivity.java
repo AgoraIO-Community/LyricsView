@@ -16,6 +16,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
 import android.view.View;
@@ -185,6 +186,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }, error -> {
                 Log.e(TAG, Log.getStackTraceString(error));
                 mLyricsModel = null;
+
+                String description = LyricsResourcePool.asList().get(mCurrentIndex).description; // For Testing
+                if (description != null && description.contains("SHOW_NO_LYRICS_TIPS")) {
+                    mKaraokeView.setLyricsData(null); // Call this will trigger no/invalid lyrics ui
+                }
+
                 updateLyricsDescription();
             });
         } else {

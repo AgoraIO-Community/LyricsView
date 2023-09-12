@@ -91,7 +91,7 @@ public class LyricsResourcePool {
         list.add(new LyricsResource(0, LRC_SAMPLE_2, null, "EMPTY_PITCH/WORD_MISSING"));
         list.add(new LyricsResource(0, LRC_SAMPLE_3, null, "ZIP/TS_PITCH_SAME"));
         list.add(new LyricsResource(0, LRC_SAMPLE_4, null, "EMPTY_PITCH/EMPTY_TITLE/EMPTY_ARTIST"));
-        list.add(new LyricsResource(0, LRC_SAMPLE_5, null, "403/INVALID_REQUEST"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_5, null, "403/INVALID_REQUEST/SHOW_NO_LYRICS_TIPS"));
         list.add(new LyricsResource(0, LRC_SAMPLE_6, null, "NON_PERFECT_XML"));
         list.add(new LyricsResource(0, LRC_SAMPLE_7, null, "404/NOT_FOUND"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_CJT44552, null, "FAST"));

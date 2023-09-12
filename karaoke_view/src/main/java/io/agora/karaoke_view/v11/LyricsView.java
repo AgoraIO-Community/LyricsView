@@ -231,10 +231,11 @@ public class LyricsView extends View {
             return super.onTouchEvent(event);
         }
 
-        if (!hasLrc()) {
+        ScoringMachine machine = this.mScoringMachine;
+        LyricsModel lyricsModel = this.mLyricsModel;
+        if (uninitializedOrNoLyrics(machine)) {
             return super.onTouchEvent(event);
         }
-        LyricsModel lyricsModel = mLyricsModel;
 
         if (targetIndex < 0 || lyricsModel.lines.size() <= targetIndex) {
             return super.onTouchEvent(event);
@@ -411,20 +412,22 @@ public class LyricsView extends View {
         this.mStartOfVerseIndicator.setColor(color);
     }
 
-    private boolean hasLrc() {
-        return mLyricsModel != null && mLyricsModel.lines != null && !mLyricsModel.lines.isEmpty();
+    protected final boolean uninitializedOrNoLyrics(ScoringMachine machine) {
+        return machine == null || mScoringMachine == null || mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty();
     }
 
     public void requestRefreshUi() {
-        if (mScoringMachine == null) {
+        ScoringMachine machine = this.mScoringMachine;
+        if (machine == null) {
             return;
         }
-
-        updateByProgress(mScoringMachine.getCurrentProgress());
+        // Always update progress even UI or data is not ready
+        updateByProgress(machine.getCurrentProgress());
     }
 
     private boolean refreshNoLyrics() {
-        if (!hasLrc()) {
+        ScoringMachine machine = this.mScoringMachine;
+        if (uninitializedOrNoLyrics(machine)) {
             if ((mCurrentTime / 1000) % 2 == 0) {
                 performInvalidateIfNecessary();
             }
@@ -436,13 +439,14 @@ public class LyricsView extends View {
     private void updateByProgress(long timestamp) {
         mCurrentTime = timestamp;
 
+        LyricsModel lyricsModel = this.mLyricsModel;
         if (refreshNoLyrics()) {
             return;
         }
 
         int line = quickSearchLineByTimestamp(mCurrentTime);
 
-        if (line < 0 || line >= mLyricsModel.lines.size()) {
+        if (line < 0 || line >= lyricsModel.lines.size()) {
             mForceUpdateUI = UpdateUIType.UpdateUIType_NO_NEED;
             return;
         }
@@ -523,7 +527,9 @@ public class LyricsView extends View {
             return;
         }
 
-        if (!hasLrc()) {
+        ScoringMachine machine = this.mScoringMachine;
+        LyricsModel lyricsModel = this.mLyricsModel;
+        if (uninitializedOrNoLyrics(machine)) {
             int width = getViewportWidth();
             int height = getViewportHeight();
             if (width == 0 || height == 0 || mCurrentTime <= 1000) {
@@ -546,8 +552,6 @@ public class LyricsView extends View {
             canvas.restore();
             return;
         }
-
-        LyricsModel lyricsModel = mLyricsModel;
 
         float centerY = getViewportHeight() / 2F + getPaddingTop() + mPaddingTop;
         if (mDraggingInProgress) {
@@ -735,10 +739,11 @@ public class LyricsView extends View {
         if (!mEnableStartOfVerseIndicator) {
             return;
         }
-        if (!hasLrc()) {
+        ScoringMachine machine = this.mScoringMachine;
+        LyricsModel lyricsModel = this.mLyricsModel;
+        if (uninitializedOrNoLyrics(machine)) {
             return;
         }
-        LyricsModel lyricsModel = mLyricsModel;
 
         double countDown = Math.ceil((lyricsModel.startOfVerse - mCurrentTime) / 1000.f); // to make start-of-verse
         // indicator animation more
@@ -962,21 +967,23 @@ public class LyricsView extends View {
      * 二分法查找当前时间应该显示的行数（最后一个 <= time 的行数）
      */
     private int quickSearchLineByTimestamp(long time) {
-        if (!hasLrc()) {
+        ScoringMachine machine = this.mScoringMachine;
+        LyricsModel lyricsModel = this.mLyricsModel;
+        if (uninitializedOrNoLyrics(machine)) {
             return 0;
         }
 
         int left = 0;
-        int right = mLyricsModel.lines.size();
+        int right = lyricsModel.lines.size();
         while (left <= right) {
             int middle = (left + right) / 2;
-            long middleTime = mLyricsModel.lines.get(middle).getStartTime();
+            long middleTime = lyricsModel.lines.get(middle).getStartTime();
 
             if (time < middleTime) {
                 right = middle - 1;
             } else {
-                if (middle + 1 >= mLyricsModel.lines.size()
-                        || time < mLyricsModel.lines.get(middle + 1).getStartTime()) {
+                if (middle + 1 >= lyricsModel.lines.size()
+                        || time < lyricsModel.lines.get(middle + 1).getStartTime()) {
                     return middle;
                 }
 
