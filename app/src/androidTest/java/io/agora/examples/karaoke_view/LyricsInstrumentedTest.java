@@ -1,25 +1,20 @@
 package io.agora.examples.karaoke_view;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -28,9 +23,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.agora.examples.utils.ResourceHelper;
-
 import io.agora.karaoke_view.v11.DefaultScoringAlgorithm;
 import io.agora.karaoke_view.v11.VoicePitchChanger;
+import io.agora.karaoke_view.v11.ai.AINative;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.logging.Logger;
@@ -633,9 +628,9 @@ public class LyricsInstrumentedTest {
         mPitchHit = -1;
         scoringMachine.setProgress(187238);
         scoringMachine.setPitch(100);
-        double processedPitch = changer.handlePitch(213, 100, scoringMachine.getMaximumRefPitch());
-        assertEquals(137.66666666666666, processedPitch, 0);
-        assertEquals(120.33999633789062, mPitchHit, 0d); // 120.33999633789062
+        double processedPitch = AINative.handlePitch(213, 100, scoringMachine.getMaximumRefPitch());
+        assertEquals(200.0, processedPitch, 0);
+        assertEquals(200.0, mPitchHit, 0.01); // 120.33999633789062
         assertTrue(mHit);
 
         Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");
@@ -797,5 +792,54 @@ public class LyricsInstrumentedTest {
 
         int lineCount = parsedLyrics.lines.size();
         assertEquals(lineCount, expectedNumberOfLines);
+    }
+
+    @Test
+    public void testHandlePitchForAi() {
+        assertEquals(0d, AINative.handlePitch(0, 0, 400), 0d);
+        assertEquals(0d, AINative.handlePitch(1, 0, 400), 0d);
+        assertEquals(1d, AINative.handlePitch(1, 1, 400), 0d);
+        assertEquals(90d, AINative.handlePitch(100, 90, 400), 0d);
+        assertEquals(80d, AINative.handlePitch(100, 80, 400), 0d);
+        assertEquals(160d, AINative.handlePitch(200, 80, 400), 0d);
+        assertEquals(320d, AINative.handlePitch(400, 80, 400), 0d);
+        assertEquals(400d, AINative.handlePitch(400, 200, 400), 0d);
+        assertEquals(400d, AINative.handlePitch(400, 400, 400), 0d);
+        assertEquals(500d, AINative.handlePitch(400, 500, 400), 0d);
+        assertEquals(300d, AINative.handlePitch(400, 600, 400), 0d);
+        assertEquals(350d, AINative.handlePitch(400, 700, 400), 0d);
+        assertEquals(400d, AINative.handlePitch(400, 800, 400), 0d);
+    }
+
+    @Test
+    public void testCalculatedScoreForAi() {
+        assertEquals(0.0f, AINative.calculatedScore(201, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(200, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(190, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(180, 100, 10, 0), 0.01f);
+        assertEquals(9.763043f, AINative.calculatedScore(170, 100, 10, 0), 0.01f);
+        assertEquals(22.357689f, AINative.calculatedScore(160, 100, 10, 0), 0.01f);
+        assertEquals(35.765438f, AINative.calculatedScore(150, 100, 10, 0), 0.01f);
+        assertEquals(50.098568f, AINative.calculatedScore(140, 100, 10, 0), 0.01f);
+        assertEquals(65.494354f, AINative.calculatedScore(130, 100, 10, 0), 0.01f);
+        assertEquals(82.12307f, AINative.calculatedScore(120, 100, 10, 0), 0.01f);
+        assertEquals(100.0f, AINative.calculatedScore(110, 100, 10, 0), 0.01f);
+        assertEquals(100.0f, AINative.calculatedScore(101, 100, 10, 0), 0.01f);
+        assertEquals(100.0f, AINative.calculatedScore(100, 100, 10, 0), 0.01f);
+        assertEquals(100.0f, AINative.calculatedScore(99, 100, 10, 0), 0.01f);
+        assertEquals(73.64238f, AINative.calculatedScore(80, 100, 10, 0), 0.01f);
+        assertEquals(45.901512f, AINative.calculatedScore(70, 100, 10, 0), 0.01f);
+        assertEquals(13.877029f, AINative.calculatedScore(60, 100, 10, 0), 0.01f);
+        assertEquals(10.3853855f, AINative.calculatedScore(59, 100, 10, 0), 0.01f);
+        assertEquals(6.834053f, AINative.calculatedScore(58, 100, 10, 0), 0.01f);
+        assertEquals(3.2209551f, AINative.calculatedScore(57, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(56, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(55, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(50, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(40, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(30, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(20, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(10, 100, 10, 0), 0.01f);
+        assertEquals(0.0f, AINative.calculatedScore(1, 100, 10, 0), 0.01f);
     }
 }

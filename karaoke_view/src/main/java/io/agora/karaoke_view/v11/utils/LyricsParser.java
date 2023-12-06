@@ -45,6 +45,7 @@ public class LyricsParser {
         return doParse(null, lyrics, null);
     }
 
+    //This interface is unstable and is not recommended for use
     @Nullable
     public static LyricsModel parse(@NonNull File lyrics, @Nullable File pitches) {
         checkParameters(lyrics);

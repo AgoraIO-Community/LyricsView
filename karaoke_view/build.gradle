@@ -40,6 +40,12 @@ android {
                     defaultConfig.versionName + ".aar"
         }
     }
+
+    externalNativeBuild {
+        cmake {
+            path './src/main/cpp/CMakeLists.txt'
+        }
+    }
 }
 
 dependencies {

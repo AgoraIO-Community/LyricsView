@@ -5,6 +5,8 @@ import android.util.Log;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
+import io.agora.karaoke_view.v11.ai.AINative;
+import io.agora.karaoke_view.v11.config.Config;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 
@@ -20,12 +22,17 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
     }
 
     // Indicating the difficulty in scoring(can change by app)
-    private int mScoringLevel = 10; // 0~100
+    private int mScoringLevel = 15; // 0~100
     private int mScoringCompensationOffset = 0; // -100~100
 
     @Override
     public float getPitchScore(float currentPitch, float currentRefPitch) {
-        final float scoreAfterNormalization = ScoringMachine.calculateScore2(0, mScoringLevel, mScoringCompensationOffset, currentPitch, currentRefPitch);
+        float scoreAfterNormalization = 0f;
+        if (Config.USE_AI_ALGORITHM) {
+            scoreAfterNormalization = AINative.calculatedScore(currentPitch, currentRefPitch, mScoringLevel, mScoringCompensationOffset);
+        } else {
+            scoreAfterNormalization = ScoringMachine.calculateScore2(0, mScoringLevel, mScoringCompensationOffset, currentPitch, currentRefPitch);
+        }
         return scoreAfterNormalization;
     }
 

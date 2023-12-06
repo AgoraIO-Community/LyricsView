@@ -1,7 +1,5 @@
 package io.agora.karaoke_view.v11;
 
-import io.agora.karaoke_view.v11.internal.ScoringMachine;
-
 public class VoicePitchChanger {
 
     double offset = 0.0F;

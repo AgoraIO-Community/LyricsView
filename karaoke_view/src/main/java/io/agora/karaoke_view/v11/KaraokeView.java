@@ -114,6 +114,7 @@ public class KaraokeView {
         return LyricsParser.parse(file);
     }
 
+    //This interface is unstable and is not recommended for use
     public static LyricsModel parseLyricsData(File file, File pitch) {
         return LyricsParser.parse(file, pitch);
     }

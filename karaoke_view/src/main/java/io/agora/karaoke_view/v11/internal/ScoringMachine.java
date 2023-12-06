@@ -4,9 +4,10 @@ import android.util.Log;
 
 import java.util.LinkedHashMap;
 
-import io.agora.karaoke_view.v11.DefaultScoringAlgorithm;
 import io.agora.karaoke_view.v11.IScoringAlgorithm;
 import io.agora.karaoke_view.v11.VoicePitchChanger;
+import io.agora.karaoke_view.v11.ai.AINative;
+import io.agora.karaoke_view.v11.config.Config;
 import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
@@ -336,7 +337,11 @@ public class ScoringMachine {
 
         if (mVoicePitchChanger != null) {
             // Either no valid local pitch or ref pitch, we will treat the return value as 0
-            pitch = (float) mVoicePitchChanger.handlePitch(currentRefPitch, pitch, this.mMaximumRefPitch);
+            if (Config.USE_AI_ALGORITHM) {
+                pitch = (float) AINative.handlePitch(currentRefPitch, pitch, this.mMaximumRefPitch);
+            } else {
+                pitch = (float) mVoicePitchChanger.handlePitch(currentRefPitch, pitch, this.mMaximumRefPitch);
+            }
             pitchAfterProcess = pitch;
         }
 
@@ -394,6 +399,10 @@ public class ScoringMachine {
         resetProperties();
 
         resetStats();
+
+        if (Config.USE_AI_ALGORITHM) {
+            AINative.reset();
+        }
     }
 
     private void resetProperties() { // Reset when song changed
