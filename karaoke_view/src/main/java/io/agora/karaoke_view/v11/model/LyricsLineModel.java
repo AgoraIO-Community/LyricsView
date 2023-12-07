@@ -1,5 +1,7 @@
 package io.agora.karaoke_view.v11.model;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +30,21 @@ public class LyricsLineModel {
 
         public long getDuration() {
             return end - begin;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return "Tone{" +
+                    "begin=" + begin +
+                    ", end=" + end +
+                    ", word='" + word + '\'' +
+                    ", lang=" + lang +
+                    ", pitch=" + pitch +
+                    ", highlight=" + highlight +
+                    ", highlightOffset=" + highlightOffset +
+                    ", highlightWidth=" + highlightWidth +
+                    '}';
         }
     }
 
@@ -61,7 +78,18 @@ public class LyricsLineModel {
     }
 
     public long getEndTime() {
-        if (tones == null || tones.isEmpty()) return 0;
-        else return tones.get(tones.size() - 1).end;
+        if (tones == null || tones.isEmpty()) {
+            return 0;
+        } else {
+            return tones.get(tones.size() - 1).end;
+        }
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "LyricsLineModel{" +
+                "tones=" + tones +
+                '}';
     }
 }

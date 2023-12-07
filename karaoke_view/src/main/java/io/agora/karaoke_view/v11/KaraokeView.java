@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.io.File;
 
+import io.agora.karaoke_view.v11.config.Config;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
@@ -12,8 +13,6 @@ import io.agora.karaoke_view.v11.utils.LyricsParser;
 public class KaraokeView {
 
     private static final String TAG = "KaraokeView";
-
-    private static final boolean DEBUG = false;
 
     private IScoringAlgorithm mScoringAlgorithm;
 
@@ -39,7 +38,7 @@ public class KaraokeView {
         mScoringMachine = new ScoringMachine(new VoicePitchChanger(), mScoringAlgorithm, new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
-                if (DEBUG) {
+                if (Config.DEBUG) {
                     Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
                 }
 
@@ -54,7 +53,7 @@ public class KaraokeView {
 
             @Override
             public void resetUi() {
-                if (DEBUG) {
+                if (Config.DEBUG) {
                     Log.d(TAG, "resetUi");
                 }
                 if (mLyricsView != null) {
@@ -67,7 +66,7 @@ public class KaraokeView {
             }
 
             public void onRefPitchUpdate(float refPitch, int numberOfRefPitches, long progress) {
-                if (DEBUG) {
+                if (Config.DEBUG) {
                     Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches + " " + progress);
                 }
 
@@ -78,7 +77,7 @@ public class KaraokeView {
 
             @Override
             public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean betweenCurrentPitch, long progress) {
-                if (DEBUG) {
+                if (Config.DEBUG) {
                     Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + betweenCurrentPitch + " " + progress);
                 }
                 if (mScoringView != null) {
@@ -87,7 +86,7 @@ public class KaraokeView {
             }
 
             public void requestRefreshUi() {
-                if (DEBUG) {
+                if (Config.DEBUG) {
                     Log.d(TAG, "requestRefreshUi");
                 }
                 if (mLyricsView != null) {

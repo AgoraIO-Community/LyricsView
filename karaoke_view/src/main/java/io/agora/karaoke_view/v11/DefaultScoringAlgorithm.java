@@ -13,8 +13,6 @@ import io.agora.karaoke_view.v11.model.LyricsLineModel;
 public class DefaultScoringAlgorithm implements IScoringAlgorithm {
     private static final String TAG = "DefaultScoringAlgorithm";
 
-    private static final boolean DEBUG = false;
-
     // Maximum score for one line, 100 for maximum and 0 for minimum
     private final int mMaximumScoreForLine = 100;
 
@@ -44,7 +42,7 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
         Float scoreForOnePitch;
         Iterator<Long> iterator = pitchesForLine.keySet().iterator();
 
-        if (DEBUG) {
+        if (Config.DEBUG) {
             debugScoringAlgo(pitchesForLine, indexOfLineJustFinished);
         }
 
@@ -56,10 +54,11 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
                 iterator.remove();
                 pitchesForLine.remove(myKeyTimestamp);
 
-                if (scoreForOnePitch != null) {
+
+                if (scoreForOnePitch != null && -1f != scoreForOnePitch) {
                     totalScoreForThisLine += scoreForOnePitch;
+                    scoreCount++;
                 }
-                scoreCount++;
             }
         }
 
@@ -67,7 +66,7 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
         int scoreThisLine = (int) totalScoreForThisLine / scoreCount;
 
-        if (DEBUG) {
+        if (Config.DEBUG) {
             Log.d(TAG, "debugScoringAlgo/mPitchesForLine/CALC: totalScoreForThisLine=" + totalScoreForThisLine + ", scoreCount=" + scoreCount + ", scoreThisLine=" + scoreThisLine);
         }
 
