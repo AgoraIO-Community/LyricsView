@@ -18,7 +18,7 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  * Non-ui related, shared by all components
  */
 public class ScoringMachine {
-    private static final String TAG = "ScoringMachine";
+    private static final String TAG = "LyricsView-ScoringMachine";
 
     private LyricsModel mLyricsModel;
 

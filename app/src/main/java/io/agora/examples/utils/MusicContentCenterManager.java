@@ -35,7 +35,7 @@ public class MusicContentCenterManager {
     private final MccCallback mCallback;
     private ScheduledExecutorService mScheduledExecutorService;
     private long mCurrentMusicPosition;
-
+    private final static int MUSIC_POSITION_UPDATE_INTERVAL = 20;
 
     private static volatile Status mStatus = Status.IDLE;
 
@@ -302,6 +302,7 @@ public class MusicContentCenterManager {
         if (!mStatus.isAtLeast(Status.Started)) {
             return;
         }
+        mStatus = Status.Paused;
         mAgoraMusicPlayer.pause();
     }
 
@@ -310,6 +311,7 @@ public class MusicContentCenterManager {
         if (!mStatus.isAtLeast(Status.Started)) {
             return;
         }
+        mStatus = Status.Started;
         mAgoraMusicPlayer.resume();
     }
 
@@ -338,14 +340,16 @@ public class MusicContentCenterManager {
         mScheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                if (-1 == mCurrentMusicPosition || mCurrentMusicPosition % 1000 < 10) {
-                    mCurrentMusicPosition = mAgoraMusicPlayer.getPlayPosition();
-                } else {
-                    mCurrentMusicPosition += 10;
+                if (mStatus == Status.Started) {
+                    if (-1 == mCurrentMusicPosition || mCurrentMusicPosition % 1000 < MUSIC_POSITION_UPDATE_INTERVAL) {
+                        mCurrentMusicPosition = mAgoraMusicPlayer.getPlayPosition();
+                    } else {
+                        mCurrentMusicPosition += MUSIC_POSITION_UPDATE_INTERVAL;
+                    }
+                    mCallback.onMusicPositionChange(mCurrentMusicPosition);
                 }
-                mCallback.onMusicPositionChange(mCurrentMusicPosition);
             }
-        }, 0, 10, TimeUnit.MILLISECONDS);
+        }, 0, MUSIC_POSITION_UPDATE_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     private void stopDisplayLrc() {

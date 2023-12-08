@@ -715,7 +715,7 @@ public class LyricsView extends View {
 
     private boolean doScrollWithAnimationTo(final int position, ValueAnimator.AnimatorUpdateListener updateListener) {
         if (mContentScrolling) {
-            return true;
+            mScrollingAnimator.cancel();
         }
 
         mContentScrolling = true;
