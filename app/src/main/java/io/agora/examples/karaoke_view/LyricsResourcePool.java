@@ -22,35 +22,48 @@ public class LyricsResourcePool {
         }
     }
 
+    protected static class MusicResource {
+        public final int index;
+
+        public final long songCode;
+        public final String songName;
+
+        MusicResource(int index, long songCode, String songName) {
+            this.index = index;
+            this.songCode = songCode;
+            this.songName = songName;
+        }
+    }
+
     public static final String LRC_SAMPLE_1 = "https://webdemo.agora.io/ktv/chocolateice.xml"; // Deprecated
 
     /**
      * <sentence>
-     *   <tone begin="153.67" end="153.951" pitch="" pronounce="" lang="1">
-     *     <word>独</word>
-     *   </tone>
-     *   <tone begin="153.951" end="154.55" pitch="" pronounce="" lang="1">
-     *     <word>自</word>
-     *   </tone>
-     *   <tone begin="154.55" end="154.947" pitch="" pronounce="" lang="1">
-     *     <word>泪</word>
-     *   </tone>
-     *   <tone begin="154.947" end="155.687" pitch="" pronounce="" lang="1">
-     *     <word>流</word>
-     *   </tone>
-     *   <tone begin="155.687" end="155.687" pitch="" pronounce="" lang="1"/>
-     *   <tone begin="155.687" end="156.1" pitch="" pronounce="" lang="1">
-     *     <word>独</word>
-     *   </tone>
-     *   <tone begin="156.1" end="156.551" pitch="" pronounce="" lang="1">
-     *     <word>自</word>
-     *   </tone>
-     *   <tone begin="156.551" end="157.125" pitch="" pronounce="" lang="1">
-     *     <word>忍</word>
-     *   </tone>
-     *   <tone begin="157.125" end="157.688" pitch="" pronounce="" lang="1">
-     *     <word>受</word>
-     *   </tone>
+     * <tone begin="153.67" end="153.951" pitch="" pronounce="" lang="1">
+     * <word>独</word>
+     * </tone>
+     * <tone begin="153.951" end="154.55" pitch="" pronounce="" lang="1">
+     * <word>自</word>
+     * </tone>
+     * <tone begin="154.55" end="154.947" pitch="" pronounce="" lang="1">
+     * <word>泪</word>
+     * </tone>
+     * <tone begin="154.947" end="155.687" pitch="" pronounce="" lang="1">
+     * <word>流</word>
+     * </tone>
+     * <tone begin="155.687" end="155.687" pitch="" pronounce="" lang="1"/>
+     * <tone begin="155.687" end="156.1" pitch="" pronounce="" lang="1">
+     * <word>独</word>
+     * </tone>
+     * <tone begin="156.1" end="156.551" pitch="" pronounce="" lang="1">
+     * <word>自</word>
+     * </tone>
+     * <tone begin="156.551" end="157.125" pitch="" pronounce="" lang="1">
+     * <word>忍</word>
+     * </tone>
+     * <tone begin="157.125" end="157.688" pitch="" pronounce="" lang="1">
+     * <word>受</word>
+     * </tone>
      * </sentence>
      */
     public static final String LRC_SAMPLE_2 = "https://webdemo.agora.io/ktv/001.xml"; // Empty pitch value/word missing
@@ -85,7 +98,7 @@ public class LyricsResourcePool {
     public static final String LRC_SAMPLE_LOCAL_FILE_LRC_6246262727282260 = "6246262727282260.lrc";
     public static final String LRC_SAMPLE_LOCAL_FILE_PITCH_6246262727282260 = "6246262727282260.bin";
 
-    public static final List<LyricsResource> asList() {
+    public static List<LyricsResource> asList() {
         ArrayList<LyricsResource> list = new ArrayList<>();
         list.add(new LyricsResource(0, LRC_SAMPLE_1, null, "DEPRECATED"));
         list.add(new LyricsResource(0, LRC_SAMPLE_2, null, "EMPTY_PITCH/WORD_MISSING"));
@@ -102,6 +115,14 @@ public class LyricsResourcePool {
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_793566, null, "PERFECT"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_227732_2_INVALID, null, "Unexpected Content"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_LRC_6246262727282260, LRC_SAMPLE_LOCAL_FILE_PITCH_6246262727282260, "Lrc file with extra standalone pitches"));
+        return list;
+    }
+
+    public static List<MusicResource> asMusicList() {
+        ArrayList<MusicResource> list = new ArrayList<>();
+        list.add(new MusicResource(0, 6246262727282860L, "爱情转移"));
+        list.add(new MusicResource(1, 6246262727300580L, "江南"));
+        list.add(new MusicResource(2, 6625526606572830L, "爱我别走"));
         return list;
     }
 }

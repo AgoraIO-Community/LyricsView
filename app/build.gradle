@@ -2,6 +2,9 @@ plugins {
     id 'com.android.application'
 }
 
+Properties properties = new Properties()
+InputStream inputStream = project.rootProject.file('local.properties').newDataInputStream()
+properties.load(inputStream)
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
@@ -13,6 +16,10 @@ android {
         versionName "1.1.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "APP_ID", "\"${properties.getProperty("APP_ID", "")}\"")
+        buildConfigField("String", "APP_CERTIFICATE", "\"${properties.getProperty("APP_CERTIFICATE", "")}\"")
+
     }
 
     signingConfigs {
@@ -47,7 +54,7 @@ android {
     android.applicationVariants.all {
         variant ->
             variant.outputs.all {
-                outputFileName = "KaraokeViewExample-android-v${defaultConfig.versionName}-${variant.buildType.name}.aar"
+                outputFileName = "KaraokeViewExample-android-v${defaultConfig.versionName}-${variant.buildType.name}.apk"
             }
     }
 
@@ -68,4 +75,8 @@ dependencies {
     androidTestImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation 'io.agora.rtc:agora-special-full:4.1.1.22'
+    implementation 'io.agora:authentication:2.0.0'
+    implementation 'commons-codec:commons-codec:1.16.0'
+    implementation 'pub.devrel:easypermissions:3.0.0'
 }
