@@ -486,7 +486,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long mLyricsCurrentProgress = 0;
 
     private void updatePlayingProgress(final long progress) {
-        binding.playingProgress.setText("" + progress);
+        binding.playingProgress.setText(String.valueOf(progress));
     }
 
     private void updateCallback(final String callback) {
@@ -580,6 +580,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void doPlay() {
+        mLyricsCurrentProgress = 0;
         mMusicContentCenterManager.preloadMusic(LyricsResourcePool.asMusicList().get(mCurrentSongCodeIndex).songCode);
     }
 
@@ -594,6 +595,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
         mLyricsCurrentProgress = mLyricsModel.startOfVerse - 1000; // Jump to slight earlier
+        if (!mIsMockPlay) {
+            mMusicContentCenterManager.seek(mLyricsCurrentProgress);
+            mMusicContentCenterManager.updateMusicPosition(mLyricsCurrentProgress);
+        }
         mState = Player_State.Playing;
     }
 
