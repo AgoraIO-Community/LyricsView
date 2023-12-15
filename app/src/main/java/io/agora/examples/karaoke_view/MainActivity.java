@@ -262,6 +262,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void loadPreferences() {
+        Log.i(TAG, "loadPreferences");
         SharedPreferences prefs = getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
         int scoringLevel = prefs.getInt(getString(R.string.prefs_key_scoring_level), mKaraokeView.getScoringLevel());
         mKaraokeView.setScoringLevel(scoringLevel);
@@ -329,6 +330,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             binding.scoringView.setLocalPitchIndicator(null);
             setParticles(true);
         }
+
+        float particleHitOnThreshold = prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f);
+        binding.scoringView.setThresholdOfHitScore(particleHitOnThreshold);
     }
 
     private void setParticles(boolean defaultOrCustomized) {
@@ -391,6 +395,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case "Brown":
                 colorInDex = Color.parseColor("#654321");
+                break;
+            case "Green":
+                colorInDex = Color.GREEN;
                 break;
             default:
                 colorInDex = 0;

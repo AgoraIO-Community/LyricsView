@@ -24,7 +24,6 @@ import android.view.animation.AccelerateInterpolator;
 import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.annotation.UiThread;
 
 import com.plattysoft.leonids.ParticleSystem;
 
@@ -219,6 +218,15 @@ public class ScoringView extends View {
         } else {
             tryDisableParticleEffect();
         }
+    }
+
+    /**
+     * set the threshold of hit score
+     *
+     * @param thresholdOfHitScore the threshold of hit score, must > 0 and <= 1
+     */
+    public void setThresholdOfHitScore(float thresholdOfHitScore) {
+        mThresholdOfHitScore = thresholdOfHitScore;
     }
 
     private Object mDelayedTaskToken;
