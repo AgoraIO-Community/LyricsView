@@ -11,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
 import android.view.View;
@@ -191,6 +192,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void loadTheLyrics(String lrcUri, String pitchUri) {
+        Log.i(TAG, "loadTheLyrics " + lrcUri + " " + pitchUri);
         mKaraokeView.reset();
         mLyricsModel = null;
 
@@ -201,8 +203,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 tvDescription.setText("Try to load " + lrcUri);
             }
         });
+        if (TextUtils.isEmpty(lrcUri)) {
+            mLyricsModel = null;
 
-        if (lrcUri.startsWith("https://") || lrcUri.startsWith("http://")) {
+            // Call this will trigger no/invalid lyrics ui
+            mKaraokeView.setLyricsData(null);
+            playMusic();
+            updateLyricsDescription();
+        } else if (lrcUri.startsWith("https://") || lrcUri.startsWith("http://")) {
             DownloadManager.getInstance().download(this, lrcUri, file -> {
                 file = extractFromZipFileIfPossible(file);
                 mLyricsModel = KaraokeView.parseLyricsData(file);
@@ -221,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (description != null && description.contains("SHOW_NO_LYRICS_TIPS")) {
                     mKaraokeView.setLyricsData(null); // Call this will trigger no/invalid lyrics ui
                 }
-
+                playMusic();
                 updateLyricsDescription();
             });
         } else {
@@ -271,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         boolean indicatorOn = prefs.getBoolean(getString(R.string.prefs_key_start_of_verse_indicator_switch), true);
         binding.lyricsView.enableStartOfVerseIndicator(indicatorOn);
-        String indicatorColor = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_color), "Gray");
+        String indicatorColor = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_color), "Default");
         binding.lyricsView.setStartOfVerseIndicatorColor(colorInStringToDex(indicatorColor));
         String indicatorRadius = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_radius), "6dp");
         binding.lyricsView.setStartOfVerseIndicatorRadius(dp2pix(Float.parseFloat(indicatorRadius.replace("dp", ""))));
@@ -697,7 +705,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicLyricRequest(long songCode, String lyricUrl) {
-        loadTheLyrics(lyricUrl, null);
+        if (TextUtils.isEmpty(lyricUrl)) {
+            mLyricsModel = null;
+
+            // Call this will trigger no/invalid lyrics ui
+            mKaraokeView.setLyricsData(null);
+
+            playMusic();
+            updateLyricsDescription();
+        } else {
+            loadTheLyrics(lyricUrl, null);
+        }
     }
 
     @Override

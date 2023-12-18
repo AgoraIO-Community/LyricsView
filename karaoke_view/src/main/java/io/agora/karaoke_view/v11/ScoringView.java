@@ -780,13 +780,10 @@ public class ScoringView extends View {
     protected final void assureAnimationForPitchIndicator(double scoreAfterNormalization) {
         // Be very careful if you wanna add condition case
         // Should not related with lyrics or other status
-        if (!mEnableParticleEffect) {
-            return;
-        }
 
         // Animation for particle
         if (scoreAfterNormalization >= mThresholdOfHitScore) {
-            if (mParticleSystem != null) {
+            if (mEnableParticleEffect && mParticleSystem != null) {
                 float value = getYForPitchIndicator();
                 // It works with an emision range
                 int[] location = new int[2];
@@ -801,7 +798,7 @@ public class ScoringView extends View {
             }
             mInHighlightStatus = true;
         } else {
-            if (mParticleSystem != null) {
+            if (mEnableParticleEffect && mParticleSystem != null) {
                 mParticleSystem.stopEmitting();
             }
             mInHighlightStatus = false;

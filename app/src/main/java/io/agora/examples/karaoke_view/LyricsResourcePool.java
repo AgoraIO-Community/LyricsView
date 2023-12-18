@@ -122,7 +122,10 @@ public class LyricsResourcePool {
         ArrayList<MusicResource> list = new ArrayList<>();
         list.add(new MusicResource(0, 6246262727282860L, "爱情转移"));
         list.add(new MusicResource(1, 6246262727300580L, "江南"));
-        list.add(new MusicResource(2, 6625526606572830L, "爱我别走"));
+        list.add(new MusicResource(2, 6625526618861450L, "卖汤圆"));
+        list.add(new MusicResource(3, 6625526606572830L, "爱我别走"));
+        list.add(new MusicResource(4, 6625526639142490L, "如果这都不算爱"));
+
         return list;
     }
 }

@@ -56,7 +56,7 @@ public class MusicContentCenterManager {
     private final IMusicContentCenterEventHandler mMccEventHandler = new IMusicContentCenterEventHandler() {
         @Override
         public void onPreLoadEvent(String requestId, long songCode, int percent, String lyricUrl, int status, int errorCode) {
-            Log.d(TAG, "onPreLoadEvent: " + requestId + " " + songCode + " " + percent + " " + lyricUrl + " " + status + " " + errorCode);
+            Log.d(TAG, "onPreLoadEvent requestId:" + requestId + " songCode:" + songCode + " percent:" + percent + " lyricUrl:" + lyricUrl + " status:" + status + " errorCode:" + errorCode);
             mCallback.onMusicPreloadResult(songCode, percent);
             if (status == 0 && percent == 100) {
                 mCallback.onMusicLyricRequest(songCode, lyricUrl);
@@ -75,6 +75,7 @@ public class MusicContentCenterManager {
 
         @Override
         public void onLyricResult(String requestId, long songCode, String lyricUrl, int errorCode) {
+            Log.d(TAG, "onLyricResult()  requestId :" + requestId + " songCode:" + songCode + " lyricUrl:" + lyricUrl + " errorCode:" + errorCode);
             mCallback.onMusicLyricRequest(songCode, lyricUrl);
         }
 
