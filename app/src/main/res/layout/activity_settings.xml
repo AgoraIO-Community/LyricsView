@@ -585,7 +585,7 @@
                 android:layout_width="0dp"
                 android:layout_height="20dp"
                 android:max="100"
-                android:min="0"
+                android:min="1"
                 android:progress="80"
                 app:layout_constraintEnd_toStartOf="@id/particle_hit_on_threshold_tune_value"
                 app:layout_constraintHorizontal_bias="0.82"

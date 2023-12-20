@@ -31,6 +31,7 @@ import java.util.List;
 
 import io.agora.karaoke_view.R;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
+import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 
@@ -41,6 +42,7 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  * @date 2021/08/04
  */
 public class ScoringView extends View {
+    private static final String TAG = "LyricsView-ScoringView";
 
     private static final boolean DEBUG = false;
 
@@ -226,6 +228,10 @@ public class ScoringView extends View {
      * @param thresholdOfHitScore the threshold of hit score, must > 0 and <= 1
      */
     public void setThresholdOfHitScore(float thresholdOfHitScore) {
+        if (thresholdOfHitScore <= 0 || thresholdOfHitScore > 1.0f) {
+            LogManager.instance().error(TAG, "Invalid value for hitScoreThreshold, must > 0 and <= 1, current is " + thresholdOfHitScore);
+            return;
+        }
         mThresholdOfHitScore = thresholdOfHitScore;
     }
 
@@ -782,7 +788,7 @@ public class ScoringView extends View {
         // Should not related with lyrics or other status
 
         // Animation for particle
-        if (scoreAfterNormalization >= mThresholdOfHitScore) {
+        if (scoreAfterNormalization >= mThresholdOfHitScore * 100) {
             if (mEnableParticleEffect && mParticleSystem != null) {
                 float value = getYForPitchIndicator();
                 // It works with an emision range

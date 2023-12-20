@@ -12,7 +12,7 @@ import io.agora.karaoke_view.v11.utils.LyricsParser;
 
 public class KaraokeView {
 
-    private static final String TAG = "KaraokeView";
+    private static final String TAG = "LyricsView-KaraokeView";
 
     private IScoringAlgorithm mScoringAlgorithm;
 

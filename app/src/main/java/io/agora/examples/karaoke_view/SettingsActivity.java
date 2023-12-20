@@ -450,7 +450,7 @@ public class SettingsActivity extends AppCompatActivity {
         binding.particleHitOnThresholdTune.setProgress(particleHitThreshold); // 0...100
         binding.particleHitOnThresholdTuneValue.setText(String.valueOf(prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            binding.particleHitOnThresholdTune.setMin(0);
+            binding.particleHitOnThresholdTune.setMin(1);
         }
         binding.particleHitOnThresholdTune.setMax(100);
         binding.particleHitOnThresholdTune.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {

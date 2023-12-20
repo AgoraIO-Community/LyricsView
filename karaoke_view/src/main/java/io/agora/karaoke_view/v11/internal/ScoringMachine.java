@@ -8,6 +8,7 @@ import io.agora.karaoke_view.v11.IScoringAlgorithm;
 import io.agora.karaoke_view.v11.VoicePitchChanger;
 import io.agora.karaoke_view.v11.ai.AINative;
 import io.agora.karaoke_view.v11.config.Config;
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
@@ -18,12 +19,13 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  * Non-ui related, shared by all components
  */
 public class ScoringMachine {
-    private static final String TAG = "LyricsView-ScoringMachine";
+    private static final String TAG = Constants.TAG + "-ScoringMachine";
 
     private LyricsModel mLyricsModel;
 
     private int mMaximumRefPitch = 0;
-    private int mMinimumRefPitch = 100; // FIXME(Hai_Guo Should not be zero, song 夏天)
+    // FIXME(Hai_Guo Should not be zero, song 夏天)
+    private int mMinimumRefPitch = 100;
     private int mNumberOfRefPitches = 0;
     // Start time of first pitch or word or tone
     private long mTimestampOfFirstRefPitch = -1;
@@ -52,8 +54,6 @@ public class ScoringMachine {
 
     public final LinkedHashMap<Integer, Integer> mScoreForEachLine = new LinkedHashMap<>();
 
-    // In highlighting status, always with some shiny animations
-    private boolean mInHighlightingStatus;
 
     // Initial score for the lyrics(can change by app)
     private float mInitialScore;
@@ -64,11 +64,13 @@ public class ScoringMachine {
     // Full marks/perfect for the lyrics
     private float mPerfectScore;
 
-    private VoicePitchChanger mVoicePitchChanger;
+    private final VoicePitchChanger mVoicePitchChanger;
 
     private IScoringAlgorithm mScoringAlgo;
 
-    private OnScoringListener mListener;
+    private final OnScoringListener mListener;
+
+    private static final int ZERO_PITCH_COUNT_THRESHOLD = 10;
 
     public ScoringMachine(VoicePitchChanger changer, IScoringAlgorithm algo, OnScoringListener listener) {
         reset();
@@ -308,9 +310,10 @@ public class ScoringMachine {
             return;
         }
 
-        final int ZERO_PITCH_COUNT_THRESHOLD = 10;
 
-        Log.d(TAG, "setPitch mContinuousZeroCount:" + mContinuousZeroCount);
+        if (Config.DEBUG) {
+            Log.d(TAG, "setPitch mContinuousZeroCount:" + mContinuousZeroCount);
+        }
         if (pitch == 0) {
             if (++mContinuousZeroCount < ZERO_PITCH_COUNT_THRESHOLD) {
                 return;
@@ -319,9 +322,13 @@ public class ScoringMachine {
             mContinuousZeroCount = 0;
         }
 
-        float currentRefPitch = mRefPitchForCurrentProgress; // Not started or ended
-        Log.d(TAG, "setPitch currentRefPitch:" + currentRefPitch);
-        if (currentRefPitch <= 0 || mContinuousZeroCount >= ZERO_PITCH_COUNT_THRESHOLD) { // No ref pitch, just ignore this time
+        // Not started or ended
+        float currentRefPitch = mRefPitchForCurrentProgress;
+        if (Config.DEBUG) {
+            Log.d(TAG, "setPitch currentRefPitch:" + currentRefPitch);
+        }
+        // No ref pitch, just ignore this time
+        if (currentRefPitch <= 0 || mContinuousZeroCount >= ZERO_PITCH_COUNT_THRESHOLD) {
             mContinuousZeroCount = 0;
             if (mListener != null) {
                 mListener.resetUi();
@@ -443,8 +450,6 @@ public class ScoringMachine {
         mRefPitchForCurrentProgress = -1f;
 
         mPitchesForLine.clear();
-
-        mInHighlightingStatus = false;
     }
 
     public void prepareUi() {
