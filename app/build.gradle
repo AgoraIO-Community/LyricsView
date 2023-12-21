@@ -13,7 +13,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 8
-        versionName "1.1.2.1221.1"
+        versionName exampleVersion.toString()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -65,12 +65,11 @@ android {
 }
 
 dependencies {
-    implementation project(':karaoke_view')
-//  implementation 'com.github.AgoraIO-Community:LyricsView:1.1.2'
-
-    api 'com.github.guohai:Leonids:9f5a9190f6'
-
-    implementation 'com.squareup.okhttp3:okhttp:4.9.2'
+    if (isSdkMode.toBoolean()) {
+        implementation "com.github.AgoraIO-Community:LyricsView:${sdkVersion.toString()}"
+    } else {
+        implementation project(':karaoke_view')
+    }
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
@@ -79,6 +78,9 @@ dependencies {
     androidTestImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+
+    implementation 'com.squareup.okhttp3:okhttp:4.9.2'
     implementation 'io.agora.rtc:agora-special-full:4.1.1.22'
     implementation 'io.agora:authentication:2.0.0'
     implementation 'commons-codec:commons-codec:1.16.0'

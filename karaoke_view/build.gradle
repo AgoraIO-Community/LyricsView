@@ -8,7 +8,7 @@ android {
         minSdkVersion 17
         targetSdkVersion 33
         versionCode 10
-        versionName "1.1.2"
+        versionName sdkVersion.toString()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
