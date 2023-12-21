@@ -1,7 +1,5 @@
 package io.agora.karaoke_view.v11.utils;
 
-import android.util.Log;
-
 import androidx.annotation.Nullable;
 
 import java.io.File;
@@ -11,10 +9,12 @@ import java.nio.ByteBuffer;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.internal.PitchesModel;
+import io.agora.logging.LogManager;
 
 public class PitchParser {
-    private static final String TAG = "PitchParser";
+    private static final String TAG = Constants.TAG + "-PitchParser";
 
     @Nullable
     public static PitchesModel doParse(File file) {
@@ -31,17 +31,17 @@ public class PitchParser {
             byte[] data = new byte[(int) file.length()];
             int size = fis.read(data);
             if (size != file.length()) {
-                Log.e(TAG, "Content not as expected size: " + file.length() + ", actual: " + size);
+                LogManager.instance().error(TAG, "Content not as expected size: " + file.length() + ", actual: " + size);
                 return model;
             }
             buffer = ByteBuffer.wrap(data);
             // Read int32 values until the end of the file
             model.version = readLittleEndianInt(buffer);
-            Log.i(TAG, "Version for the pitch file: " + model.version);
+            LogManager.instance().info(TAG, "Version for the pitch file: " + model.version);
             model.interval = readLittleEndianInt(buffer);
-            Log.i(TAG, "Interval for the pitch file: " + model.interval);
+            LogManager.instance().info(TAG, "Interval for the pitch file: " + model.interval);
             model.reserved = readLittleEndianInt(buffer);
-            Log.i(TAG, "Reserved for the pitch file: " + model.reserved);
+            LogManager.instance().info(TAG, "Reserved for the pitch file: " + model.reserved);
 
             DecimalFormat formatter = new DecimalFormat("#.###");
             while (buffer.remaining() >= 8) { // Each pitch value at least takes 8 bits

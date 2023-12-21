@@ -1,35 +1,44 @@
 package io.agora.karaoke_view.v11;
 
-import android.util.Log;
+import android.content.Context;
 
 import java.io.File;
 
 import io.agora.karaoke_view.v11.config.Config;
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 import io.agora.karaoke_view.v11.utils.LyricsParser;
+import io.agora.logging.FileLogger;
+import io.agora.logging.LogManager;
+import io.agora.logging.Logger;
 
 public class KaraokeView {
-
-    private static final String TAG = "LyricsView-KaraokeView";
-
     private IScoringAlgorithm mScoringAlgorithm;
-
     private KaraokeEvent mKaraokeEvent;
-
     private LyricsView mLyricsView;
     private ScoringView mScoringView;
-
     private ScoringMachine mScoringMachine;
+    private Context mContext;
 
     public KaraokeView(LyricsView lyricsView, ScoringView scoringView) {
         this.mLyricsView = lyricsView;
         this.mScoringView = scoringView;
+        if (null != mLyricsView) {
+            mContext = mLyricsView.getContext();
+        } else if (null != mScoringView) {
+            mContext = mScoringView.getContext();
+        }
         initialize();
     }
 
     public KaraokeView() {
+        initialize();
+    }
+
+    public KaraokeView(Context context) {
+        mContext = context;
         initialize();
     }
 
@@ -39,7 +48,7 @@ public class KaraokeView {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
                 if (Config.DEBUG) {
-                    Log.d(TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
+                    LogManager.instance().debug(Constants.TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
                 }
 
                 if (mScoringView != null) {
@@ -54,7 +63,7 @@ public class KaraokeView {
             @Override
             public void resetUi() {
                 if (Config.DEBUG) {
-                    Log.d(TAG, "resetUi");
+                    LogManager.instance().debug(Constants.TAG, "resetUi");
                 }
                 if (mLyricsView != null) {
                     mLyricsView.requestRefreshUi();
@@ -67,7 +76,7 @@ public class KaraokeView {
 
             public void onRefPitchUpdate(float refPitch, int numberOfRefPitches, long progress) {
                 if (Config.DEBUG) {
-                    Log.d(TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches + " " + progress);
+                    LogManager.instance().debug(Constants.TAG, "onRefPitchUpdate " + refPitch + " " + numberOfRefPitches + " " + progress);
                 }
 
                 if (mKaraokeEvent != null) {
@@ -78,7 +87,7 @@ public class KaraokeView {
             @Override
             public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean betweenCurrentPitch, long progress) {
                 if (Config.DEBUG) {
-                    Log.d(TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + betweenCurrentPitch + " " + progress);
+                    LogManager.instance().debug(Constants.TAG, "onPitchAndScoreUpdate " + pitch + " " + scoreAfterNormalization + " " + betweenCurrentPitch + " " + progress);
                 }
                 if (mScoringView != null) {
                     mScoringView.updatePitchAndScore(pitch, scoreAfterNormalization, betweenCurrentPitch);
@@ -87,7 +96,7 @@ public class KaraokeView {
 
             public void requestRefreshUi() {
                 if (Config.DEBUG) {
-                    Log.d(TAG, "requestRefreshUi");
+                    LogManager.instance().debug(Constants.TAG, "requestRefreshUi");
                 }
                 if (mLyricsView != null) {
                     mLyricsView.requestRefreshUi();
@@ -97,6 +106,10 @@ public class KaraokeView {
                 }
             }
         });
+
+        if (null != mContext) {
+            LogManager.instance().addLogger(new FileLogger(mContext.getExternalFilesDir(null).getPath(), Constants.LOG_FILE_NAME, 1024 * 1024, 2, Constants.TAG));
+        }
     }
 
     public void reset() {
@@ -231,5 +244,9 @@ public class KaraokeView {
 
     public int getScoringCompensationOffset() {
         return this.mScoringAlgorithm.getScoringCompensationOffset();
+    }
+
+    public void addLogger(Logger logger) {
+        LogManager.instance().addLogger(logger);
     }
 }

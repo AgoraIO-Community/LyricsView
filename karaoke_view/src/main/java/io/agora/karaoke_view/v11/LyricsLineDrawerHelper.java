@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 
 /**
@@ -20,7 +21,7 @@ import io.agora.karaoke_view.v11.model.LyricsLineModel;
  * @date 2021/7/6
  */
 class LyricsLineDrawerHelper {
-    private static final String TAG = "LyricsLineDrawerHelper";
+    private static final String TAG = Constants.TAG + "-LyricsLineDrawerHelper";
 
     private StaticLayout mLayoutBG; // 背景文字
     private StaticLayout mLayoutFG; // 前排高亮文字

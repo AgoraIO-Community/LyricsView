@@ -31,9 +31,9 @@ import java.util.List;
 
 import io.agora.karaoke_view.R;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
-import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.LogManager;
 
 /**
  * 激励，互动视图

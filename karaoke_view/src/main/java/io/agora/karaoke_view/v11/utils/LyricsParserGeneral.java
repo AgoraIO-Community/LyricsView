@@ -14,9 +14,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.agora.karaoke_view.v11.logging.LogManager;
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.LogManager;
 
 /**
  * 加载 lrc 歌词(逐句)
@@ -29,7 +30,7 @@ class LyricsParserGeneral {
     private static final Pattern PATTERN_LINE = Pattern.compile("((\\[\\d{2}:\\d{2}\\.\\d{2,3}\\])+)(.+)");
     private static final Pattern PATTERN_TIME = Pattern.compile("\\[(\\d{2}):(\\d{2})\\.(\\d{2,3})\\]");
 
-    private static final String TAG = "LyricsParserGeneral";
+    private static final String TAG = Constants.TAG + "-LyricsParserGeneral";
 
     /**
      * 从文件解析歌词

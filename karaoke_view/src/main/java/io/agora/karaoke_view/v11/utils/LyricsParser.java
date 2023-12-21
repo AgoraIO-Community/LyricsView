@@ -11,10 +11,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.internal.PitchesModel;
-import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.LogManager;
 
 /**
  * 加载歌词
@@ -23,7 +24,7 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  * @date 2021/7/6
  */
 public class LyricsParser {
-    private static final String TAG = "LyricsParser";
+    private static final String TAG = Constants.TAG + "-LyricsParser";
 
     private static void checkParameters(File file) {
         if (file == null || !file.isFile() || !file.exists() || !file.canRead() || file.length() == 0) {

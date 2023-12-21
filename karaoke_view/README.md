@@ -78,7 +78,7 @@ public class LiveActivity extends RtcBaseActivity {
 
         // 1. Initialize and set a logger as needed
         mKaraokeView = new KaraokeView(mLyricsView, mScoringView);
-        LogManager.instance().addLogger(new YourLogger() {
+        mKaraokeView.addLogger(new YourLogger() {
         });
 
         // 2. Parse the lyrics and set up the lyrics model for KaraokeView

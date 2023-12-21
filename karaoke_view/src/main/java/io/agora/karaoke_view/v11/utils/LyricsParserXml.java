@@ -12,9 +12,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.agora.karaoke_view.v11.logging.LogManager;
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.LogManager;
 
 /**
  * 加载 xml 歌词(逐字)
@@ -23,7 +24,7 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  * @date 2021/7/6
  */
 class LyricsParserXml {
-    private static final String TAG = "LyricsParserXml";
+    private static final String TAG = Constants.TAG + "-LyricsParserXml";
 
     public static class Song {
         public SongGeneral general;

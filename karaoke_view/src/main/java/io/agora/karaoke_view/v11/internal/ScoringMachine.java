@@ -1,7 +1,5 @@
 package io.agora.karaoke_view.v11.internal;
 
-import android.util.Log;
-
 import java.util.LinkedHashMap;
 
 import io.agora.karaoke_view.v11.IScoringAlgorithm;
@@ -9,9 +7,9 @@ import io.agora.karaoke_view.v11.VoicePitchChanger;
 import io.agora.karaoke_view.v11.ai.AINative;
 import io.agora.karaoke_view.v11.config.Config;
 import io.agora.karaoke_view.v11.constants.Constants;
-import io.agora.karaoke_view.v11.logging.LogManager;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.LogManager;
 
 /**
  * State/Information of playing/rendering/on-going lyrics
@@ -164,7 +162,7 @@ public class ScoringMachine {
         }
 
         if (Config.DEBUG) {
-            Log.d(TAG, "debugScoringAlgo/mPitchesForLine/STUB: timestamp=" + timestamp + ", referencePitch=" + referencePitch + ", mIndexOfCurrentLine=" + mIndexOfCurrentLine + ", mMarkOfLineEndEventFire=" + mMarkOfLineEndEventFire);
+            LogManager.instance().debug(Constants.TAG, "debugScoringAlgo/mPitchesForLine/STUB: timestamp=" + timestamp + ", referencePitch=" + referencePitch + ", mIndexOfCurrentLine=" + mIndexOfCurrentLine + ", mMarkOfLineEndEventFire=" + mMarkOfLineEndEventFire);
         }
 
         if (mIndexOfCurrentLine >= 0 && ( /** VeryCloseToNextLine @Ref K329404 **/((mIndexOfCurrentLine + 1 < numberOfLines) && ((timestamp + mDeltaOfUpdate) >= mLyricsModel.lines.get(mIndexOfCurrentLine + 1).getStartTime()))
@@ -198,7 +196,7 @@ public class ScoringMachine {
         scoreAfterNormalization = scoreAfterNormalization > 1 ? 1 : scoreAfterNormalization;
 
         if (Config.DEBUG) {
-            Log.d(TAG, "debugScoringAlgo/calculateScore2/REAL: minimumScore=" + minimumScore + ", pitch=" + pitch + ", refPitch=" + refPitch +
+            LogManager.instance().debug(Constants.TAG, "debugScoringAlgo/calculateScore2/REAL: minimumScore=" + minimumScore + ", pitch=" + pitch + ", refPitch=" + refPitch +
                     ", level=" + scoringLevel + ", compensationOffset=" + scoringCompensationOffset);
         }
 
@@ -220,7 +218,7 @@ public class ScoringMachine {
         }
 
         if (Config.DEBUG) {
-            Log.d(TAG, "updateScoreForMostRecentLine: timestamp=" + timestamp + ", mEndTimeOfThisLyrics=" + mEndTimeOfThisLyrics + ", numberOfPitchScores=" + mPitchesForLine.size()
+            LogManager.instance().debug(Constants.TAG, "updateScoreForMostRecentLine: timestamp=" + timestamp + ", mEndTimeOfThisLyrics=" + mEndTimeOfThisLyrics + ", numberOfPitchScores=" + mPitchesForLine.size()
                     + "\n" + newLine + "(" + indexOfMostRecentLine + ")"
                     + "\n indexOfMostRecentLine: " + indexOfMostRecentLine + ", mIndexOfCurrentLine=" + mIndexOfCurrentLine + ", delta= " + mDeltaOfUpdate);
         }
@@ -302,7 +300,7 @@ public class ScoringMachine {
     private int mContinuousZeroCount = 0;
 
     public void setPitch(float pitch) {
-        Log.d(TAG, "setPitch pitch:" + pitch);
+        LogManager.instance().debug(Constants.TAG, "setPitch pitch:" + pitch);
         if (mLyricsModel == null) {
             if (mListener != null) {
                 mListener.resetUi();
@@ -312,7 +310,7 @@ public class ScoringMachine {
 
 
         if (Config.DEBUG) {
-            Log.d(TAG, "setPitch mContinuousZeroCount:" + mContinuousZeroCount);
+            LogManager.instance().debug(Constants.TAG, "setPitch mContinuousZeroCount:" + mContinuousZeroCount);
         }
         if (pitch == 0) {
             if (++mContinuousZeroCount < ZERO_PITCH_COUNT_THRESHOLD) {
@@ -324,9 +322,7 @@ public class ScoringMachine {
 
         // Not started or ended
         float currentRefPitch = mRefPitchForCurrentProgress;
-        if (Config.DEBUG) {
-            Log.d(TAG, "setPitch currentRefPitch:" + currentRefPitch);
-        }
+        LogManager.instance().debug(Constants.TAG, "setPitch currentRefPitch:" + currentRefPitch);
         // No ref pitch, just ignore this time
         if (currentRefPitch <= 0 || mContinuousZeroCount >= ZERO_PITCH_COUNT_THRESHOLD) {
             mContinuousZeroCount = 0;
@@ -337,7 +333,7 @@ public class ScoringMachine {
         }
 
         long progress = mCurrentProgress;
-        Log.d(TAG, "setPitch progress:" + progress);
+        LogManager.instance().debug(Constants.TAG, "setPitch progress:" + progress);
 
         boolean betweenCurrentPitch = checkBetweenCurrentRefPitch();
 
@@ -360,10 +356,10 @@ public class ScoringMachine {
             score = score * mScoringAlgo.getMaximumScoreForLine();
         }
 
-        Log.d(TAG, "mPitchesForLine.put progress:" + progress + ",score:" + score);
+        LogManager.instance().debug(Constants.TAG, "mPitchesForLine.put progress:" + progress + ",score:" + score);
         mPitchesForLine.put(progress, score);
         if (Config.DEBUG) {
-            Log.d(TAG, "debugScoringAlgo/mPitchesForLine/REAL: progress=" + progress +
+            LogManager.instance().debug(Constants.TAG, "debugScoringAlgo/mPitchesForLine/REAL: progress=" + progress +
                     ", scoreForPitch=" + score + ", rawPitch=" + rawPitch + ", pitchAfterProcess=" + pitchAfterProcess + ", currentRefPitch=" + currentRefPitch);
         }
 

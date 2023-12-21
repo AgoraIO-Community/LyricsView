@@ -18,7 +18,6 @@ import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -28,9 +27,12 @@ import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 
 import io.agora.karaoke_view.R;
+import io.agora.karaoke_view.v11.config.Config;
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.LogManager;
 
 /**
  * 歌词视图
@@ -41,7 +43,7 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  */
 @SuppressLint("StaticFieldLeak")
 public class LyricsView extends View {
-    private static final String TAG = "LyricsView";
+    private static final String TAG = Constants.TAG + "-LyricsView";
 
     private static final boolean DEBUG = false;
 
@@ -652,8 +654,8 @@ public class LyricsView extends View {
                         public void onAnimationUpdate(ValueAnimator animation) {
                             float fraction = animation.getAnimatedFraction();
 
-                            if (DEBUG) {
-                                Log.d(TAG, "debugAnimation/onAnimationUpdate/REAL: fraction=" + fraction);
+                            if (Config.DEBUG) {
+                                LogManager.instance().debug(TAG, "debugAnimation/onAnimationUpdate/REAL: fraction=" + fraction);
                             }
 
                             doConfigCanvasAndTexts(fraction);
@@ -820,8 +822,8 @@ public class LyricsView extends View {
         } else {
             mCurrentLineTranslateX = 0;
         }
-        if (DEBUG) {
-            Log.d(TAG, "checkIfXTranslationShouldApply xTranslation: " + mCurrentLineTranslateX + ", " +
+        if (Config.DEBUG) {
+            LogManager.instance().debug(TAG, "checkIfXTranslationShouldApply xTranslation: " + mCurrentLineTranslateX + ", " +
                     "widthOfHighlightRect: " + mRectClip.width() + ", mLastRightOfRectClip: " + mLastRightOfRectClip + ", " +
                     "widthOfCurrentLine: " + currentLineDrawHelper.getWidth() + ", widthOfLyricsView: " + halfWidthOfLyricsView * 2);
         }

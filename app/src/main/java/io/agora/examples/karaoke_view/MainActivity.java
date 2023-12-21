@@ -44,10 +44,9 @@ import io.agora.examples.utils.MusicContentCenterManager;
 import io.agora.examples.utils.ResourceHelper;
 import io.agora.karaoke_view.v11.KaraokeEvent;
 import io.agora.karaoke_view.v11.KaraokeView;
-import io.agora.karaoke_view.v11.logging.LogManager;
-import io.agora.karaoke_view.v11.logging.Logger;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.ConsoleLogger;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, MusicContentCenterManager.MccCallback {
@@ -95,25 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mKaraokeView = new KaraokeView(binding.enableLyrics.isChecked() ? binding.lyricsView : null, binding.enableScoring.isChecked() ? binding.scoringView : null);
 
-        LogManager.instance().addLogger(new Logger() {
-            @Override
-            public void onLog(int level, String tag, String message) {
-                switch (level) {
-                    case Log.DEBUG:
-                        Log.d(tag, message);
-                        break;
-                    case Log.ERROR:
-                        Log.e(tag, message);
-                        break;
-                    case Log.WARN:
-                        Log.w(tag, message);
-                        break;
-                    case Log.INFO:
-                        Log.i(tag, message);
-                        break;
-                }
-            }
-        });
+        mKaraokeView.addLogger(new ConsoleLogger());
 
         mKaraokeView.setKaraokeEvent(new KaraokeEvent() {
             @Override

@@ -9,7 +9,7 @@ import io.agora.rtm.RtmTokenBuilder2;
 
 public class KeyCenter {
     public static final int USER_MAX_UID = 10000;
-    public static final String CHANNEL_NAME = "test-lyrics";
+    public static final String CHANNEL_NAME = "Karaoke-Example-Test-Android";
     public static final String APP_ID = BuildConfig.APP_ID;
     private static int USER_RTC_UID = -1;
 

@@ -1,17 +1,17 @@
 package io.agora.karaoke_view.v11;
 
-import android.util.Log;
-
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 import io.agora.karaoke_view.v11.ai.AINative;
 import io.agora.karaoke_view.v11.config.Config;
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
+import io.agora.logging.LogManager;
 
 public class DefaultScoringAlgorithm implements IScoringAlgorithm {
-    private static final String TAG = "DefaultScoringAlgorithm";
+    private static final String TAG = Constants.TAG + "-DefaultScoringAlgorithm";
 
     // Maximum score for one line, 100 for maximum and 0 for minimum
     private final int mMaximumScoreForLine = 100;
@@ -66,9 +66,7 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
         int scoreThisLine = (int) totalScoreForThisLine / scoreCount;
 
-        if (Config.DEBUG) {
-            Log.d(TAG, "debugScoringAlgo/mPitchesForLine/CALC: totalScoreForThisLine=" + totalScoreForThisLine + ", scoreCount=" + scoreCount + ", scoreThisLine=" + scoreThisLine);
-        }
+        LogManager.instance().debug(TAG, "debugScoringAlgo/mPitchesForLine/CALC: totalScoreForThisLine=" + totalScoreForThisLine + ", scoreCount=" + scoreCount + ", scoreThisLine=" + scoreThisLine);
 
         return scoreThisLine;
     }
@@ -80,9 +78,11 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
             Long myKeyTimestamp = iterator.next();
             Float score = pitches.get(myKeyTimestamp);
             cumulativeScoreForLine += (score != null ? score : 0);
-            Log.d(TAG, "debugScoringAlgo/mPitchesForLine: timestamp=" + myKeyTimestamp + ", scoreForPitch=" + score);
+            if (Config.DEBUG) {
+                LogManager.instance().debug(TAG, "debugScoringAlgo/mPitchesForLine: timestamp=" + myKeyTimestamp + ", scoreForPitch=" + score);
+            }
         }
-        Log.d(TAG, "debugScoringAlgo/mPitchesForLine: numberOfPitches=" + pitches.size() + ", cumulativeScoreForLine=" + cumulativeScoreForLine + ", mIndexOfCurrentLine=" + indexOfLineJustFinished);
+        LogManager.instance().debug(TAG, "debugScoringAlgo/mPitchesForLine: numberOfPitches=" + pitches.size() + ", cumulativeScoreForLine=" + cumulativeScoreForLine + ", mIndexOfCurrentLine=" + indexOfLineJustFinished);
     }
 
     @Override
