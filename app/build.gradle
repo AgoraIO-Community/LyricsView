@@ -79,9 +79,13 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
+    if (isLocalRtcSDK.toBoolean()) {
+        implementation files('libs/agora-rtc-sdk.jar')
+    } else {
+        implementation 'io.agora.rtc:agora-special-full:4.1.1.22'
+    }
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
     implementation 'com.squareup.okhttp3:okhttp:4.9.2'
-    implementation 'io.agora.rtc:agora-special-full:4.1.1.22'
     implementation 'io.agora:authentication:2.0.0'
     implementation 'commons-codec:commons-codec:1.16.0'
     implementation 'pub.devrel:easypermissions:3.0.0'
