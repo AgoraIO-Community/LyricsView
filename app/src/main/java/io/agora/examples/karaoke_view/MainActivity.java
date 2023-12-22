@@ -47,6 +47,7 @@ import io.agora.karaoke_view.v11.KaraokeView;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 import io.agora.logging.ConsoleLogger;
+import io.agora.logging.LogManager;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, MusicContentCenterManager.MccCallback {
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Handler mHandler;
     private MusicContentCenterManager mMusicContentCenterManager;
     private boolean mIsMockPlay = false;
+    private ConsoleLogger mConsoleLogger;
     private static final int TAG_PERMISSION_REQUEST_CODE = 1000;
     private static final String[] PERMISSION = new String[]{
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -94,7 +96,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mKaraokeView = new KaraokeView(binding.enableLyrics.isChecked() ? binding.lyricsView : null, binding.enableScoring.isChecked() ? binding.scoringView : null);
 
-        mKaraokeView.addLogger(new ConsoleLogger());
+        if (null == mConsoleLogger) {
+            mConsoleLogger = new ConsoleLogger();
+        }
+        mKaraokeView.addLogger(mConsoleLogger);
 
         mKaraokeView.setKaraokeEvent(new KaraokeEvent() {
             @Override
@@ -624,6 +629,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         mMusicContentCenterManager.destroy();
+
+        if (mConsoleLogger != null) {
+            LogManager.instance().removeLogger(mConsoleLogger);
+        }
     }
 
     @Override

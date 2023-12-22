@@ -21,6 +21,7 @@ public class KaraokeView {
     private ScoringView mScoringView;
     private ScoringMachine mScoringMachine;
     private Context mContext;
+    private static FileLogger mFileLogger;
 
     public KaraokeView(LyricsView lyricsView, ScoringView scoringView) {
         this.mLyricsView = lyricsView;
@@ -108,7 +109,10 @@ public class KaraokeView {
         });
 
         if (null != mContext) {
-            LogManager.instance().addLogger(new FileLogger(mContext.getExternalFilesDir(null).getPath(), Constants.LOG_FILE_NAME, 1024 * 1024, 2, Constants.TAG));
+            if (null == mFileLogger) {
+                mFileLogger = new FileLogger(mContext.getExternalFilesDir(null).getPath(), Constants.LOG_FILE_NAME, 1024 * 1024, 2, Constants.TAG);
+            }
+            LogManager.instance().addLogger(mFileLogger);
         }
     }
 
