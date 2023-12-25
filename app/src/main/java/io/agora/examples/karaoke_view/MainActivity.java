@@ -616,6 +616,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mLyricsCurrentProgress = 0;
         mState = Player_State.Uninitialized;
 
+        if (mConsoleLogger != null && mKaraokeView != null) {
+            mKaraokeView.removeLogger(mConsoleLogger);
+        }
+
         if (mKaraokeView != null) {
             mKaraokeView.setProgress(0);
             mKaraokeView.setPitch(0);
@@ -628,10 +632,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         mMusicContentCenterManager.destroy();
-
-        if (mConsoleLogger != null) {
-            mKaraokeView.removeLogger(mConsoleLogger);
-        }
     }
 
     @Override
