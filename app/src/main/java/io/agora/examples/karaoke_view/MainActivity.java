@@ -47,7 +47,6 @@ import io.agora.karaoke_view.v11.KaraokeView;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 import io.agora.logging.ConsoleLogger;
-import io.agora.logging.LogManager;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, MusicContentCenterManager.MccCallback {
@@ -631,7 +630,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mMusicContentCenterManager.destroy();
 
         if (mConsoleLogger != null) {
-            LogManager.instance().removeLogger(mConsoleLogger);
+            mKaraokeView.removeLogger(mConsoleLogger);
         }
     }
 

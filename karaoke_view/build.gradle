@@ -53,7 +53,7 @@ android {
 }
 
 dependencies {
-    api files('libs/Agora-LoggingService-android-v1.0.1.jar')
+    api files('libs/Agora-LoggingService-android-v1.0.2.jar')
     implementation 'androidx.annotation:annotation:1.5.0'
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
 }

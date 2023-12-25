@@ -110,7 +110,7 @@ public class KaraokeView {
 
         if (null != mContext) {
             if (null == mFileLogger) {
-                mFileLogger = new FileLogger(mContext.getExternalFilesDir(null).getPath(), Constants.LOG_FILE_NAME, 1024 * 1024, 2, Constants.TAG);
+                mFileLogger = new FileLogger(mContext.getExternalFilesDir(null).getPath(), Constants.LOG_FILE_NAME, 1024 * 1024, 2);
             }
             LogManager.instance().addLogger(mFileLogger);
         }
@@ -252,5 +252,9 @@ public class KaraokeView {
 
     public void addLogger(Logger logger) {
         LogManager.instance().addLogger(logger);
+    }
+
+    public void removeLogger(Logger logger) {
+        LogManager.instance().removeLogger(logger);
     }
 }
