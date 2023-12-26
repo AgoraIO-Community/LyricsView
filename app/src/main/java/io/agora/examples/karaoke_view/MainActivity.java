@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private ActivityMainBinding binding;
 
-    private static final String TAG = "LyricsView-MainActivity";
+    private static final String TAG = "KaraokeView-MainActivity";
 
     private KaraokeView mKaraokeView;
 

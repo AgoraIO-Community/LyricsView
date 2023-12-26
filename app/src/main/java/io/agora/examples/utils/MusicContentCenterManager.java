@@ -27,7 +27,7 @@ import io.agora.rtc2.RtcEngine;
 import io.agora.rtc2.RtcEngineConfig;
 
 public class MusicContentCenterManager {
-    private static final String TAG = "LyricsView-MCCManager";
+    private static final String TAG = "KaraokeView-MCCManager";
     private final Context mContext;
     private IAgoraMusicContentCenter mMcc;
     private IAgoraMusicPlayer mAgoraMusicPlayer;
@@ -221,6 +221,7 @@ public class MusicContentCenterManager {
             mConfig.appId = BuildConfig.APP_ID;
             mConfig.mccUid = KeyCenter.getUserUid();
             mConfig.token = KeyCenter.getRtmToken(KeyCenter.getUserUid());
+            mConfig.mccDomain = "api-test.agora.io";
             mConfig.eventHandler = mMccEventHandler;
             mMcc.initialize(mConfig);
 
