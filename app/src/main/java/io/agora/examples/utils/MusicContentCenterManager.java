@@ -187,9 +187,18 @@ public class MusicContentCenterManager {
                         }
                     }
                 }
+
+                @Override
+                public void onJoinChannelSuccess(String channel, int uid, int elapsed) {
+                    super.onJoinChannelSuccess(channel, uid, elapsed);
+                    Log.i(TAG, "onJoinChannelSuccess " + channel + " " + uid + " " + elapsed);
+                }
             };
 
             RtcEngine rtcEngine = RtcEngine.create(config);
+            rtcEngine.setParameters("{\"rtc.debug.enable\": true}");
+            rtcEngine.setParameters("{\"che.audio.apm_dump\": true}");
+
             ChannelMediaOptions option = new ChannelMediaOptions();
             option.autoSubscribeAudio = true;
             rtcEngine.updateChannelMediaOptions(option);

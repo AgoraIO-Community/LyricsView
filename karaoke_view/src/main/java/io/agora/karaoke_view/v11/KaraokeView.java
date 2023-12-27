@@ -48,9 +48,8 @@ public class KaraokeView {
         mScoringMachine = new ScoringMachine(new VoicePitchChanger(), mScoringAlgorithm, new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
-                if (Config.DEBUG) {
-                    LogManager.instance().debug(Constants.TAG, "onLineFinished " + line + " " + score + " " + cumulativeScore + " " + perfectScore + " " + index + " " + numberOfLines);
-                }
+                LogManager.instance().debug(Constants.TAG, "onLineFinished line startTime:" + line.getStartTime() + ",line endTime:" + line.getEndTime() +
+                        ",score:" + score + ",cumulativeScore:" + cumulativeScore + ",perfectScore:" + perfectScore + ",index:" + index + ",numberOfLines:" + numberOfLines);
 
                 if (mScoringView != null) {
                     mScoringView.resetPitchIndicatorAndAnimationWhenFullLineFinished(score);

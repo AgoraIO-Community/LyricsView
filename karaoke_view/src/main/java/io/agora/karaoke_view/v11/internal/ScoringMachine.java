@@ -225,6 +225,9 @@ public class ScoringMachine {
 
         if (newLine && !mPitchesForLine.isEmpty()) {
             LyricsLineModel lineJustFinished = mLyricsModel.lines.get(indexOfMostRecentLine);
+            LogManager.instance().debug(Constants.TAG, "updateScoreForMostRecentLine: lineJustFinished startTime:" + lineJustFinished.getStartTime() +
+                    ",lineJustFinished endTime:" + lineJustFinished.getEndTime() + ",timestamp:" + timestamp + ",indexOfMostRecentLine:" + indexOfMostRecentLine +
+                    ",mPitchesForLine:" + mPitchesForLine);
             int scoreThisTime = mScoringAlgo.getLineScore(mPitchesForLine, indexOfMostRecentLine, lineJustFinished);
 
             // 统计到累计分数
@@ -300,7 +303,7 @@ public class ScoringMachine {
     private int mContinuousZeroCount = 0;
 
     public void setPitch(float pitch) {
-        LogManager.instance().debug(Constants.TAG, "setPitch pitch:" + pitch);
+        LogManager.instance().debug(Constants.TAG, "setPitch pitch:" + pitch + ",currentRefPitch:" + mRefPitchForCurrentProgress + ",currentProgress:" + mCurrentProgress);
         if (mLyricsModel == null) {
             if (mListener != null) {
                 mListener.resetUi();
@@ -322,7 +325,6 @@ public class ScoringMachine {
 
         // Not started or ended
         float currentRefPitch = mRefPitchForCurrentProgress;
-        LogManager.instance().debug(Constants.TAG, "setPitch currentRefPitch:" + currentRefPitch);
         // No ref pitch, just ignore this time
         if (currentRefPitch <= 0 || mContinuousZeroCount >= ZERO_PITCH_COUNT_THRESHOLD) {
             mContinuousZeroCount = 0;
@@ -333,7 +335,6 @@ public class ScoringMachine {
         }
 
         long progress = mCurrentProgress;
-        LogManager.instance().debug(Constants.TAG, "setPitch progress:" + progress);
 
         boolean betweenCurrentPitch = checkBetweenCurrentRefPitch();
 
@@ -356,12 +357,8 @@ public class ScoringMachine {
             score = score * mScoringAlgo.getMaximumScoreForLine();
         }
 
-        LogManager.instance().debug(Constants.TAG, "mPitchesForLine.put progress:" + progress + ",score:" + score);
+        LogManager.instance().debug(Constants.TAG, "PitchAndScoreUpdate rawPitch:" + rawPitch + ",after:" + pitchAfterProcess + ",currentRefPitch：" + currentRefPitch + ",score:" + score);
         mPitchesForLine.put(progress, score);
-        if (Config.DEBUG) {
-            LogManager.instance().debug(Constants.TAG, "debugScoringAlgo/mPitchesForLine/REAL: progress=" + progress +
-                    ", scoreForPitch=" + score + ", rawPitch=" + rawPitch + ", pitchAfterProcess=" + pitchAfterProcess + ", currentRefPitch=" + currentRefPitch);
-        }
 
         if (mListener != null) {
             mListener.onPitchAndScoreUpdate(pitch, scoreAfterNormalization, betweenCurrentPitch, progress);

@@ -64,11 +64,7 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
         scoreCount = Math.max(1, scoreCount);
 
-        int scoreThisLine = (int) totalScoreForThisLine / scoreCount;
-
-        LogManager.instance().debug(TAG, "debugScoringAlgo/mPitchesForLine/CALC: totalScoreForThisLine=" + totalScoreForThisLine + ", scoreCount=" + scoreCount + ", scoreThisLine=" + scoreThisLine);
-
-        return scoreThisLine;
+        return (int) totalScoreForThisLine / scoreCount;
     }
 
     private void debugScoringAlgo(LinkedHashMap<Long, Float> pitches, int indexOfLineJustFinished) {
