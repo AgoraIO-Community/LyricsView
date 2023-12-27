@@ -4,142 +4,38 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:keepScreenOn="true"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/lyrics_description"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="2dp"
-        android:layout_marginTop="2dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <io.agora.karaoke_view.v11.ScoringView
-        android:id="@+id/scoring_view"
+    <io.agora.lyrics_view.LrcView
+        android:id="@+id/lrc_view"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:layout_marginBottom="20dp"
-        android:background="@android:color/holo_orange_light"
-        app:hitScoreThreshold="0.8"
-        app:layout_constraintBottom_toTopOf="@id/lyrics_view"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:movingPixelsPerMs="0.4"
-        app:pitchIndicatorRadius="6dp"
-        app:pitchStickHeight="6dp"
-        app:startPointHorizontalBias="0.4" />
-
-    <androidx.appcompat.widget.AppCompatCheckBox
-        android:id="@+id/enable_scoring"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checked="true"
-        app:layout_constraintBottom_toBottomOf="@id/scoring_view"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <io.agora.karaoke_view.v11.LyricsView
-        android:id="@+id/lyrics_view"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="70dp"
         android:background="@color/purple_200"
         android:paddingStart="10dp"
         android:paddingEnd="10dp"
         android:paddingBottom="10dp"
-        app:currentLineHighlightedTextColor="#FFF44336"
-        app:currentLineTextColor="#FFFFFF"
-        app:currentLineTextSize="20sp"
-        app:labelWhenNoLyrics=""
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:lineSpacing="6dp"
-        app:paddingTop="4dp"
-        app:textGravity="center"
-        app:textSize="12sp" />
-
-    <androidx.appcompat.widget.AppCompatCheckBox
-        android:id="@+id/enable_lyrics"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checked="true"
-        app:layout_constraintBottom_toBottomOf="@id/lyrics_view"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/playing_progress"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="2dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/lyrics_view" />
-
-    <TextView
-        android:id="@+id/callBack"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="2dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/lyrics_view" />
+        app:lrcCurrentTextColor="#FFF44336"
+        app:lrcDividerHeight="6dp"
+        app:lrcFutureTextColor="#33FFFFFF"
+        app:lrcLabel=" "
+        app:lrcMarginTop="-10dp"
+        app:lrcNormalTextColor="#FFFFFF"
+        app:lrcNormalTextSize="12sp"
+        app:lrcPastTextColor="#99FFFFFF"
+        app:lrcTextGravity="center"
+        app:lrcTextSize="20sp" />
 
     <Button
-        android:id="@+id/play_mock"
+        android:id="@+id/clear_cache"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="80dp"
-        android:text="Play(Mock)"
+        android:layout_marginBottom="60dp"
+        android:text="Clear Cache and Switch"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/play"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="80dp"
-        android:text="Play"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/play_mock" />
-
-    <Button
-        android:id="@+id/pause"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="80dp"
-        android:text="Pause"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/play" />
-
-    <Button
-        android:id="@+id/switch_to_next"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="30dp"
-        android:text="Switch"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/skip_the_intro"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="30dp"
-        android:text="Skip intro"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/switch_to_next" />
-
-    <Button
-        android:id="@+id/settings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="30dp"
-        android:text="Settings"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/skip_the_intro" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
