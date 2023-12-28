@@ -199,6 +199,17 @@ public class MusicContentCenterManager {
             rtcEngine.setParameters("{\"rtc.debug.enable\": true}");
             rtcEngine.setParameters("{\"che.audio.apm_dump\": true}");
 
+//            rtcEngine.setParameters("{\n" +
+//                    "\n" +
+//                    "\"che.audio.enable.nsng\":true,\n" +
+//                    "\"che.audio.ains_mode\":2,\n" +
+//                    "\"che.audio.ns.mode\":2,\n" +
+//                    "\"che.audio.nsng.lowerBound\":80,\n" +
+//                    "\"che.audio.nsng.lowerMask\":50,\n" +
+//                    "\"che.audio.nsng.statisticalbound\":5,\n" +
+//                    "\"che.audio.nsng.finallowermask\":30\n" +
+//                    "}");
+
             ChannelMediaOptions option = new ChannelMediaOptions();
             option.autoSubscribeAudio = true;
             rtcEngine.updateChannelMediaOptions(option);

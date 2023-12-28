@@ -157,7 +157,7 @@ public class ScoringMachine {
         if (referencePitch == -1f) { // No ref pitch hit
             mStartTimeOfCurrentRefPitch = -1;
             mEndTimeOfCurrentRefPitch = -1;
-        } else { // If hit the ref pitch(whenever 0 or > 0)
+        } else { // If hit the ref pitch(default -1)
             mPitchesForLine.put(timestamp, -1f);
         }
 
@@ -256,6 +256,8 @@ public class ScoringMachine {
             mDeltaOfUpdate = (int) (progress - this.mCurrentProgress);
             if (mDeltaOfUpdate > 100 || mDeltaOfUpdate < 0) {
                 // TODO(Hai_Guo) Need to show warning information when this method called not smoothly
+                LogManager.instance().info(Constants.TAG, "setProgress this method called not smoothly: current mDeltaOfUpdate=" + mDeltaOfUpdate + " and reset to 20ms");
+                mDeltaOfUpdate = 20;
             }
         }
 
@@ -292,7 +294,6 @@ public class ScoringMachine {
                 mListener.onRefPitchUpdate(currentRefPitch, mNumberOfRefPitches, progress);
             }
         }
-
         updateScoreForMostRecentLine(progress, newLine[0], indexOfMostRecentLine[0]);
 
         if (mListener != null) {

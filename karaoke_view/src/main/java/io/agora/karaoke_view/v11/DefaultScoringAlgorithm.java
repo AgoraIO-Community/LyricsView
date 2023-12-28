@@ -1,7 +1,10 @@
 package io.agora.karaoke_view.v11;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import io.agora.karaoke_view.v11.ai.AINative;
 import io.agora.karaoke_view.v11.config.Config;
@@ -36,35 +39,69 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
     @Override
     public int getLineScore(final LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished) {
-        float totalScoreForThisLine = 0;
-        int scoreCount = 0;
-
-        Float scoreForOnePitch;
         Iterator<Long> iterator = pitchesForLine.keySet().iterator();
 
         if (Config.DEBUG) {
             debugScoringAlgo(pitchesForLine, indexOfLineJustFinished);
         }
 
+        List<LyricsLineModel.Tone> tones = lineJustFinished.tones;
+        Map<LyricsLineModel.Tone, Float> toneScoresMap = new HashMap<>(tones.size());
+
+        int toneIndex = 0;
+        float totalScoreForTone = 0f;
+        int scoreCountForTone = 0;
+        Float scoreForOnePitch = null;
         while (iterator.hasNext()) {
             Long myKeyTimestamp = iterator.next();
-            if (myKeyTimestamp <= lineJustFinished.getEndTime()) {
-                scoreForOnePitch = pitchesForLine.get(myKeyTimestamp);
-
-                iterator.remove();
-                pitchesForLine.remove(myKeyTimestamp);
-
-
-                if (scoreForOnePitch != null && -1f != scoreForOnePitch) {
-                    totalScoreForThisLine += scoreForOnePitch;
-                    scoreCount++;
+            do {
+                if (toneIndex >= tones.size()) {
+                    break;
                 }
+                if (myKeyTimestamp >= tones.get(toneIndex).begin && myKeyTimestamp <= tones.get(toneIndex).end) {
+                    scoreForOnePitch = pitchesForLine.get(myKeyTimestamp);
+                    break;
+                } else {
+                    if (scoreCountForTone > 0) {
+                        toneScoresMap.put(tones.get(toneIndex), totalScoreForTone / scoreCountForTone);
+                    } else {
+                        toneScoresMap.put(tones.get(toneIndex), 0f);
+                    }
+
+                    toneIndex++;
+                    totalScoreForTone = 0f;
+                    scoreCountForTone = 0;
+                    scoreForOnePitch = null;
+                }
+            } while (toneIndex < tones.size());
+
+
+            iterator.remove();
+            pitchesForLine.remove(myKeyTimestamp);
+
+            if (scoreForOnePitch != null && -1f != scoreForOnePitch) {
+                totalScoreForTone += scoreForOnePitch;
+                scoreCountForTone++;
             }
         }
 
-        scoreCount = Math.max(1, scoreCount);
+        if (toneIndex < tones.size()) {
+            if (scoreCountForTone > 0) {
+                toneScoresMap.put(tones.get(toneIndex), totalScoreForTone / scoreCountForTone);
+            } else {
+                toneScoresMap.put(tones.get(toneIndex), 0f);
+            }
+        }
 
-        return (int) totalScoreForThisLine / scoreCount;
+        if (!toneScoresMap.isEmpty()) {
+            float totalScoreForThisLine = 0;
+            for (Float score : toneScoresMap.values()) {
+                totalScoreForThisLine += score;
+            }
+            return (int) (totalScoreForThisLine / toneScoresMap.size());
+        }
+
+        return 0;
     }
 
     private void debugScoringAlgo(LinkedHashMap<Long, Float> pitches, int indexOfLineJustFinished) {

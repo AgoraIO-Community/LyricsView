@@ -27,8 +27,6 @@ import io.agora.karaoke_view.v11.DefaultScoringAlgorithm;
 import io.agora.karaoke_view.v11.VoicePitchChanger;
 import io.agora.karaoke_view.v11.ai.AINative;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
-import io.agora.karaoke_view.v11.logging.LogManager;
-import io.agora.karaoke_view.v11.logging.Logger;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 import io.agora.karaoke_view.v11.utils.LyricsParser;
@@ -130,12 +128,6 @@ public class LyricsInstrumentedTest {
 
     @Test
     public void unexpectedContentCheckingForLyrics() {
-        LogManager.instance().addLogger(new Logger() {
-            @Override
-            public void onLog(int level, String tag, String message) {
-                Log.e(tag, message);
-            }
-        });
 
         File target;
         LyricsModel parsedLyrics;
@@ -433,7 +425,7 @@ public class LyricsInstrumentedTest {
                 scoringMachine.setPitch(tone.pitch - 1);
             }
 
-            if (mLatestIndexOfScoringLines >= 5) {
+            if (mLatestIndexOfScoringLines >= 6) {
                 break;
             }
         }
@@ -445,7 +437,7 @@ public class LyricsInstrumentedTest {
 
         // Check if `onLineFinished` working as expected
         assertEquals(mNumberOfScoringLines, 5);
-        assertEquals(mLatestIndexOfScoringLines, 5);
+        assertEquals(mLatestIndexOfScoringLines, 6);
     }
 
     private float mRefPitch = 0;
@@ -867,6 +859,7 @@ public class LyricsInstrumentedTest {
 
         mNumberOfScoringLines = 0;
         mLatestIndexOfScoringLines = 0;
+        mFinalCumulativeScore = 0;
         ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new DefaultScoringAlgorithm(), new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
@@ -907,7 +900,7 @@ public class LyricsInstrumentedTest {
                 scoringMachine.setPitch(tone.pitch - 1);
             }
 
-            if (mLatestIndexOfScoringLines >= 5) {
+            if (mLatestIndexOfScoringLines >= 6) {
                 break;
             }
         }
@@ -919,7 +912,78 @@ public class LyricsInstrumentedTest {
 
         // Check if `onLineFinished` working as expected
         assertEquals(mNumberOfScoringLines, 5);
-        assertEquals(mLatestIndexOfScoringLines, 5);
+        assertEquals(mLatestIndexOfScoringLines, 6);
         assertEquals(mFinalCumulativeScore, 500);
+    }
+
+    @Test
+    public void testMockScoring2() {
+        String fileNameOfSong = "825003.xml";
+        String songTitle = "净化空间";
+        int expectedNumberOfLines = 30;
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        String sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent = ResourceHelper.loadAsString(appContext, fileNameOfSong);
+        assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
+
+        File target = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        LyricsModel parsedLyrics = LyricsParser.parse(target);
+
+        Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
+
+        for (LyricsLineModel line : parsedLyrics.lines) {
+            Log.d(TAG, "Line summary: " + line.getStartTime() + " ~ " + line.getEndTime() + " " + line.tones.size());
+        }
+
+        assertTrue(parsedLyrics.startOfVerse >= 0);
+
+        mFinalCumulativeScore = 0;
+        ScoringMachine scoringMachine = new ScoringMachine(new VoicePitchChanger(), new DefaultScoringAlgorithm(), new ScoringMachine.OnScoringListener() {
+            @Override
+            public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int perfectScore, int index, int numberOfLines) {
+                Log.d(TAG, "onLineFinished line:" + line + " score:" + score + " cumulativeScore:" + cumulativeScore + " perfectScore:" + perfectScore + " index:" + index + " numberOfLines:" + numberOfLines);
+                mFinalCumulativeScore = cumulativeScore;
+            }
+
+            @Override
+            public void resetUi() {
+                Log.d(TAG, "resetUi");
+            }
+
+            @Override
+            public void onRefPitchUpdate(float refPitch, int numberOfRefPitches, long progress) {
+                Log.d(TAG, "onRefPitchUpdate refPitch:" + refPitch + " numberOfRefPitches:" + numberOfRefPitches + " progress:" + progress);
+            }
+
+            @Override
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, boolean hit, long progress) {
+                Log.d(TAG, "onPitchAndScoreUpdate pitch:" + pitch + " scoreAfterNormalization:" + scoreAfterNormalization + " hit:" + hit + " progress:" + progress);
+            }
+
+            @Override
+            public void requestRefreshUi() {
+                Log.d(TAG, "requestRefreshUi");
+            }
+        });
+
+        long startTsOfTest = System.currentTimeMillis();
+        scoringMachine.prepare(parsedLyrics);
+
+        LyricsLineModel firstLine = parsedLyrics.lines.get(0);
+        long time = firstLine.getStartTime();
+        int gap = 0;
+        while (time <= firstLine.getEndTime() + 20) {
+            scoringMachine.setProgress(time);
+            if (gap == 40) {
+                gap = 0;
+                scoringMachine.setPitch(50);
+            }
+            gap += 20;
+            time += 20;
+        }
+
+        Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");
+
+        assertEquals(mFinalCumulativeScore, 66);
     }
 }
