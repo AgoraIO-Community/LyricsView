@@ -715,7 +715,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onMusicPositionChange(long position) {
         mLyricsCurrentProgress = position;
-        updatePlayingProgress(position);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updatePlayingProgress(position);
+            }
+        });
         if (mState == Player_State.Playing) {
             runOnUiThread(new Runnable() {
                 @Override
