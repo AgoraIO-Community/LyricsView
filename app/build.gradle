@@ -2,6 +2,9 @@ plugins {
     id 'com.android.application'
 }
 
+Properties properties = new Properties()
+InputStream inputStream = project.rootProject.file('local.properties').newDataInputStream()
+properties.load(inputStream)
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
@@ -10,15 +13,33 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 8
-        versionName "1.1.0"
+        versionName exampleVersion.toString()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "APP_ID", "\"${properties.getProperty("APP_ID", "")}\"")
+        buildConfigField("String", "APP_CERTIFICATE", "\"${properties.getProperty("APP_CERTIFICATE", "")}\"")
+
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+
+    }
+
+    signingConfigs {
+        release {
+            keyAlias "key0"
+            keyPassword "123456"
+            storeFile file('./keystore/testkey.jks')
+            storePassword "123456"
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 
@@ -32,15 +53,23 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+
+    android.applicationVariants.all {
+        variant ->
+            variant.outputs.all {
+                outputFileName = "KaraokeViewExample-android-v${defaultConfig.versionName}-${variant.buildType.name}.apk"
+            }
+    }
+
 }
 
 dependencies {
-    implementation project(':karaoke_view')
-//  implementation 'com.github.AgoraIO-Community:LyricsView:1.1.1'
-
-    api 'com.github.guohai:Leonids:9f5a9190f6'
-
-    implementation 'com.squareup.okhttp3:okhttp:4.9.2'
+    if (isSdkMode.toBoolean()) {
+        implementation "com.github.AgoraIO-Community:LyricsView:${sdkVersion.toString()}"
+    } else {
+        implementation project(':karaoke_view')
+    }
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
@@ -49,4 +78,15 @@ dependencies {
     androidTestImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    if (isLocalRtcSDK.toBoolean()) {
+        implementation files('libs/agora-rtc-sdk.jar')
+    } else {
+        implementation 'io.agora.rtc:agora-special-full:4.1.1.17'
+    }
+    implementation 'com.github.guohai:Leonids:9f5a9190f6'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.2'
+    implementation 'io.agora:authentication:2.0.0'
+    implementation 'commons-codec:commons-codec:1.16.0'
+    implementation 'pub.devrel:easypermissions:3.0.0'
 }

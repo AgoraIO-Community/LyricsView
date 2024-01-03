@@ -32,6 +32,8 @@
     <string name="prefs_key_customized_indicator_and_particle_switch" translatable="false">prefs_key_customized_indicator_and_particle_switch</string>
     <string name="prefs_key_particle_hit_on_threshold" translatable="false">prefs_key_particle_hit_on_threshold</string>
 
+    <string name="error_permission">Please open the permission first</string>
+
     <string-array name="available_indicator_colors">
         <item>Default</item>
         <item>Red</item>

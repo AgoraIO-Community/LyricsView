@@ -48,11 +48,19 @@
                 android:layout_height="20dp"
                 android:max="100"
                 android:min="0"
-                android:progress="10"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/scoring_level_tune_value"
                 app:layout_constraintHorizontal_bias="0.82"
                 app:layout_constraintStart_toEndOf="@+id/scoring_level_title"
                 app:layout_constraintTop_toTopOf="@id/scoring_level_title" />
+
+            <TextView
+                android:id="@+id/scoring_level_tune_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/scoring_level_title" />
+
 
             <TextView
                 android:id="@+id/compensation_offset_title"
@@ -72,9 +80,17 @@
                 android:max="100"
                 android:min="-100"
                 android:progress="0"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/compensation_offset_tune_value"
                 app:layout_constraintHorizontal_bias="0.82"
                 app:layout_constraintStart_toEndOf="@id/compensation_offset_title"
+                app:layout_constraintTop_toTopOf="@id/compensation_offset_title" />
+
+            <TextView
+                android:id="@+id/compensation_offset_tune_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/compensation_offset_title" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -569,11 +585,19 @@
                 android:layout_width="0dp"
                 android:layout_height="20dp"
                 android:max="100"
-                android:min="0"
+                android:min="1"
                 android:progress="80"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/particle_hit_on_threshold_tune_value"
                 app:layout_constraintHorizontal_bias="0.82"
                 app:layout_constraintStart_toEndOf="@id/particle_hit_on_threshold_title"
+                app:layout_constraintTop_toTopOf="@id/particle_hit_on_threshold_title" />
+
+            <TextView
+                android:id="@+id/particle_hit_on_threshold_tune_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/particle_hit_on_threshold_title" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>

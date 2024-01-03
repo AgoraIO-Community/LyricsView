@@ -1,11 +1,6 @@
 package io.agora.examples.karaoke_view;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,12 +11,19 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.AndroidRuntimeException;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -37,31 +39,40 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.agora.examples.karaoke_view.databinding.ActivityMainBinding;
-import io.agora.examples.utils.ResourceHelper;
 import io.agora.examples.utils.DownloadManager;
-
+import io.agora.examples.utils.MusicContentCenterManager;
+import io.agora.examples.utils.ResourceHelper;
 import io.agora.karaoke_view.v11.KaraokeEvent;
 import io.agora.karaoke_view.v11.KaraokeView;
-import io.agora.karaoke_view.v11.logging.LogManager;
-import io.agora.karaoke_view.v11.logging.Logger;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.ConsoleLogger;
+import pub.devrel.easypermissions.EasyPermissions;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, MusicContentCenterManager.MccCallback {
 
     private ActivityMainBinding binding;
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "KaraokeView-MainActivity";
 
     private KaraokeView mKaraokeView;
 
     private int mCurrentIndex = 0;
+    private int mCurrentSongCodeIndex = 0;
 
     private LyricsModel mLyricsModel;
 
     private ActivityResultLauncher mLauncher;
 
     private Handler mHandler;
+    private MusicContentCenterManager mMusicContentCenterManager;
+    private boolean mIsMockPlay = false;
+    private ConsoleLogger mConsoleLogger;
+    private static final int TAG_PERMISSION_REQUEST_CODE = 1000;
+    private static final String[] PERMISSION = new String[]{
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.RECORD_AUDIO};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,9 +81,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        mMusicContentCenterManager = new MusicContentCenterManager(this, this);
+        mMusicContentCenterManager.init();
+
         mHandler = new Handler(this.getMainLooper());
 
         binding.switchToNext.setOnClickListener(this);
+        binding.playMock.setOnClickListener(this);
         binding.play.setOnClickListener(this);
         binding.pause.setOnClickListener(this);
         binding.skipTheIntro.setOnClickListener(this);
@@ -80,25 +95,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mKaraokeView = new KaraokeView(binding.enableLyrics.isChecked() ? binding.lyricsView : null, binding.enableScoring.isChecked() ? binding.scoringView : null);
 
-        LogManager.instance().addLogger(new Logger() {
-            @Override
-            public void onLog(int level, String tag, String message) {
-                switch (level) {
-                    case Log.DEBUG:
-                        Log.d(tag, message);
-                        break;
-                    case Log.ERROR:
-                        Log.e(tag, message);
-                        break;
-                    case Log.WARN:
-                        Log.w(tag, message);
-                        break;
-                    case Log.INFO:
-                        Log.i(tag, message);
-                        break;
-                }
-            }
-        });
+        if (null == mConsoleLogger) {
+            mConsoleLogger = new ConsoleLogger();
+        }
+        mKaraokeView.addLogger(mConsoleLogger);
 
         mKaraokeView.setKaraokeEvent(new KaraokeEvent() {
             @Override
@@ -106,11 +106,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mKaraokeView.setProgress(position);
                 mLyricsCurrentProgress = position;
                 updateCallback("Dragging, new progress " + position);
+                if (!mIsMockPlay) {
+                    mMusicContentCenterManager.seek(position);
+                    mMusicContentCenterManager.updateMusicPosition(position);
+                }
             }
 
             @Override
             public void onRefPitchUpdate(float refPitch, int numberOfRefPitches) {
-                mKaraokeView.setPitch(refPitch);
+                if (mIsMockPlay) {
+                    mKaraokeView.setPitch(refPitch);
+                }
             }
 
             @Override
@@ -124,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-        loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
+        //loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).lyrics, LyricsResourcePool.asList().get(mCurrentIndex).pitches);
 
         loadPreferences();
 
@@ -160,7 +166,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    private void loadTheLyrics(String lrcSample) {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!EasyPermissions.hasPermissions(this, PERMISSION)) {
+            EasyPermissions.requestPermissions(this, getString(R.string.error_permission),
+                    TAG_PERMISSION_REQUEST_CODE, PERMISSION);
+            return;
+        }
+    }
+
+    private void loadTheLyrics(String lrcUri, String pitchUri) {
+        Log.i(TAG, "loadTheLyrics " + lrcUri + " " + pitchUri);
         mKaraokeView.reset();
         mLyricsModel = null;
 
@@ -168,51 +185,77 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 TextView tvDescription = findViewById(R.id.lyrics_description);
-                tvDescription.setText("Try to load " + lrcSample);
+                tvDescription.setText("Try to load " + lrcUri);
             }
         });
+        if (TextUtils.isEmpty(lrcUri)) {
+            mLyricsModel = null;
 
-        if (lrcSample.startsWith("https://") || lrcSample.startsWith("http://")) {
-            DownloadManager.getInstance().download(this, lrcSample, file -> {
+            // Call this will trigger no/invalid lyrics ui
+            mKaraokeView.setLyricsData(null);
+            playMusic();
+            updateLyricsDescription();
+        } else if (lrcUri.startsWith("https://") || lrcUri.startsWith("http://")) {
+            DownloadManager.getInstance().download(this, lrcUri, file -> {
                 file = extractFromZipFileIfPossible(file);
                 mLyricsModel = KaraokeView.parseLyricsData(file);
+
 
                 if (mLyricsModel != null) {
                     mKaraokeView.setLyricsData(mLyricsModel);
                 }
-
+                playMusic();
                 updateLyricsDescription();
             }, error -> {
                 Log.e(TAG, Log.getStackTraceString(error));
                 mLyricsModel = null;
+
+                String description = LyricsResourcePool.asList().get(mCurrentIndex).description; // For Testing
+                if (description != null && description.contains("SHOW_NO_LYRICS_TIPS")) {
+                    mKaraokeView.setLyricsData(null); // Call this will trigger no/invalid lyrics ui
+                }
+                playMusic();
                 updateLyricsDescription();
             });
         } else {
-            File file = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcSample);
-            file = extractFromZipFileIfPossible(file);
-            mLyricsModel = KaraokeView.parseLyricsData(file);
+            File lrc = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
+            File pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
+            lrc = extractFromZipFileIfPossible(lrc);
+            mLyricsModel = KaraokeView.parseLyricsData(lrc, pitch);
 
             if (mLyricsModel != null) {
                 mKaraokeView.setLyricsData(mLyricsModel);
             }
-
+            playMusic();
             updateLyricsDescription();
         }
     }
 
     private void updateLyricsDescription() {
         String lyricsSummary = mLyricsModel != null ? (mLyricsModel.title + ": " + mLyricsModel.artist + " " + mLyricsModel.startOfVerse + " " + mLyricsModel.lines.size() + " " + mLyricsModel.duration) : "Invalid lyrics";
-        final String description = lyricsSummary + "\n" + LyricsResourcePool.asList().get(mCurrentIndex).description;
+        Log.d(TAG, "lyricsSummary: " + lyricsSummary);
+        String description = lyricsSummary + "\n";
+        if (mIsMockPlay) {
+            description += LyricsResourcePool.asList().get(mCurrentIndex).description;
+        }
+        final String finalDescription = description;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 TextView tvDescription = findViewById(R.id.lyrics_description);
-                tvDescription.setText(description);
+                tvDescription.setText(finalDescription);
             }
         });
     }
 
+    private void playMusic() {
+        if (!mIsMockPlay) {
+            mMusicContentCenterManager.openMusic(LyricsResourcePool.asMusicList().get(mCurrentSongCodeIndex).songCode);
+        }
+    }
+
     private void loadPreferences() {
+        Log.i(TAG, "loadPreferences");
         SharedPreferences prefs = getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
         int scoringLevel = prefs.getInt(getString(R.string.prefs_key_scoring_level), mKaraokeView.getScoringLevel());
         mKaraokeView.setScoringLevel(scoringLevel);
@@ -221,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         boolean indicatorOn = prefs.getBoolean(getString(R.string.prefs_key_start_of_verse_indicator_switch), true);
         binding.lyricsView.enableStartOfVerseIndicator(indicatorOn);
-        String indicatorColor = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_color), "Gray");
+        String indicatorColor = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_color), "Default");
         binding.lyricsView.setStartOfVerseIndicatorColor(colorInStringToDex(indicatorColor));
         String indicatorRadius = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_radius), "6dp");
         binding.lyricsView.setStartOfVerseIndicatorRadius(dp2pix(Float.parseFloat(indicatorRadius.replace("dp", ""))));
@@ -232,16 +275,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.lyricsView.setPreviousLineTextColor(colorInStringToDex(defaultTextColor));
         binding.lyricsView.setUpcomingLineTextColor(colorInStringToDex(defaultTextColor));
 
-        int defaultTextSize = prefs.getInt(getString(R.string.prefs_key_normal_line_text_size), 14);
+        int defaultTextSize = prefs.getInt(getString(R.string.prefs_key_normal_line_text_size), 13);
         binding.lyricsView.setTextSize(sp2pix(defaultTextSize));
 
-        String currentTextColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "White");
+        String currentTextColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "Yellow");
         binding.lyricsView.setCurrentLineTextColor(colorInStringToDex(currentTextColor));
 
         String highlightedTextColor = prefs.getString(getString(R.string.prefs_key_current_line_highlighted_text_color), "Red");
         binding.lyricsView.setCurrentLineHighlightedTextColor(colorInStringToDex(highlightedTextColor));
 
-        int currentTextSize = prefs.getInt(getString(R.string.prefs_key_current_line_text_size), 18);
+        int currentTextSize = prefs.getInt(getString(R.string.prefs_key_current_line_text_size), 24);
         binding.lyricsView.setCurrentLineTextSize(sp2pix(currentTextSize));
 
         String lineSpacing = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");
@@ -280,6 +323,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             binding.scoringView.setLocalPitchIndicator(null);
             setParticles(true);
         }
+
+        float particleHitOnThreshold = prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f);
+        binding.scoringView.setThresholdOfHitScore(particleHitOnThreshold);
     }
 
     private void setParticles(boolean defaultOrCustomized) {
@@ -342,6 +388,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case "Brown":
                 colorInDex = Color.parseColor("#654321");
+                break;
+            case "Green":
+                colorInDex = Color.GREEN;
                 break;
             default:
                 colorInDex = 0;
@@ -417,9 +466,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 updateLyricsDescription();
 
-                loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).uri);
+                loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).lyrics, LyricsResourcePool.asList().get(mCurrentIndex).pitches);
             }
         }, 0, TimeUnit.MILLISECONDS);
+    }
+
+    private void doClearCacheAndLoadSongCode() {
+        mMusicContentCenterManager.stop();
+        mCurrentSongCodeIndex++;
+        if (mCurrentSongCodeIndex >= LyricsResourcePool.asMusicList().size()) {
+            mCurrentSongCodeIndex = 0;
+        }
+
+        doPlay();
     }
 
     private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -427,7 +486,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long mLyricsCurrentProgress = 0;
 
     private void updatePlayingProgress(final long progress) {
-        binding.playingProgress.setText("" + progress);
+        binding.playingProgress.setText(String.valueOf(progress));
     }
 
     private void updateCallback(final String callback) {
@@ -437,6 +496,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ScheduledFuture mFuture;
 
     private Player_State mState = Player_State.Uninitialized;
+
 
     private enum Player_State {
         Uninitialized(-1),
@@ -519,6 +579,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mState = Player_State.Playing;
     }
 
+    private void doPlay() {
+        mLyricsCurrentProgress = 0;
+        mMusicContentCenterManager.preloadMusic(LyricsResourcePool.asMusicList().get(mCurrentSongCodeIndex).songCode);
+    }
+
     private void forwardToSettings() {
         Intent intent = new Intent(this, SettingsActivity.class);
         mLauncher.launch(intent);
@@ -530,10 +595,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
         mLyricsCurrentProgress = mLyricsModel.startOfVerse - 1000; // Jump to slight earlier
+        if (!mIsMockPlay) {
+            mMusicContentCenterManager.seek(mLyricsCurrentProgress);
+            mMusicContentCenterManager.updateMusicPosition(mLyricsCurrentProgress);
+        }
         mState = Player_State.Playing;
     }
 
-    private void doMockPause() {
+    private void doPauseOrResume() {
         if (mState == Player_State.Playing) {
             mState = Player_State.Pause;
         } else if (mState == Player_State.Pause) {
@@ -547,6 +616,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mLyricsCurrentProgress = 0;
         mState = Player_State.Uninitialized;
 
+        if (mConsoleLogger != null && mKaraokeView != null) {
+            mKaraokeView.removeLogger(mConsoleLogger);
+        }
+
         if (mKaraokeView != null) {
             mKaraokeView.setProgress(0);
             mKaraokeView.setPitch(0);
@@ -557,6 +630,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (mFuture != null) {
             mFuture.cancel(true);
         }
+
+        mMusicContentCenterManager.destroy();
     }
 
     @Override
@@ -566,18 +641,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 updateCallback("Next");
                 mLyricsCurrentProgress = 0; // Replay if already playing
                 mState = Player_State.Playing;
-                doClearCacheAndLoadTheLyrics();
+                if (mIsMockPlay) {
+                    doClearCacheAndLoadTheLyrics();
+                } else {
+                    doClearCacheAndLoadSongCode();
+                }
+                break;
+            case R.id.play_mock:
+                updateCallback("Play(Mock)");
+                if (!mIsMockPlay && mState == Player_State.Playing) {
+                    mMusicContentCenterManager.stop();
+                }
+                mIsMockPlay = true;
+                doMockPlay();
                 break;
             case R.id.play:
-                updateCallback("Play");
-                doMockPlay();
+                mIsMockPlay = false;
+                updateCallback("Play(MCC)");
+                doPlay();
                 break;
             case R.id.pause:
                 if (mState != Player_State.Playing && mState != Player_State.Pause) {
                     return;
                 }
-                updateCallback("Pause");
-                doMockPause();
+                if (mState == Player_State.Playing) {
+                    updateCallback("Pause");
+                    binding.pause.setText("Resume");
+                    if (!mIsMockPlay) {
+                        mMusicContentCenterManager.pause();
+                    }
+                } else {
+                    updateCallback("Resume");
+                    binding.pause.setText("Pause");
+                    if (!mIsMockPlay) {
+                        mMusicContentCenterManager.resume();
+                    }
+                }
+
+                doPauseOrResume();
                 break;
             case R.id.skip_the_intro:
                 updateCallback("Skip Intro");
@@ -589,5 +690,69 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             default:
                 break;
         }
+    }
+
+    @Override
+    public void onMusicLyricRequest(long songCode, String lyricUrl) {
+        if (TextUtils.isEmpty(lyricUrl)) {
+            mLyricsModel = null;
+
+            // Call this will trigger no/invalid lyrics ui
+            mKaraokeView.setLyricsData(null);
+
+            playMusic();
+            updateLyricsDescription();
+        } else {
+            loadTheLyrics(lyricUrl, null);
+        }
+    }
+
+    @Override
+    public void onMusicPreloadResult(long songCode, int percent) {
+        updateCallback("Preload: " + songCode + "  " + percent + "%");
+    }
+
+    @Override
+    public void onMusicPositionChange(long position) {
+        mLyricsCurrentProgress = position;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updatePlayingProgress(position);
+            }
+        });
+        if (mState == Player_State.Playing) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mKaraokeView.setProgress(position);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onMusicPitch(double voicePitch) {
+        if (mState == Player_State.Playing) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mKaraokeView.setPitch((float) voicePitch);
+                }
+            });
+
+        }
+    }
+
+    @Override
+    public void onMusicPlaying() {
+        updateCallback("Playing");
+        mState = Player_State.Playing;
+    }
+
+    @Override
+    public void onMusicStop() {
+        updateCallback("Stop");
+        mState = Player_State.Idle;
     }
 }

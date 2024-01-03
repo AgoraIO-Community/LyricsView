@@ -4,7 +4,7 @@ import java.util.List;
 
 public class LyricsModel {
     public static enum Type {
-        General, Migu;
+        General, Xml;
     }
 
     public Type type;

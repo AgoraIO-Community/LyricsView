@@ -12,18 +12,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.agora.karaoke_view.v11.logging.LogManager;
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.LogManager;
 
 /**
- * 咪咕加载 xml 歌词
+ * 加载 xml 歌词(逐字)
  *
  * @author chenhengfei(Aslanchen)
  * @date 2021/7/6
  */
-class LyricsParserMigu {
-    private static final String TAG = "LyricsParserXml";
+class LyricsParserXml {
+    private static final String TAG = Constants.TAG + "-LyricsParserXml";
 
     public static class Song {
         public SongGeneral general;
@@ -65,7 +66,7 @@ class LyricsParserMigu {
                 return null;
             }
 
-            LyricsModel lyrics = new LyricsModel(LyricsModel.Type.Migu);
+            LyricsModel lyrics = new LyricsModel(LyricsModel.Type.Xml);
             List<LyricsLineModel> lines = new ArrayList<>();
             for (Paragraph paragraph : song.midi.paragraphs) {
                 lines.addAll(paragraph.lines);
@@ -247,7 +248,7 @@ class LyricsParserMigu {
             String name = parser.getName();
             if (name.equals("word")) {
                 tone.word = readText(parser);
-                // protect in case migu missed lang field
+                // protect in case lang field missed
                 if (lang == null) {
                     isEnglish = checkLang(tone.word);
                     if (isEnglish) {

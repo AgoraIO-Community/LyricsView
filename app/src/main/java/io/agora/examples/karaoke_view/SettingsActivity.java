@@ -46,7 +46,8 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void loadPreferencesScoringAlgo(SharedPreferences prefs, SharedPreferences.Editor editor) {
-        binding.scoringLevelTune.setProgress(prefs.getInt(getString(R.string.prefs_key_scoring_level), 10)); // 0...100
+        binding.scoringLevelTune.setProgress(prefs.getInt(getString(R.string.prefs_key_scoring_level), 15)); // 0...100
+        binding.scoringLevelTuneValue.setText(String.valueOf(prefs.getInt(getString(R.string.prefs_key_scoring_level), 15)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             binding.scoringLevelTune.setMin(0);
         }
@@ -57,6 +58,7 @@ public class SettingsActivity extends AppCompatActivity {
                 if (fromUser) {
                     editor.putInt(getString(R.string.prefs_key_scoring_level), progress);
                     editor.apply();
+                    binding.scoringLevelTuneValue.setText(String.valueOf(progress));
                 }
             }
 
@@ -70,10 +72,11 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         binding.compensationOffsetTune.setProgress(prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), 0)); // -100...100
+        binding.compensationOffsetTuneValue.setText(String.valueOf(prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), 0)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            binding.scoringLevelTune.setMin(-100);
+            binding.compensationOffsetTune.setMin(-100);
         }
-        binding.scoringLevelTune.setMax(100);
+        binding.compensationOffsetTune.setMax(100);
 
         binding.compensationOffsetTune.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -81,6 +84,7 @@ public class SettingsActivity extends AppCompatActivity {
                 if (fromUser) {
                     editor.putInt(getString(R.string.prefs_key_scoring_compensation_offset), progress);
                     editor.apply();
+                    binding.compensationOffsetTuneValue.setText(String.valueOf(progress));
                 }
             }
 
@@ -443,17 +447,20 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         int particleHitThreshold = (int) (prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f) * 100);
-        binding.particleHitOnThresholdTune.setProgress(particleHitThreshold); // 0...1
+        binding.particleHitOnThresholdTune.setProgress(particleHitThreshold); // 0...100
+        binding.particleHitOnThresholdTuneValue.setText(String.valueOf(prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            binding.particleHitOnThresholdTune.setMin(0);
+            binding.particleHitOnThresholdTune.setMin(1);
         }
         binding.particleHitOnThresholdTune.setMax(100);
         binding.particleHitOnThresholdTune.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    editor.putFloat(getString(R.string.prefs_key_particle_hit_on_threshold), (float) progress / 100.f);
+                    float threshold = (float) progress / 100.f;
+                    editor.putFloat(getString(R.string.prefs_key_particle_hit_on_threshold), threshold);
                     editor.apply();
+                    binding.particleHitOnThresholdTuneValue.setText(String.valueOf(threshold));
                 }
             }
 

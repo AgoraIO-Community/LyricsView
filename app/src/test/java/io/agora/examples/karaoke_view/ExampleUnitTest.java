@@ -38,6 +38,7 @@ public class ExampleUnitTest {
             exception.printStackTrace();
         }
         assertTrue(exception instanceof IllegalArgumentException);
+        Logx("invalidFileChecking: expected IllegalArgumentException above");
     }
 
     private VoicePitchChanger mVoicePitchChanger = new VoicePitchChanger();

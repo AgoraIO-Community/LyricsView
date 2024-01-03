@@ -1,7 +1,5 @@
 package io.agora.karaoke_view.v11.utils;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -13,8 +11,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import io.agora.karaoke_view.v11.logging.LogManager;
+import io.agora.karaoke_view.v11.constants.Constants;
+import io.agora.karaoke_view.v11.internal.PitchesModel;
+import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.logging.LogManager;
 
 /**
  * 加载歌词
@@ -23,7 +24,7 @@ import io.agora.karaoke_view.v11.model.LyricsModel;
  * @date 2021/7/6
  */
 public class LyricsParser {
-    private static final String TAG = "LyricsParser";
+    private static final String TAG = Constants.TAG + "-LyricsParser";
 
     private static void checkParameters(File file) {
         if (file == null || !file.isFile() || !file.exists() || !file.canRead() || file.length() == 0) {
@@ -40,19 +41,83 @@ public class LyricsParser {
     }
 
     @Nullable
-    public static LyricsModel parse(@NonNull File file) {
-        checkParameters(file);
-        return doParse(null, file);
+    public static LyricsModel parse(@NonNull File lyrics) {
+        checkParameters(lyrics);
+        return doParse(null, lyrics, null);
+    }
+
+    //This interface is unstable and is not recommended for use
+    @Nullable
+    public static LyricsModel parse(@NonNull File lyrics, @Nullable File pitches) {
+        checkParameters(lyrics);
+        return doParse(null, lyrics, pitches);
     }
 
     @Nullable
     public static LyricsModel parse(@NonNull LyricsModel.Type type, @NonNull File file) {
         checkParameters(file);
-        return doParse(type, file);
+        return doParse(type, file, null);
     }
 
     @Nullable
-    private static LyricsModel doParse(LyricsModel.Type type, File file) {
+    private static LyricsModel doParse(LyricsModel.Type type, File lyrics, File pitches) {
+        type = probeLyricsFileType(type, lyrics);
+
+        PitchesModel pitchesModel = null;
+        if (pitches != null) {
+            pitchesModel = PitchParser.doParse(pitches);
+        }
+
+        LyricsModel model;
+
+        if (type == LyricsModel.Type.General) {
+            model = LyricsParserGeneral.parseLrc(lyrics);
+            if (model == null) {
+                return null;
+            }
+
+            // Replace tones and set the pitch value
+            // Each tone lasts for 100ms
+            for (int i = 0; i < model.lines.size() - 1; i++) {
+                LyricsLineModel line = model.lines.get(i);
+                long start = line.tones.get(0).begin;
+                long end = line.tones.get(0).end;
+                String words = line.tones.get(0).word;
+                LyricsLineModel.Lang lang = line.tones.get(0).lang;
+
+                line.tones.get(0).end = start + (100 - 1); // Change the end time of first tone
+                line.tones.get(0).pitch = (int) PitchParser.fetchPitchWithRange(pitchesModel, model.startOfVerse, line.tones.get(0).begin, line.tones.get(0).end);
+
+                int numberOfTones = (int) (end - start) / 100;
+                // Figure out how many tones need to be added and do it
+                for (int j = 1; j < numberOfTones; j++) {
+                    LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
+                    tone.begin = start + 100 * j;
+                    tone.end = tone.begin + (100 - 1);
+                    tone.pitch = (int) PitchParser.fetchPitchWithRange(pitchesModel, model.startOfVerse, tone.begin, tone.end);
+                    line.tones.add(tone);
+                }
+            }
+        } else if (type == LyricsModel.Type.Xml) {
+            model = LyricsParserXml.parseLrc(lyrics);
+            if (model == null) {
+                return null;
+            }
+
+            // Replace tones and set the pitch value
+            // Each tone lasts for the specified time
+            for (int i = 0; i < model.lines.size() - 1; i++) {
+                LyricsLineModel cur = model.lines.get(i);
+
+            }
+        } else {
+            LogManager.instance().error(TAG, "Do not support the lyrics file type " + type);
+            return null;
+        }
+        return model;
+    }
+
+    private static LyricsModel.Type probeLyricsFileType(LyricsModel.Type type, File file) {
         if (type == null) {
             InputStream inputStream = null;
             InputStreamReader inputStreamReader = null;
@@ -63,7 +128,7 @@ public class LyricsParser {
                 bufferedReader = new BufferedReader(inputStreamReader);
                 String line = bufferedReader.readLine();
                 if (line != null && (line.contains("xml") || line.contains("<song>"))) {
-                    type = LyricsModel.Type.Migu;
+                    type = LyricsModel.Type.Xml;
                 } else {
                     type = LyricsModel.Type.General;
                 }
@@ -95,14 +160,6 @@ public class LyricsParser {
                 }
             }
         }
-
-        if (type == LyricsModel.Type.General) {
-            return LyricsParserGeneral.parseLrc(file);
-        } else if (type == LyricsModel.Type.Migu) {
-            return LyricsParserMigu.parseLrc(file);
-        } else {
-            LogManager.instance().error(TAG, "Do not support the lyrics file type " + type);
-            return null;
-        }
+        return type;
     }
 }

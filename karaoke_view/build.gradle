@@ -8,7 +8,7 @@ android {
         minSdkVersion 17
         targetSdkVersion 33
         versionCode 10
-        versionName "1.1.1"
+        versionName sdkVersion.toString()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -40,9 +40,20 @@ android {
                     defaultConfig.versionName + ".aar"
         }
     }
+
+    externalNativeBuild {
+        cmake {
+            path './src/main/cpp/CMakeLists.txt'
+        }
+    }
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
 }
 
 dependencies {
+    api files('libs/Agora-LoggingService-android-v1.0.3.jar')
     implementation 'androidx.annotation:annotation:1.5.0'
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
 }
