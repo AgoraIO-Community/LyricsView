@@ -34,7 +34,7 @@ allprojects {
 ```
 dependencies {
     ...
-    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.2-beta.8'
+    implementation 'com.github.AgoraIO-Community:LyricsView:1.1.2'
 }
 ```
 
