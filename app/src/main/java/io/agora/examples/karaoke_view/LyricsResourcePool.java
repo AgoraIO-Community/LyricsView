@@ -72,6 +72,7 @@ public class LyricsResourcePool {
     public static final String LRC_SAMPLE_5 = "https://accktv.sd-rtn.com/202211021744/7191509b5d335b3956debbf1b06056dc/release/lyric/zip_utf8/1/0f7d7e5dd1ab4d84927b6aa78ce69fd6.zip"; // File 430 forbidden
     public static final String LRC_SAMPLE_6 = "https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/fulldemoStatic/privacy/loadFil.xml"; // Non-perfect xml format
     public static final String LRC_SAMPLE_7 = "https://accktv.sd-rtn.com/202211091649/release/lyric/zip_utf8/3/901174.zip"; // File not available
+    public static final String LRC_SAMPLE_8 = "https://fullapp.oss-cn-beijing.aliyuncs.com/lyricsMockDownload/8.lrc"; // File not available
 
     public static final String LRC_SAMPLE_LOCAL_FILE_CJT44552 = "CJt1320044552.xml";
 
@@ -107,6 +108,7 @@ public class LyricsResourcePool {
         list.add(new LyricsResource(0, LRC_SAMPLE_5, null, "403/INVALID_REQUEST/SHOW_NO_LYRICS_TIPS"));
         list.add(new LyricsResource(0, LRC_SAMPLE_6, null, "NON_PERFECT_XML"));
         list.add(new LyricsResource(0, LRC_SAMPLE_7, null, "404/NOT_FOUND"));
+        list.add(new LyricsResource(0, LRC_SAMPLE_8, null, "LRC_FILE"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_CJT44552, null, "FAST"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_810507, null, "ONE_LINE"));
         list.add(new LyricsResource(0, LRC_SAMPLE_LOCAL_FILE_825003, null, "TS_PITCH_SAME"));

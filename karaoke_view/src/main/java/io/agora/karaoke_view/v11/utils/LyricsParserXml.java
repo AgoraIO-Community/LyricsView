@@ -9,6 +9,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,6 +61,39 @@ class LyricsParserXml {
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
             parser.setInput(in, null);
             parser.nextTag();
+            return parseLrcByXmlParse(parser);
+        } catch (Exception e) {
+            LogManager.instance().error(TAG, Log.getStackTraceString(e));
+        }
+
+        return null;
+    }
+
+    /**
+     * 从文件内容解析歌词
+     */
+    public static LyricsModel parseLrc(byte[] lrcFileData) {
+        if (lrcFileData == null || lrcFileData.length == 0) {
+            LogManager.instance().error(TAG, " lyrics file data is empty");
+            return null;
+        }
+
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new StringReader(new String(lrcFileData, Constants.UTF_8)));
+            parser.nextTag();
+
+            return parseLrcByXmlParse(parser);
+        } catch (Exception e) {
+            LogManager.instance().error(TAG, Log.getStackTraceString(e));
+        }
+
+        return null;
+    }
+
+    private static LyricsModel parseLrcByXmlParse(XmlPullParser parser) {
+        try {
             Song song = readLrc(parser);
             if (song.midi == null || song.midi.paragraphs == null) {
                 LogManager.instance().error(TAG, "no midi or paragraph");
@@ -74,22 +108,24 @@ class LyricsParserXml {
             if (lines.size() > 0) {
                 lyrics.duration = lines.get(lines.size() - 1).getEndTime();
             }
-            lyrics.startOfVerse = lines.get(0).getStartTime(); // Always the first line of lyrics
+            // Always the first line of lyrics
+            lyrics.startOfVerse = lines.get(0).getStartTime();
             lyrics.title = song.general.name;
             lyrics.artist = song.general.singer;
             lyrics.lines = lines;
 
             if (lyrics.duration <= 0 || lyrics.startOfVerse < 0) {
                 LogManager.instance().error(TAG, "no sentence or tone or unexpected timestamp of tone: " + lyrics.startOfVerse + " " + lyrics.duration);
-                return null; // Invalid lyrics
+                // Invalid lyrics
+                return null;
             }
             return lyrics;
         } catch (Exception e) {
-            LogManager.instance().error(TAG, Log.getStackTraceString(e));
+            e.printStackTrace();
         }
-
         return null;
     }
+
 
     private static Song readLrc(XmlPullParser parser) throws XmlPullParserException, IOException {
         Song song = new Song();

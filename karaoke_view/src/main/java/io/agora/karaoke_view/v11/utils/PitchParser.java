@@ -1,6 +1,6 @@
 package io.agora.karaoke_view.v11.utils;
 
-import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,7 +16,7 @@ import io.agora.logging.LogManager;
 public class PitchParser {
     private static final String TAG = Constants.TAG + "-PitchParser";
 
-    @Nullable
+    @NonNull
     public static PitchesModel doParse(File file) {
         PitchesModel model = new PitchesModel(new ArrayList<>());
 
@@ -25,7 +25,6 @@ public class PitchParser {
         }
 
         FileInputStream fis = null;
-        ByteBuffer buffer = null;
         try {
             fis = new FileInputStream(file);
             byte[] data = new byte[(int) file.length()];
@@ -34,7 +33,34 @@ public class PitchParser {
                 LogManager.instance().error(TAG, "Content not as expected size: " + file.length() + ", actual: " + size);
                 return model;
             }
-            buffer = ByteBuffer.wrap(data);
+            return doParse(data);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return model;
+    }
+
+    @NonNull
+    public static PitchesModel doParse(byte[] fileData) {
+        PitchesModel model = new PitchesModel(new ArrayList<>());
+
+        if (null == fileData) {
+            return model;
+        }
+
+        ByteBuffer buffer = null;
+        try {
+            buffer = ByteBuffer.wrap(fileData);
             // Read int32 values until the end of the file
             model.version = readLittleEndianInt(buffer);
             LogManager.instance().info(TAG, "Version for the pitch file: " + model.version);
@@ -44,21 +70,17 @@ public class PitchParser {
             LogManager.instance().info(TAG, "Reserved for the pitch file: " + model.reserved);
 
             DecimalFormat formatter = new DecimalFormat("#.###");
-            while (buffer.remaining() >= 8) { // Each pitch value at least takes 8 bits
+            while (buffer.remaining() >= 8) {
+                // Each pitch value at least takes 8 bits
                 double pitch = readLittleEndianDouble(buffer);
                 String formattedPitch = formatter.format(pitch);
                 model.pitches.add(Double.parseDouble(formattedPitch));
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             if (buffer != null) {
                 buffer.clear();
-            }
-            if (fis != null) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                }
             }
         }
 

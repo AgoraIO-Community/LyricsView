@@ -11,6 +11,7 @@ import android.widget.SeekBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import io.agora.examples.karaoke_view.databinding.ActivitySettingsBinding;
+import io.agora.karaoke_view.v11.downloader.LyricsFileDownloader;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -43,6 +44,8 @@ public class SettingsActivity extends AppCompatActivity {
         loadPreferencesLyricsUI(prefs, editor);
 
         loadPreferencesScoringUI(prefs, editor);
+
+        loadPreferencesDownloaderUI(prefs, editor);
     }
 
     private void loadPreferencesScoringAlgo(SharedPreferences prefs, SharedPreferences.Editor editor) {
@@ -470,6 +473,15 @@ public class SettingsActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+    }
+
+    private void loadPreferencesDownloaderUI(SharedPreferences prefs, SharedPreferences.Editor editor) {
+        binding.downloaderCleanAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LyricsFileDownloader.getInstance(getApplicationContext()).cleanAll();
             }
         });
     }

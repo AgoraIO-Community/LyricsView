@@ -1,5 +1,7 @@
 package io.agora.karaoke_view.v11.utils;
 
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -54,6 +56,16 @@ public class LyricsParser {
     }
 
     @Nullable
+    public static LyricsModel parse(@NonNull byte[] lyricsData) {
+        return doParse(null, lyricsData, null);
+    }
+
+    @Nullable
+    public static LyricsModel parse(@NonNull byte[] lyricsData, @Nullable byte[] pitchesData) {
+        return doParse(null, lyricsData, pitchesData);
+    }
+
+    @Nullable
     public static LyricsModel parse(@NonNull LyricsModel.Type type, @NonNull File file) {
         checkParameters(file);
         return doParse(type, file, null);
@@ -85,7 +97,67 @@ public class LyricsParser {
                 String words = line.tones.get(0).word;
                 LyricsLineModel.Lang lang = line.tones.get(0).lang;
 
-                line.tones.get(0).end = start + (100 - 1); // Change the end time of first tone
+                // Change the end time of first tone
+                line.tones.get(0).end = start + (100 - 1);
+                line.tones.get(0).pitch = (int) PitchParser.fetchPitchWithRange(pitchesModel, model.startOfVerse, line.tones.get(0).begin, line.tones.get(0).end);
+
+                int numberOfTones = (int) (end - start) / 100;
+                // Figure out how many tones need to be added and do it
+                for (int j = 1; j < numberOfTones; j++) {
+                    LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
+                    tone.begin = start + 100 * j;
+                    tone.end = tone.begin + (100 - 1);
+                    tone.pitch = (int) PitchParser.fetchPitchWithRange(pitchesModel, model.startOfVerse, tone.begin, tone.end);
+                    line.tones.add(tone);
+                }
+            }
+        } else if (type == LyricsModel.Type.Xml) {
+            model = LyricsParserXml.parseLrc(lyrics);
+            if (model == null) {
+                return null;
+            }
+
+            // Replace tones and set the pitch value
+            // Each tone lasts for the specified time
+            for (int i = 0; i < model.lines.size() - 1; i++) {
+                LyricsLineModel cur = model.lines.get(i);
+
+            }
+        } else {
+            LogManager.instance().error(TAG, "Do not support the lyrics file type " + type);
+            return null;
+        }
+        return model;
+    }
+
+    @Nullable
+    private static LyricsModel doParse(LyricsModel.Type type, byte[] lyrics, byte[] pitches) {
+        type = probeLyricsFileType(type, lyrics);
+
+        PitchesModel pitchesModel = null;
+        if (pitches != null) {
+            pitchesModel = PitchParser.doParse(pitches);
+        }
+
+        LyricsModel model;
+
+        if (type == LyricsModel.Type.General) {
+            model = LyricsParserGeneral.parseLrc(lyrics);
+            if (model == null) {
+                return null;
+            }
+
+            // Replace tones and set the pitch value
+            // Each tone lasts for 100ms
+            for (int i = 0; i < model.lines.size() - 1; i++) {
+                LyricsLineModel line = model.lines.get(i);
+                long start = line.tones.get(0).begin;
+                long end = line.tones.get(0).end;
+                String words = line.tones.get(0).word;
+                LyricsLineModel.Lang lang = line.tones.get(0).lang;
+
+                // Change the end time of first tone
+                line.tones.get(0).end = start + (100 - 1);
                 line.tones.get(0).pitch = (int) PitchParser.fetchPitchWithRange(pitchesModel, model.startOfVerse, line.tones.get(0).begin, line.tones.get(0).end);
 
                 int numberOfTones = (int) (end - start) / 100;
@@ -158,6 +230,28 @@ public class LyricsParser {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+        }
+        return type;
+    }
+
+    private static LyricsModel.Type probeLyricsFileType(LyricsModel.Type type, byte[] fileData) {
+        if (type == null) {
+            try {
+                String fileContent = new String(fileData);
+                String[] lines = fileContent.split("\n");
+                if (lines.length > 0) {
+                    String firstLine = lines[0];
+                    if (!TextUtils.isEmpty(firstLine)) {
+                        if (firstLine.contains("xml") || firstLine.contains("<song>")) {
+                            type = LyricsModel.Type.Xml;
+                        } else {
+                            type = LyricsModel.Type.General;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         return type;

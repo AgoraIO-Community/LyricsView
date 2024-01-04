@@ -135,7 +135,7 @@ public class KaraokeView {
     }
 
     public static LyricsModel parseLyricsData(byte[] data) {
-        return new LyricsModel(LyricsModel.Type.Xml);
+        return LyricsParser.parse(data);
     }
 
     public void setLyricsData(LyricsModel model) {
@@ -255,5 +255,9 @@ public class KaraokeView {
 
     public void removeLogger(Logger logger) {
         LogManager.instance().removeLogger(logger);
+    }
+
+    public void removeAllLogger() {
+        LogManager.instance().removeAllLogger();
     }
 }

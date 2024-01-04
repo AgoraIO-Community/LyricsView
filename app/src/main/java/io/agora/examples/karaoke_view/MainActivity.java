@@ -39,11 +39,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.agora.examples.karaoke_view.databinding.ActivityMainBinding;
-import io.agora.examples.utils.DownloadManager;
 import io.agora.examples.utils.MusicContentCenterManager;
 import io.agora.examples.utils.ResourceHelper;
 import io.agora.karaoke_view.v11.KaraokeEvent;
 import io.agora.karaoke_view.v11.KaraokeView;
+import io.agora.karaoke_view.v11.constants.Constants;
+import io.agora.karaoke_view.v11.constants.DownloadError;
+import io.agora.karaoke_view.v11.downloader.LyricsFileDownloader;
+import io.agora.karaoke_view.v11.downloader.LyricsFileDownloaderCallback;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 import io.agora.logging.ConsoleLogger;
@@ -53,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private ActivityMainBinding binding;
 
-    private static final String TAG = "KaraokeView-MainActivity";
+    private static final String TAG = Constants.TAG + "-Main";
 
     private KaraokeView mKaraokeView;
 
@@ -164,6 +167,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         });
+
+        LyricsFileDownloader.getInstance(this).setMaxFileNum(3);
+        LyricsFileDownloader.getInstance(this).setMaxFileAge(60);
+        LyricsFileDownloader.getInstance(this).setLyricsFileDownloaderCallback(new LyricsFileDownloaderCallback() {
+            @Override
+            public void onLyricsFileDownloadProgress(int requestId, float progress) {
+                Log.d(TAG, "onLyricsFileDownloadProgress requestId:" + requestId + " progress:" + progress);
+            }
+
+            @Override
+            public void onLyricsFileDownloadCompleted(int requestId, byte[] fileData, DownloadError error) {
+                Log.d(TAG, "onLyricsFileDownloadCompleted requestId:" + requestId + " error:" + error);
+                if (null == error && null != fileData) {
+                    Log.d(TAG, "onLyricsFileDownloadCompleted fileData:" + fileData.length);
+                    mLyricsModel = KaraokeView.parseLyricsData(fileData);
+
+                    if (mLyricsModel != null) {
+                        mKaraokeView.setLyricsData(mLyricsModel);
+                    }
+                    playMusic();
+                    updateLyricsDescription();
+                } else {
+                    mLyricsModel = null;
+
+                    String description = LyricsResourcePool.asList().get(mCurrentIndex).description; // For Testing
+                    if (description != null && description.contains("SHOW_NO_LYRICS_TIPS")) {
+                        mKaraokeView.setLyricsData(null); // Call this will trigger no/invalid lyrics ui
+                    }
+                    playMusic();
+                    updateLyricsDescription();
+                }
+            }
+        });
     }
 
     @Override
@@ -196,27 +232,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             playMusic();
             updateLyricsDescription();
         } else if (lrcUri.startsWith("https://") || lrcUri.startsWith("http://")) {
-            DownloadManager.getInstance().download(this, lrcUri, file -> {
-                file = extractFromZipFileIfPossible(file);
-                mLyricsModel = KaraokeView.parseLyricsData(file);
-
-
-                if (mLyricsModel != null) {
-                    mKaraokeView.setLyricsData(mLyricsModel);
-                }
-                playMusic();
-                updateLyricsDescription();
-            }, error -> {
-                Log.e(TAG, Log.getStackTraceString(error));
-                mLyricsModel = null;
-
-                String description = LyricsResourcePool.asList().get(mCurrentIndex).description; // For Testing
-                if (description != null && description.contains("SHOW_NO_LYRICS_TIPS")) {
-                    mKaraokeView.setLyricsData(null); // Call this will trigger no/invalid lyrics ui
-                }
-                playMusic();
-                updateLyricsDescription();
-            });
+            LyricsFileDownloader.getInstance(this).download(lrcUri);
         } else {
             File lrc = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
             File pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
@@ -462,8 +478,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mExecutor.schedule(new Runnable() {
             @Override
             public void run() {
-                DownloadManager.getInstance().clearCache(getApplicationContext());
-
                 updateLyricsDescription();
 
                 loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).lyrics, LyricsResourcePool.asList().get(mCurrentIndex).pitches);
@@ -548,7 +562,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (mLyricsCurrentProgress >= 0 && mLyricsCurrentProgress < DURATION_OF_SONG) {
                     mKaraokeView.setProgress(mLyricsCurrentProgress); // zero for first time
-                    Log.d(PLAYER_TAG, "timer mCurrentPosition: " + mLyricsCurrentProgress + " " + Thread.currentThread());
+                    //Log.d(PLAYER_TAG, "timer mCurrentPosition: " + mLyricsCurrentProgress + " " + Thread.currentThread());
                 } else if (mLyricsCurrentProgress >= DURATION_OF_SONG && mLyricsCurrentProgress < (DURATION_OF_SONG + 1000)) {
                     long lastPosition = mLyricsCurrentProgress;
                     mKaraokeView.setProgress(mLyricsCurrentProgress);

@@ -40,12 +40,14 @@ class LyricsParserGeneral {
             return null;
         }
 
-        LyricsModel lyrics = new LyricsModel(LyricsModel.Type.General);
-
         List<LyricsLineModel> lines = new ArrayList<>();
-        lyrics.lines = lines;
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+            BufferedReader br = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+            } else {
+                br = new BufferedReader(new InputStreamReader(new FileInputStream(file), Constants.UTF_8));
+            }
             String line;
             while ((line = br.readLine()) != null) {
                 List<LyricsLineModel> list = parseLine(line);
@@ -58,6 +60,41 @@ class LyricsParserGeneral {
             e.printStackTrace();
         }
 
+        return parseLines(lines);
+    }
+
+    /**
+     * 从文件内容解析歌词
+     */
+    public static LyricsModel parseLrc(byte[] fileData) {
+        if (null == fileData) {
+            return null;
+        }
+
+        List<LyricsLineModel> lines = new ArrayList<>();
+        try {
+            String fileContent = new String(fileData, Constants.UTF_8);
+            String[] lineArray = fileContent.split("\n");
+            for (String line : lineArray) {
+                List<LyricsLineModel> list = parseLine(line);
+                if (list != null && !list.isEmpty()) {
+                    lines.addAll(list);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        return parseLines(lines);
+    }
+
+    private static LyricsModel parseLines(List<LyricsLineModel> lines) {
+        LyricsModel lyrics = new LyricsModel(LyricsModel.Type.General);
+        if (null == lines || lines.isEmpty()) {
+            return lyrics;
+        }
+        lyrics.lines = lines;
         for (int i = 0; i < lines.size() - 1; i++) {
             LyricsLineModel cur = lines.get(i);
             LyricsLineModel next = lines.get(i + 1);
@@ -73,16 +110,17 @@ class LyricsParserGeneral {
         if (lines.size() > 0) {
             long faked = lines.get(lines.size() - 1).getStartTime() + 8765;
             lines.get(lines.size() - 1).tones.get(0).end = faked;
-            lyrics.duration = faked; // We do not know the last end timestamp of song
+            // We do not know the last end timestamp of song
+            lyrics.duration = faked;
         }
-
-        lyrics.startOfVerse = lines.get(0).getStartTime(); // Always the first line of lyrics
+        // Always the first line of lyrics
+        lyrics.startOfVerse = lines.get(0).getStartTime();
 
         if (lyrics.duration <= 0 || lyrics.startOfVerse < 0) {
             LogManager.instance().error(TAG, "no sentence or unexpected timestamp of sentence: " + lyrics.startOfVerse + " " + lyrics.duration);
-            return null; // Invalid lyrics
+            // Invalid lyrics
+            return null;
         }
-
         return lyrics;
     }
 
