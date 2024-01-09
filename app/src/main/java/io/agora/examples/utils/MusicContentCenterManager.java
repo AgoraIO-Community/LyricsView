@@ -1,6 +1,7 @@
 package io.agora.examples.utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -11,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import io.agora.examples.karaoke_view.BuildConfig;
+import io.agora.examples.karaoke_view.R;
 import io.agora.mediaplayer.IMediaPlayerObserver;
 import io.agora.mediaplayer.data.PlayerUpdatedInfo;
 import io.agora.mediaplayer.data.SrcInfo;
@@ -196,19 +198,25 @@ public class MusicContentCenterManager {
             };
 
             RtcEngine rtcEngine = RtcEngine.create(config);
-            rtcEngine.setParameters("{\"rtc.debug.enable\": true}");
-            rtcEngine.setParameters("{\"che.audio.apm_dump\": true}");
 
-//            rtcEngine.setParameters("{\n" +
-//                    "\n" +
-//                    "\"che.audio.enable.nsng\":true,\n" +
-//                    "\"che.audio.ains_mode\":2,\n" +
-//                    "\"che.audio.ns.mode\":2,\n" +
-//                    "\"che.audio.nsng.lowerBound\":80,\n" +
-//                    "\"che.audio.nsng.lowerMask\":50,\n" +
-//                    "\"che.audio.nsng.statisticalbound\":5,\n" +
-//                    "\"che.audio.nsng.finallowermask\":30\n" +
-//                    "}");
+            SharedPreferences prefs = mContext.getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
+            if (prefs.getBoolean(mContext.getString(R.string.prefs_key_rtc_audio_dump), false)) {
+                rtcEngine.setParameters("{\"rtc.debug.enable\": true}");
+                rtcEngine.setParameters("{\"che.audio.apm_dump\": true}");
+            }
+
+            if (prefs.getBoolean(mContext.getString(R.string.prefs_key_rtc_ains), false)) {
+                rtcEngine.setParameters("{\n" +
+                        "\n" +
+                        "\"che.audio.enable.nsng\":true,\n" +
+                        "\"che.audio.ains_mode\":2,\n" +
+                        "\"che.audio.ns.mode\":2,\n" +
+                        "\"che.audio.nsng.lowerBound\":80,\n" +
+                        "\"che.audio.nsng.lowerMask\":50,\n" +
+                        "\"che.audio.nsng.statisticalbound\":5,\n" +
+                        "\"che.audio.nsng.finallowermask\":30\n" +
+                        "}");
+            }
 
             ChannelMediaOptions option = new ChannelMediaOptions();
             option.autoSubscribeAudio = true;

@@ -46,6 +46,8 @@ public class SettingsActivity extends AppCompatActivity {
         loadPreferencesScoringUI(prefs, editor);
 
         loadPreferencesDownloaderUI(prefs, editor);
+
+        loadPreferencesOtherSettingsUI(prefs, editor);
     }
 
     private void loadPreferencesScoringAlgo(SharedPreferences prefs, SharedPreferences.Editor editor) {
@@ -483,6 +485,20 @@ public class SettingsActivity extends AppCompatActivity {
             public void onClick(View v) {
                 LyricsFileDownloader.getInstance(getApplicationContext()).cleanAll();
             }
+        });
+    }
+
+    private void loadPreferencesOtherSettingsUI(SharedPreferences prefs, SharedPreferences.Editor editor) {
+        binding.rtcAudioDumpSwitch.setChecked(prefs.getBoolean(getString(R.string.prefs_key_rtc_audio_dump), false));
+        binding.rtcAudioDumpSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            editor.putBoolean(getString(R.string.prefs_key_rtc_audio_dump), isChecked);
+            editor.apply();
+        });
+
+        binding.rtcAudioDumpSwitch.setChecked(prefs.getBoolean(getString(R.string.prefs_key_rtc_audio_dump), false));
+        binding.rtcAudioDumpSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            editor.putBoolean(getString(R.string.prefs_key_rtc_audio_dump), isChecked);
+            editor.apply();
         });
     }
 }
