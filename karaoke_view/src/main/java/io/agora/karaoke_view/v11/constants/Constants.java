@@ -16,6 +16,7 @@ public class Constants {
 
     public static final int ERROR_NONE = 0;
     public static final int ERROR_GENERAL = -1;
+    public static final int ERROR_UNZIP_ERROR = -4;
     public static final int ERROR_HTTP_TIMEOUT = -1001;
     public static final int ERROR_HTTP_UNKNOWN_HOST = -1003;
     public static final int ERROR_HTTP_NOT_CONNECT = -1004;

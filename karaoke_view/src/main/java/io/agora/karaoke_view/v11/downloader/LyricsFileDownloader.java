@@ -74,6 +74,11 @@ public class LyricsFileDownloader {
      * @param maxFileNum Maximum number of files
      */
     public void setMaxFileNum(int maxFileNum) {
+        LogManager.instance().debug(TAG, "setMaxFileNum maxFileNum:" + maxFileNum);
+        if (maxFileNum <= 0) {
+            LogManager.instance().error(TAG, "setMaxFileNum maxFileNum is invalid");
+            return;
+        }
         mMaxFileNum = maxFileNum;
     }
 
@@ -81,6 +86,11 @@ public class LyricsFileDownloader {
      * @param maxFileAge Unit: seconds
      */
     public void setMaxFileAge(long maxFileAge) {
+        LogManager.instance().debug(TAG, "setMaxFileAge maxFileAge:" + maxFileAge);
+        if (maxFileAge <= 0) {
+            LogManager.instance().error(TAG, "setMaxFileAge maxFileAge is invalid");
+            return;
+        }
         mMaxFileAge = maxFileAge;
     }
 
@@ -218,19 +228,21 @@ public class LyricsFileDownloader {
 
     private synchronized void handleDownloadedFile(int requestId, File file) {
         LogManager.instance().debug(TAG, "handleDownloadedFile requestId:" + requestId + ",file:" + file.getPath());
+        checkFileAge(new File(mContext.getExternalCacheDir(), Constants.LYRICS_FILE_DOWNLOAD_DIR));
         if (file.exists()) {
             if (file.getName().toLowerCase().endsWith(Constants.FILE_EXTENSION_ZIP)) {
                 LogManager.instance().debug(TAG, "handleDownloadedFile file is zip file");
                 ByteArrayOutputStream byteArrayOutputStream = null;
-                FileInputStream fis;
                 // buffer for read and write data to file
                 byte[] buffer = new byte[1024];
-                try {
-                    fis = new FileInputStream(file);
-                    ZipInputStream zis = new ZipInputStream(fis);
+                try (FileInputStream fis = new FileInputStream(file);
+                     ZipInputStream zis = new ZipInputStream(fis)) {
                     byteArrayOutputStream = new ByteArrayOutputStream();
+                    //get first ZipEntry
                     ZipEntry entry = zis.getNextEntry();
-                    while (entry != null) {
+                    String fileName = entry.getName();
+                    LogManager.instance().debug(TAG, "handleDownloadedFile unzip file:" + fileName);
+                    if (isSupportLyricsFile(fileName)) {
                         int len;
                         while ((len = zis.read(buffer)) > 0) {
                             byteArrayOutputStream.write(buffer, 0, len);
@@ -238,13 +250,16 @@ public class LyricsFileDownloader {
                         byteArrayOutputStream.flush();
                         // close this ZipEntry
                         zis.closeEntry();
-                        entry = zis.getNextEntry();
+                        byteArrayOutputStream.close();
+                        // close last ZipEntry
+                    } else {
+                        zis.closeEntry();
+                        LogManager.instance().error(TAG, "handleDownloadedFile file is not support lyrics file " + fileName + " in zip file");
+                        DownloadError error = DownloadError.UNZIP_FAIL;
+                        error.setErrorCode(Constants.ERROR_UNZIP_ERROR);
+                        notifyLyricsFileDownloadCompleted(requestId, null, error);
+                        return;
                     }
-                    byteArrayOutputStream.close();
-                    // close last ZipEntry
-                    zis.closeEntry();
-                    zis.close();
-                    fis.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                     LogManager.instance().error(TAG, "handleDownloadedFile unzip exception:" + e);
@@ -275,22 +290,25 @@ public class LyricsFileDownloader {
                 }
                 LogManager.instance().debug(TAG, "handleDownloadedFile unzip file success");
                 handleLyricsFile(requestId, realFile, true);
-            } else if (file.getName().toLowerCase().endsWith(Constants.FILE_EXTENSION_XML)) {
-                LogManager.instance().debug(TAG, "handleDownloadedFile file is xml file");
-                handleLyricsFile(requestId, file, false);
-            } else if (file.getName().toLowerCase().endsWith(Constants.FILE_EXTENSION_LRC)) {
-                LogManager.instance().debug(TAG, "handleDownloadedFile file is lrc file");
-                handleLyricsFile(requestId, file, false);
+            } else if (isSupportLyricsFile(file.getName())) {
+                if (file.getName().toLowerCase().endsWith(Constants.FILE_EXTENSION_XML)) {
+                    LogManager.instance().debug(TAG, "handleDownloadedFile file is xml file");
+                    handleLyricsFile(requestId, file, false);
+                } else if (file.getName().toLowerCase().endsWith(Constants.FILE_EXTENSION_LRC)) {
+                    LogManager.instance().debug(TAG, "handleDownloadedFile file is lrc file");
+                    handleLyricsFile(requestId, file, false);
+                }
             } else {
                 LogManager.instance().error(TAG, "handleDownloadedFile unknown file format and return directly");
-                handleLyricsFile(requestId, file, false);
+                DownloadError error = DownloadError.UNZIP_FAIL;
+                error.setErrorCode(Constants.ERROR_UNZIP_ERROR);
+                notifyLyricsFileDownloadCompleted(requestId, null, error);
             }
         } else {
             LogManager.instance().error(TAG, "extractFromZipFileIfPossible file is not exists");
 
             notifyLyricsFileDownloadCompleted(requestId, null, DownloadError.HTTP_DOWNLOAD_ERROR);
         }
-
     }
 
     private void handleLyricsFile(int requestId, File lyricFile, boolean deleteLyricsFile) {
@@ -298,6 +316,7 @@ public class LyricsFileDownloader {
 
         if (deleteLyricsFile) {
             if (lyricFile.exists()) {
+                LogManager.instance().debug(TAG, "handleLyricsFile delete file:" + lyricFile.getPath());
                 lyricFile.delete();
             }
         }
@@ -311,6 +330,7 @@ public class LyricsFileDownloader {
             return;
         }
         List<File> fileList = new ArrayList<>(Arrays.asList(files));
+
         Iterator<File> iterator = fileList.iterator();
         while (iterator.hasNext()) {
             File file = iterator.next();
@@ -321,7 +341,7 @@ public class LyricsFileDownloader {
         if (fileList.size() <= mMaxFileNum) {
             return;
         }
-
+        LogManager.instance().debug(TAG, "checkMaxFileNum fileList :" + fileList);
         Collections.sort(fileList, new Comparator<File>() {
             @Override
             public int compare(File file1, File file2) {
@@ -352,6 +372,7 @@ public class LyricsFileDownloader {
             }
         }
         if (canDelete) {
+            LogManager.instance().debug(TAG, "maybeDeleteFile delete file:" + file.getPath());
             file.delete();
         }
 
@@ -363,12 +384,18 @@ public class LyricsFileDownloader {
         if (null == files) {
             return;
         }
+        LogManager.instance().debug(TAG, "checkFileAge files :" + Arrays.toString(files));
         long now = System.currentTimeMillis();
         for (File file : files) {
             if (file.isFile() && (now - file.lastModified() > mMaxFileAge * 1000)) {
+                LogManager.instance().debug(TAG, "checkFileAge delete file:" + file.getPath());
                 file.delete();
             }
         }
+    }
+
+    private boolean isSupportLyricsFile(String fileName) {
+        return fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_XML) || fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_LRC);
     }
 
     private synchronized void notifyLyricsFileDownloadCompleted(int requestId, File lyricFile, DownloadError error) {

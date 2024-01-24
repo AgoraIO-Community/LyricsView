@@ -42,7 +42,9 @@ public class DownloaderFakeUrlTest {
         String[] urls = new String[]{"https://127.0.0.1/lyricsMockDownload/1.zip",
                 "https://agora.fake.domain.com/lyricsMockDownload/1.zip",
                 "https://fullapp.oss-cn-beijing.aliyuncs.com/lyricsMockDownload/10000.zip",
-                "https://8.141.208.82/lyricsMockDownload/1.zip"};
+                "https://8.141.208.82/lyricsMockDownload/1.zip",
+                "https://fullapp.oss-cn-beijing.aliyuncs.com/lyricsMockDownload/11.zip",
+                "https://fullapp.oss-cn-beijing.aliyuncs.com/lyricsMockDownload/11.txt"};
 
         Map<Integer, DownloadError> requestErrorMap = new ConcurrentHashMap<>(urls.length);
 
@@ -88,6 +90,14 @@ public class DownloaderFakeUrlTest {
                 case 3:
                     downloadError = DownloadError.HTTP_DOWNLOAD_ERROR;
                     downloadError.setErrorCode(Constants.ERROR_HTTP_TIMEOUT);
+                    break;
+                case 4:
+                    downloadError = DownloadError.UNZIP_FAIL;
+                    downloadError.setErrorCode(Constants.ERROR_UNZIP_ERROR);
+                    break;
+                case 5:
+                    downloadError = DownloadError.UNZIP_FAIL;
+                    downloadError.setErrorCode(Constants.ERROR_UNZIP_ERROR);
                     break;
             }
             requestErrorMap.put(requestId, downloadError);
