@@ -409,7 +409,7 @@ public class LyricsFileDownloader {
         }
     }
 
-    public synchronized void cancelDownload(int requestId) {
+    public void cancelDownload(int requestId) {
         if (null == mContext) {
             LogManager.instance().error(TAG, "cancelDownload context is null");
             return;
@@ -433,7 +433,7 @@ public class LyricsFileDownloader {
         }
     }
 
-    public synchronized void cleanAll() {
+    public void cleanAll() {
         if (null == mContext) {
             LogManager.instance().error(TAG, "cleanAll context is null");
             return;
