@@ -247,9 +247,7 @@ public class ScoringView extends View {
             mDelayedTaskToken = new Object();
             boolean result = mHandler.postAtTime(() -> {
                 // Create a particle system and start emiting
-                if (mParticleSystem != null) {
-                    setParticles(null);
-                }
+                setParticles(null);
             }, mDelayedTaskToken, SystemClock.uptimeMillis() + 1000);
         }
     }
