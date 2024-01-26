@@ -327,6 +327,7 @@ public class LyricsFileDownloader {
         File folder = new File(mContext.getExternalCacheDir(), Constants.LYRICS_FILE_DOWNLOAD_DIR);
         File[] files = folder.listFiles();
         if (null == files) {
+            LogManager.instance().info(TAG, "checkMaxFileNum files is empty");
             return;
         }
         List<File> fileList = new ArrayList<>(Arrays.asList(files));
@@ -339,6 +340,7 @@ public class LyricsFileDownloader {
             }
         }
         if (fileList.size() <= mMaxFileNum) {
+            LogManager.instance().debug(TAG, "checkMaxFileNum fileList size:" + fileList.size() + " is less than maxFileNum:" + mMaxFileNum);
             return;
         }
         LogManager.instance().debug(TAG, "checkMaxFileNum fileList :" + fileList);
@@ -402,8 +404,10 @@ public class LyricsFileDownloader {
         checkMaxFileNum();
         if (null != mLyricsFileDownloaderCallback) {
             if (null != lyricFile) {
+                LogManager.instance().debug(TAG, "notifyLyricsFileDownloadCompleted requestId:" + requestId + ",lyricFile:" + lyricFile.getPath() + ",error:" + error);
                 mLyricsFileDownloaderCallback.onLyricsFileDownloadCompleted(requestId, Utils.readFileToByteArray(lyricFile.getPath()), null);
             } else {
+                LogManager.instance().debug(TAG, "notifyLyricsFileDownloadCompleted requestId:" + requestId + ",lyricFile is null,error:" + error);
                 mLyricsFileDownloaderCallback.onLyricsFileDownloadCompleted(requestId, null, error);
             }
         }
