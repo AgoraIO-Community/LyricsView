@@ -410,6 +410,8 @@ public class LyricsFileDownloader {
                 LogManager.instance().debug(TAG, "notifyLyricsFileDownloadCompleted requestId:" + requestId + ",lyricFile is null,error:" + error);
                 mLyricsFileDownloaderCallback.onLyricsFileDownloadCompleted(requestId, null, error);
             }
+        } else {
+            LogManager.instance().debug(TAG, "notifyLyricsFileDownloadCompleted mLyricsFileDownloaderCallback is null");
         }
     }
 
