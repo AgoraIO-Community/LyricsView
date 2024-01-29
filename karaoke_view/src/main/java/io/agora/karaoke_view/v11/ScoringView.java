@@ -30,6 +30,7 @@ import com.plattysoft.leonids.ParticleSystem;
 import java.util.List;
 
 import io.agora.karaoke_view.R;
+import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
@@ -42,7 +43,7 @@ import io.agora.logging.LogManager;
  * @date 2021/08/04
  */
 public class ScoringView extends View {
-    private static final String TAG = "LyricsView-ScoringView";
+    private static final String TAG = Constants.TAG + "-ScoringView";
 
     private static final boolean DEBUG = false;
 

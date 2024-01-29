@@ -137,9 +137,6 @@ public class LyricsFileDownloader {
             final File file = new File(folder, urlFileName);
             if (file.exists()) {
                 LogManager.instance().debug(TAG, "download " + file.getPath() + " exists");
-                if (null != mLyricsFileDownloaderCallback) {
-                    mLyricsFileDownloaderCallback.onLyricsFileDownloadProgress(mRequestId, 100);
-                }
                 handleDownloadedFile(mRequestId, file);
                 return mRequestId;
             }
