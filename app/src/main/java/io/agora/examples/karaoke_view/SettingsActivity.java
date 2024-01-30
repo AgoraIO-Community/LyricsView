@@ -11,6 +11,7 @@ import android.widget.SeekBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import io.agora.examples.karaoke_view.databinding.ActivitySettingsBinding;
+import io.agora.karaoke_view.v11.downloader.LyricsFileDownloader;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -43,6 +44,10 @@ public class SettingsActivity extends AppCompatActivity {
         loadPreferencesLyricsUI(prefs, editor);
 
         loadPreferencesScoringUI(prefs, editor);
+
+        loadPreferencesDownloaderUI(prefs, editor);
+
+        loadPreferencesOtherSettingsUI(prefs, editor);
     }
 
     private void loadPreferencesScoringAlgo(SharedPreferences prefs, SharedPreferences.Editor editor) {
@@ -471,6 +476,29 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
+        });
+    }
+
+    private void loadPreferencesDownloaderUI(SharedPreferences prefs, SharedPreferences.Editor editor) {
+        binding.downloaderCleanAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LyricsFileDownloader.getInstance(getApplicationContext()).cleanAll();
+            }
+        });
+    }
+
+    private void loadPreferencesOtherSettingsUI(SharedPreferences prefs, SharedPreferences.Editor editor) {
+        binding.rtcAudioDumpSwitch.setChecked(prefs.getBoolean(getString(R.string.prefs_key_rtc_audio_dump), false));
+        binding.rtcAudioDumpSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            editor.putBoolean(getString(R.string.prefs_key_rtc_audio_dump), isChecked);
+            editor.apply();
+        });
+
+        binding.rtcAudioDumpSwitch.setChecked(prefs.getBoolean(getString(R.string.prefs_key_rtc_audio_dump), false));
+        binding.rtcAudioDumpSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            editor.putBoolean(getString(R.string.prefs_key_rtc_audio_dump), isChecked);
+            editor.apply();
         });
     }
 }

@@ -230,6 +230,13 @@ public class ScoringMachine {
                     ",mPitchesForLine:" + mPitchesForLine);
             int scoreThisTime = mScoringAlgo.getLineScore(mPitchesForLine, indexOfMostRecentLine, lineJustFinished);
 
+            StringBuilder lyricsContentLine = new StringBuilder();
+            for (LyricsLineModel.Tone tone : lineJustFinished.tones) {
+                lyricsContentLine.append(tone.word);
+            }
+            LogManager.instance().debug(Constants.TAG, "updateScoreForMostRecentLine: startTime:" + lineJustFinished.getStartTime() +
+                    ",endTime:" + lineJustFinished.getEndTime() + ",lyricsContentLine:" + lyricsContentLine + ",scoreThisTime:" + scoreThisTime);
+
             // 统计到累计分数
             mCumulativeScore += scoreThisTime;
 

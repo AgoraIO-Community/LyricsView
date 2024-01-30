@@ -15,6 +15,7 @@ import io.agora.logging.LogManager;
 import io.agora.logging.Logger;
 
 public class KaraokeView {
+    private static final String TAG = Constants.TAG + "-KaraokeView";
     private IScoringAlgorithm mScoringAlgorithm;
     private KaraokeEvent mKaraokeEvent;
     private LyricsView mLyricsView;
@@ -44,6 +45,7 @@ public class KaraokeView {
     }
 
     private void initialize() {
+        LogManager.instance().debug(TAG, "initialize");
         this.mScoringAlgorithm = new DefaultScoringAlgorithm();
         mScoringMachine = new ScoringMachine(new VoicePitchChanger(), mScoringAlgorithm, new ScoringMachine.OnScoringListener() {
             @Override
@@ -116,6 +118,7 @@ public class KaraokeView {
     }
 
     public void reset() {
+        LogManager.instance().debug(Constants.TAG, "reset");
         if (mLyricsView != null) {
             mLyricsView.reset();
         }
@@ -135,10 +138,11 @@ public class KaraokeView {
     }
 
     public static LyricsModel parseLyricsData(byte[] data) {
-        return new LyricsModel(LyricsModel.Type.Xml);
+        return LyricsParser.parse(data);
     }
 
     public void setLyricsData(LyricsModel model) {
+        LogManager.instance().debug(Constants.TAG, "setLyricsData model:" + model);
         mScoringMachine.prepare(model);
 
         if (mLyricsView != null) {
@@ -153,6 +157,7 @@ public class KaraokeView {
     }
 
     public void attachUi(LyricsView lyrics, ScoringView scoring) {
+        LogManager.instance().debug(Constants.TAG, "attachUi lyrics:" + lyrics + ",scoring:" + scoring);
         if (mScoringMachine == null) {
             throw new IllegalStateException("Call this after KaraokeView initialized, this is a convenient method for attach/detach on-the-fly");
         }
@@ -203,6 +208,7 @@ public class KaraokeView {
     }
 
     public void setKaraokeEvent(KaraokeEvent event) {
+        LogManager.instance().debug(Constants.TAG, "setKaraokeEvent event:" + event);
         this.mKaraokeEvent = event;
 
         if (mLyricsView != null) {
@@ -229,11 +235,13 @@ public class KaraokeView {
     }
 
     public void setScoringAlgorithm(IScoringAlgorithm algorithm) {
+        LogManager.instance().debug(Constants.TAG, "setScoringAlgorithm algorithm:" + algorithm);
         this.mScoringAlgorithm = algorithm;
         this.mScoringMachine.setScoringAlgorithm(this.mScoringAlgorithm);
     }
 
     public void setScoringLevel(int level) {
+        LogManager.instance().debug(Constants.TAG, "setScoringLevel level:" + level);
         this.mScoringAlgorithm.setScoringLevel(level);
     }
 
@@ -242,6 +250,7 @@ public class KaraokeView {
     }
 
     public void setScoringCompensationOffset(int offset) {
+        LogManager.instance().debug(Constants.TAG, "setScoringCompensationOffset offset:" + offset);
         this.mScoringAlgorithm.setScoringCompensationOffset(offset);
     }
 
@@ -255,5 +264,9 @@ public class KaraokeView {
 
     public void removeLogger(Logger logger) {
         LogManager.instance().removeLogger(logger);
+    }
+
+    public void removeAllLogger() {
+        LogManager.instance().removeAllLogger();
     }
 }
