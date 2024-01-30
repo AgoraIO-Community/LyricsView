@@ -66,6 +66,11 @@ public class LyricsFileDownloader {
         return instance;
     }
 
+    /**
+     * set callback for download
+     *
+     * @param callback callback
+     */
     public void setLyricsFileDownloaderCallback(LyricsFileDownloaderCallback callback) {
         mLyricsFileDownloaderCallback = callback;
     }
@@ -94,6 +99,12 @@ public class LyricsFileDownloader {
         mMaxFileAge = maxFileAge;
     }
 
+    /**
+     * start a download
+     *
+     * @param url download url
+     * @return requestId
+     */
     public int download(final String url) {
         if (null == mContext) {
             LogManager.instance().error(TAG, "download context is null");
@@ -412,6 +423,11 @@ public class LyricsFileDownloader {
         }
     }
 
+    /**
+     * cancel a downloading task
+     *
+     * @param requestId requestId for download
+     */
     public void cancelDownload(int requestId) {
         if (null == mContext) {
             LogManager.instance().error(TAG, "cancelDownload context is null");
@@ -436,6 +452,9 @@ public class LyricsFileDownloader {
         }
     }
 
+    /**
+     * clean all files in local
+     */
     public void cleanAll() {
         if (null == mContext) {
             LogManager.instance().error(TAG, "cleanAll context is null");
