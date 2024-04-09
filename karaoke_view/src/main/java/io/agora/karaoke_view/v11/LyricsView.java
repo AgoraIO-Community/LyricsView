@@ -963,6 +963,9 @@ public class LyricsView extends View {
         mOffset = 0;
         targetIndex = 0;
         mDuration = 0;
+        mRectClip.setEmpty();
+        mLastRightOfRectClip = mRectClip.right;
+        mCurrentLineTranslateX = 0;
     }
 
     /**
