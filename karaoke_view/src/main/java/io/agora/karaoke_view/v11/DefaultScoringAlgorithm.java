@@ -75,9 +75,7 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
                 }
             } while (toneIndex < tones.size());
 
-
             iterator.remove();
-            pitchesForLine.remove(myKeyTimestamp);
 
             if (scoreForOnePitch != null && -1f != scoreForOnePitch) {
                 totalScoreForTone += scoreForOnePitch;
