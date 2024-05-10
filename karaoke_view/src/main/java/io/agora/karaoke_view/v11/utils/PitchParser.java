@@ -2,6 +2,8 @@ package io.agora.karaoke_view.v11.utils;
 
 import androidx.annotation.NonNull;
 
+import com.google.gson.Gson;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -11,6 +13,7 @@ import java.util.ArrayList;
 
 import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.internal.PitchesModel;
+import io.agora.karaoke_view.v11.model.KrcPitchModel;
 import io.agora.logging.LogManager;
 
 public class PitchParser {
@@ -150,5 +153,55 @@ public class PitchParser {
 
     static int asUnsignedByte(byte b) {
         return b & 0xFF;
+    }
+
+    public static KrcPitchModel doPitchParse(File file) {
+        KrcPitchModel model = new KrcPitchModel();
+
+        if (file == null || !file.isFile() || !file.exists() || !file.canRead() || file.length() == 0) {
+            return model;
+        }
+
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(file);
+            byte[] data = new byte[(int) file.length()];
+            int size = fis.read(data);
+            if (size != file.length()) {
+                LogManager.instance().error(TAG, "Content not as expected size: " + file.length() + ", actual: " + size);
+                return model;
+            }
+            return doPitchParse(data);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return model;
+
+    }
+
+    @NonNull
+    public static KrcPitchModel doPitchParse(byte[] fileData) {
+        if (fileData == null || fileData.length == 0) {
+            return null;
+        }
+
+        try {
+            String jsonData = new String(fileData);
+            Gson gson = new Gson();
+            KrcPitchModel pitchModel = gson.fromJson(jsonData, KrcPitchModel.class);
+            return pitchModel;
+        } catch (Exception e) {
+            LogManager.instance().error(TAG, e.getMessage());
+            return null;
+        }
     }
 }

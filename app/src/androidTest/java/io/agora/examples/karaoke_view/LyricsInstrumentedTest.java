@@ -39,9 +39,12 @@ import io.agora.karaoke_view.v11.constants.DownloadError;
 import io.agora.karaoke_view.v11.downloader.LyricsFileDownloader;
 import io.agora.karaoke_view.v11.downloader.LyricsFileDownloaderCallback;
 import io.agora.karaoke_view.v11.internal.ScoringMachine;
+import io.agora.karaoke_view.v11.model.KrcPitchModel;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.v11.utils.KRCParser;
 import io.agora.karaoke_view.v11.utils.LyricsParser;
+import io.agora.karaoke_view.v11.utils.PitchParser;
 import io.agora.logging.ConsoleLogger;
 import io.agora.logging.LogManager;
 
@@ -1272,5 +1275,74 @@ public class LyricsInstrumentedTest {
         LyricsFileDownloader.getInstance(appContext).cleanAll();
 
         Log.d(TAG, "testDownload done");
+    }
+
+    @Test
+    public void parseKRCFile() {
+        String fileNameOfSong = "4875936889260991133.krc";
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        File lyrics = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        LyricsModel model = KRCParser.doParse(lyrics);
+
+        assertFalse(model.lines.isEmpty());
+        assertEquals(0, model.lines.get(0).getStartTime());
+        assertEquals(model.title, "十年 (《明年今日》国语版|《隐婚男女》电影插曲|《摆渡人》电影插曲)");
+        assertEquals(model.artist, "陈奕迅");
+        assertEquals(model.type, LyricsModel.Type.KRC);
+        assertEquals(model.duration, 182736); //[179088,3648]
+        assertEquals(model.startOfVerse, 0);
+        assertNull(model.pitchDatas);
+    }
+
+    @Test
+    public void parsePitchFile() {
+        String fileNameOfPitch = "4875936889260991133.pitch";
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        File pitches = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfPitch);
+        KrcPitchModel model = PitchParser.doPitchParse(pitches);
+
+        assertEquals(model.pitchDatas.size(), 294);
+        assertEquals(model.pitchDatas.get(0).duration, 241);
+        assertEquals(model.pitchDatas.get(0).startTime, 15203);
+        assertEquals(model.pitchDatas.get(0).pitch.intValue(), 50);
+        assertEquals(model.pitchDatas.get(model.pitchDatas.size() - 1).duration, 2907);
+        assertEquals(model.pitchDatas.get(model.pitchDatas.size() - 1).startTime, 180203);
+        assertEquals(model.pitchDatas.get(model.pitchDatas.size() - 1).pitch.intValue(), 50);
+    }
+
+    @Test
+    public void mergeKRCPitch() {
+        String fileNameOfSong = "4875936889260991133.krc";
+        String fileNameOfPitch = "4875936889260991133.pitch";
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        File lyrics = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        File pitches = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfPitch);
+         LyricsModel model = LyricsParser.parseLyricFile(lyrics,pitches);
+         assertEquals(0, model.lines.get(0).getStartTime());
+         // 移除版权信息类型
+//        LyricsModel model = LyricsParser.parseLyricFile(lyrics, pitches, false);
+//        assertEquals(15457, model.lines.get(0).getStartTime());
+
+        assertFalse(model.lines.isEmpty());
+        assertEquals(model.title, "十年 (《明年今日》国语版|《隐婚男女》电影插曲|《摆渡人》电影插曲)");
+        assertEquals(model.artist, "陈奕迅");
+        assertEquals(model.type, LyricsModel.Type.KRC);
+        assertEquals(model.duration, 182736); //[179088,3648]
+        assertEquals(model.startOfVerse, 15203);
+        assertFalse(model.pitchDatas.isEmpty());
+
+        assertEquals(model.pitchDatas.size(), 294);
+        assertEquals(model.pitchDatas.get(0).duration, 241);
+        assertEquals(model.pitchDatas.get(0).startTime, 15203);
+        assertEquals(model.pitchDatas.get(0).pitch.intValue(), 50);
+        assertEquals(model.pitchDatas.get(model.pitchDatas.size() - 1).duration, 2907);
+        assertEquals(model.pitchDatas.get(model.pitchDatas.size() - 1).startTime, 180203);
+        assertEquals(model.pitchDatas.get(model.pitchDatas.size() - 1).pitch.intValue(), 50);
     }
 }

@@ -4,7 +4,7 @@ import java.util.List;
 
 public class LyricsModel {
     public static enum Type {
-        General, Xml;
+        General, Xml, KRC;
     }
 
     public Type type;
@@ -26,6 +26,10 @@ public class LyricsModel {
      * <a href="https://en.wikipedia.org/wiki/ID3#ID3v2">ID3 artist</a>
      */
     public String artist;
+
+    public List<KrcPitchData> pitchDatas;
+
+    public boolean hasPitch;
 
     public LyricsModel(Type type) {
         this.type = type;
