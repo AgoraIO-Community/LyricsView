@@ -1,0 +1,71 @@
+afterEvaluate {
+    publishing {
+        repositories {
+            //it.mavenLocal()
+            it.maven {
+                url "${rootDir}/repo"
+            }
+        }
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                from components.release
+                groupId = mavenGroupId.toString()
+                artifactId = mavenArtifactId.toString()
+                version = android.defaultConfig.versionName
+
+                pom {
+                    name = mavenArtifactId.toString()
+                    description = mavenPomDescription.toString()
+                    url = 'http://maven.apache.org'
+
+
+                    licenses {
+                        license {
+                            name = 'AGORA SDK License'
+                            url = 'https://github.com/AgoraIO/full-sdk/blob/master/LICENSE'
+                        }
+                    }
+
+
+                    developers {
+                        developer {
+                            id = 'agora'
+                            name = 'agora'
+                            url = 'https://www.shengwang.cn/'
+                        }
+                    }
+
+                    scm {
+                        url = 'https://github.com/winskyan/Agora-Service-SDK.git'
+                    }
+                }
+            }
+        }
+    }
+    signing {
+        sign publishing.publications.release
+    }
+
+    tasks.register('cleanFiles', Zip) {
+        delete("${rootDir}/mavenUpload")
+        delete("${rootDir}/repo")
+    }
+
+
+    tasks.register('zipFolderAndUpload', Zip) {
+        from "${rootDir}/repo" // 要压缩的文件夹路径
+        archiveFileName = "${mavenArtifactId.toString()}-${sdkVersion.toString()}.zip"
+
+        // 排除过滤器
+        exclude { FileTreeElement element ->
+            // 判断是文件夹且名称以指定字符串结尾
+            !element.isDirectory() && element.name.startsWith('maven-metadata')
+        }
+
+        destinationDirectory = file("${rootDir}/mavenUpload")
+    }
+
+    publish.dependsOn(cleanFiles)
+    publish.finalizedBy(zipFolderAndUpload)
+}
