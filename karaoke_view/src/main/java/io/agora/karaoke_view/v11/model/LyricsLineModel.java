@@ -76,6 +76,8 @@ public class LyricsLineModel {
     }
 
     public List<Tone> tones;
+    // 总时长 (ms), krc 有值，其他格式文件解析没有赋值
+    public long duartion;
 
     public LyricsLineModel(Tone tone) {
         this.tones = new ArrayList<>();

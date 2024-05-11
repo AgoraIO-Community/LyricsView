@@ -12,9 +12,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import io.agora.karaoke_view.v11.constants.Constants;
 import io.agora.karaoke_view.v11.internal.PitchesModel;
+import io.agora.karaoke_view.v11.model.KrcPitchData;
+import io.agora.karaoke_view.v11.model.KrcPitchModel;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
 import io.agora.logging.LogManager;
@@ -255,5 +263,47 @@ public class LyricsParser {
             }
         }
         return type;
+    }
+
+    public static LyricsModel parseLyricFile(File krcFile, File pitchFile) {
+        return parseLyricFile(krcFile, pitchFile, true);
+    }
+
+    public static LyricsModel parseLyricFile(File krcFile, File pitchFile, Boolean includeCopyrightSentence) {
+        LyricsModel lyricsModel = KRCParser.doParse(krcFile);
+        KrcPitchModel pitchModel = PitchParser.doPitchParse(pitchFile);
+        lyricsModel.pitchDatas = pitchModel.pitchDatas;
+        lyricsModel.hasPitch = pitchModel.pitchDatas != null && !pitchModel.pitchDatas.isEmpty();
+        if (lyricsModel.hasPitch) {
+            lyricsModel.startOfVerse = lyricsModel.pitchDatas.get(0).startTime;
+        }
+        // 移除版权信息类型的句子
+        if (!includeCopyrightSentence && lyricsModel.lines != null && !lyricsModel.lines.isEmpty()) {
+            List<LyricsLineModel> tempLines = lyricsModel.lines;
+            List<LyricsLineModel> newLines = new ArrayList<>();
+            for (int i = 0; i < tempLines.size(); i++) {
+                LyricsLineModel lineModel = tempLines.get(i);
+                if (lineModel.getStartTime() > lyricsModel.startOfVerse) {
+                    newLines.add(lineModel);
+                }
+            }
+            lyricsModel.lines = newLines;
+        }
+        return lyricsModel;
+    }
+
+    public static LyricsModel parseLyricData(byte[] krcData, byte[] pitchData) {
+        return parseLyricData(krcData, pitchData, true);
+    }
+
+    public static LyricsModel parseLyricData(byte[] krcData, byte[] pitchData, Boolean includeCopyrightSentence) {
+        LyricsModel lyricsModel = KRCParser.doParse(krcData);
+        KrcPitchModel pitchModel = PitchParser.doPitchParse(pitchData);
+        lyricsModel.pitchDatas = pitchModel.pitchDatas;
+        lyricsModel.hasPitch = pitchModel.pitchDatas != null && !pitchModel.pitchDatas.isEmpty();
+        if (lyricsModel.pitchDatas != null && !lyricsModel.pitchDatas.isEmpty()) {
+            lyricsModel.startOfVerse = lyricsModel.pitchDatas.get(0).startTime;
+        }
+        return lyricsModel;
     }
 }

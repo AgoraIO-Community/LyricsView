@@ -56,6 +56,7 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.5.0'
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
     api 'io.github.winskyan:Agora-LoggingService:1.0.9'
+    implementation 'com.google.code.gson:gson:2.9.0'
 }
 
 afterEvaluate {
