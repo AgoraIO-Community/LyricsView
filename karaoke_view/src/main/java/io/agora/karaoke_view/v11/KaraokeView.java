@@ -141,6 +141,14 @@ public class KaraokeView {
         return LyricsParser.parse(data);
     }
 
+    public static LyricsModel parseLyricsDataEx(File file, File pitch) {
+        return LyricsParser.parseLyricFile(file, pitch);
+    }
+
+    public static LyricsModel parseLyricsDataEx(byte[] lyricsData, byte[] pitchData) {
+        return LyricsParser.parseLyricData(lyricsData, pitchData);
+    }
+
     public void setLyricsData(LyricsModel model) {
         LogManager.instance().debug(Constants.TAG, "setLyricsData model:" + model);
         mScoringMachine.prepare(model);

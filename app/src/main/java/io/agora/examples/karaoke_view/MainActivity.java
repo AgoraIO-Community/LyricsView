@@ -23,6 +23,8 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.ByteArrayOutputStream;
@@ -39,6 +41,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.agora.examples.karaoke_view.databinding.ActivityMainBinding;
+import io.agora.examples.utils.MccExManager;
 import io.agora.examples.utils.MusicContentCenterManager;
 import io.agora.examples.utils.ResourceHelper;
 import io.agora.karaoke_view.v11.KaraokeEvent;
@@ -49,10 +52,16 @@ import io.agora.karaoke_view.v11.downloader.LyricsFileDownloader;
 import io.agora.karaoke_view.v11.downloader.LyricsFileDownloaderCallback;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
+import io.agora.karaoke_view.v11.utils.LyricsParser;
 import io.agora.logging.ConsoleLogger;
+import io.agora.mccex.constants.MccExState;
+import io.agora.mccex.constants.MccExStateReason;
+import io.agora.examples.utils.RtcManager;
+import io.agora.rtc2.IRtcEngineEventHandler;
 import pub.devrel.easypermissions.EasyPermissions;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, MusicContentCenterManager.MccCallback {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,
+        MusicContentCenterManager.MccCallback, MccExManager.MccExCallback {
 
     private ActivityMainBinding binding;
 
@@ -69,6 +78,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Handler mHandler;
     private MusicContentCenterManager mMusicContentCenterManager;
+    private RtcManager mRtcManager;
+    private MccExManager mMccExManager;
+    private boolean mMccExService = true;
     private boolean mIsMockPlay = false;
     private ConsoleLogger mConsoleLogger;
     private static final int TAG_PERMISSION_REQUEST_CODE = 1000;
@@ -84,9 +96,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        mMusicContentCenterManager = new MusicContentCenterManager(this, this);
-        mMusicContentCenterManager.init();
+        if (mMccExService) {
+            mRtcManager = RtcManager.INSTANCE;
+            mRtcManager.initRtcEngine(this, new RtcManager.RtcCallback() {
+                @Override
+                public void onAudioVolumeIndication(@Nullable IRtcEngineEventHandler.AudioVolumeInfo[] speakers, int totalVolume) {
+                }
 
+                @Override
+                public void onUnMuteSuccess() {
+                }
+
+                @Override
+                public void onMuteSuccess() {
+                }
+
+                @Override
+                public void onJoinChannelSuccess(@NonNull String channel, int uid, int elapsed) {
+                }
+
+                @Override
+                public void onLeaveChannel(@NonNull IRtcEngineEventHandler.RtcStats stats) {
+
+                }
+            });
+            mMccExManager = MccExManager.INSTANCE;
+            mMccExManager.setTokenAndUserId(BuildConfig.YSD_TOKEN, BuildConfig.YSD_USER_ID);
+            mMccExManager.initMccExService(RtcManager.getRtcEngine(), mRtcManager, this, MainActivity.this);
+        } else {
+            mMusicContentCenterManager = new MusicContentCenterManager(this, this);
+            mMusicContentCenterManager.init();
+        }
         mHandler = new Handler(this.getMainLooper());
 
         binding.switchToNext.setOnClickListener(this);
@@ -110,8 +150,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mLyricsCurrentProgress = position;
                 updateCallback("Dragging, new progress " + position);
                 if (!mIsMockPlay) {
-                    mMusicContentCenterManager.seek(position);
-                    mMusicContentCenterManager.updateMusicPosition(position);
+                    if (mMccExService) {
+                        mMccExManager.seek(position);
+                        mMccExManager.updateMusicPosition(position);
+                    } else {
+                        mMusicContentCenterManager.seek(position);
+                        mMusicContentCenterManager.updateMusicPosition(position);
+                    }
                 }
             }
 
@@ -234,16 +279,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (lrcUri.startsWith("https://") || lrcUri.startsWith("http://")) {
             LyricsFileDownloader.getInstance(this).download(lrcUri);
         } else {
-            File lrc = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
-            File pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
-            lrc = extractFromZipFileIfPossible(lrc);
-            mLyricsModel = KaraokeView.parseLyricsData(lrc, pitch);
+            if (mMccExService) {
+                File lrc = new File(lrcUri);
+                File pitch = new File(pitchUri);
+                mLyricsModel = KaraokeView.parseLyricsDataEx(lrc, pitch);
 
-            if (mLyricsModel != null) {
-                mKaraokeView.setLyricsData(mLyricsModel);
+                if (mLyricsModel != null) {
+                    mKaraokeView.setLyricsData(mLyricsModel);
+                }
+                playMusic();
+                updateLyricsDescription();
+            } else {
+                File lrc = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
+                File pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
+                lrc = extractFromZipFileIfPossible(lrc);
+                mLyricsModel = KaraokeView.parseLyricsData(lrc, pitch);
+
+                if (mLyricsModel != null) {
+                    mKaraokeView.setLyricsData(mLyricsModel);
+                }
+                playMusic();
+                updateLyricsDescription();
             }
-            playMusic();
-            updateLyricsDescription();
+
         }
     }
 
@@ -266,7 +324,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void playMusic() {
         if (!mIsMockPlay) {
-            mMusicContentCenterManager.openMusic(LyricsResourcePool.asMusicList().get(mCurrentSongCodeIndex).songCode);
+            if (mMccExService) {
+//                mMccExManager.openMusic(LyricsResourcePool.asMusicListEx().get(mCurrentSongCodeIndex).songId);
+            } else {
+                mMusicContentCenterManager.openMusic(LyricsResourcePool.asMusicList().get(mCurrentSongCodeIndex).songCode);
+            }
         }
     }
 
@@ -486,10 +548,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void doClearCacheAndLoadSongCode() {
-        mMusicContentCenterManager.stop();
-        mCurrentSongCodeIndex++;
-        if (mCurrentSongCodeIndex >= LyricsResourcePool.asMusicList().size()) {
-            mCurrentSongCodeIndex = 0;
+        if (mMccExService) {
+            mMccExManager.stop();
+            mCurrentSongCodeIndex++;
+            if (mCurrentSongCodeIndex >= LyricsResourcePool.asMusicListEx().size()) {
+                mCurrentSongCodeIndex = 0;
+            }
+        } else {
+            mMusicContentCenterManager.stop();
+            mCurrentSongCodeIndex++;
+            if (mCurrentSongCodeIndex >= LyricsResourcePool.asMusicList().size()) {
+                mCurrentSongCodeIndex = 0;
+            }
         }
 
         doPlay();
@@ -595,7 +665,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void doPlay() {
         mLyricsCurrentProgress = 0;
-        mMusicContentCenterManager.preloadMusic(LyricsResourcePool.asMusicList().get(mCurrentSongCodeIndex).songCode);
+        if (mMccExService) {
+            mMccExManager.preloadMusic(LyricsResourcePool.asMusicListEx().get(mCurrentSongCodeIndex).songId, "");
+        } else {
+            mMusicContentCenterManager.preloadMusic(LyricsResourcePool.asMusicList().get(mCurrentSongCodeIndex).songCode);
+        }
     }
 
     private void forwardToSettings() {
@@ -610,8 +684,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         mLyricsCurrentProgress = mLyricsModel.startOfVerse - 1000; // Jump to slight earlier
         if (!mIsMockPlay) {
-            mMusicContentCenterManager.seek(mLyricsCurrentProgress);
-            mMusicContentCenterManager.updateMusicPosition(mLyricsCurrentProgress);
+            if (mMccExService) {
+                mMccExManager.seek(mLyricsCurrentProgress);
+                mMccExManager.updateMusicPosition(mLyricsCurrentProgress);
+            } else {
+                mMusicContentCenterManager.seek(mLyricsCurrentProgress);
+                mMusicContentCenterManager.updateMusicPosition(mLyricsCurrentProgress);
+            }
         }
         mState = Player_State.Playing;
     }
@@ -644,8 +723,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (mFuture != null) {
             mFuture.cancel(true);
         }
-
-        mMusicContentCenterManager.destroy();
+        if (mMccExService) {
+            mMccExManager.destroy();
+        } else {
+            mMusicContentCenterManager.destroy();
+        }
     }
 
     @Override
@@ -664,7 +746,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.play_mock:
                 updateCallback("Play(Mock)");
                 if (!mIsMockPlay && mState == Player_State.Playing) {
-                    mMusicContentCenterManager.stop();
+                    if (mMccExService) {
+                        mMccExManager.stop();
+                    } else {
+                        mMusicContentCenterManager.stop();
+                    }
                 }
                 mIsMockPlay = true;
                 doMockPlay();
@@ -682,13 +768,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     updateCallback("Pause");
                     binding.pause.setText("Resume");
                     if (!mIsMockPlay) {
-                        mMusicContentCenterManager.pause();
+                        if (mMccExService) {
+                            mMccExManager.pause();
+                        } else {
+                            mMusicContentCenterManager.pause();
+                        }
                     }
                 } else {
                     updateCallback("Resume");
                     binding.pause.setText("Pause");
                     if (!mIsMockPlay) {
-                        mMusicContentCenterManager.resume();
+                        if (mMccExService) {
+                            mMccExManager.resume();
+                        } else {
+                            mMusicContentCenterManager.resume();
+                        }
                     }
                 }
 
@@ -706,6 +800,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    //======================= MusicContentCenterManager.MccCallback start =============
     @Override
     public void onMusicLyricRequest(long songCode, String lyricUrl) {
         if (TextUtils.isEmpty(lyricUrl)) {
@@ -769,4 +864,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         updateCallback("Stop");
         mState = Player_State.Idle;
     }
+    //======================= MusicContentCenterManager.MccCallback end =============
+
+    //========== MccExManager.MccExCallback start=============================
+    @Override
+    public void onInitializeResult(@NonNull MccExState state, @NonNull MccExStateReason reason) {
+
+    }
+
+    @Override
+    public void onPreLoadEvent(@NonNull String requestId, long songCode, int percent, @NonNull String lyricPath, @NonNull String pitchPath, int offsetBegin, int offsetEnd, @NonNull MccExState state, @NonNull MccExStateReason reason) {
+        if (percent == 100 && state == MccExState.PRELOAD_STATE_COMPLETED) {
+            loadTheLyrics(lyricPath, pitchPath);
+        }
+    }
+
+
+    @Override
+    public void onLyricResult(@NonNull String requestId, long songCode, @NonNull String lyricPath, int offsetBegin, int offsetEnd, @NonNull MccExStateReason reason) {
+
+
+    }
+
+    @Override
+    public void onPitchResult(@NonNull String requestId, long songCode, @NonNull String pitchPath, int offsetBegin, int offsetEnd, @NonNull MccExStateReason reason) {
+    }
+
+    @Override
+    public void onPlayStateChange() {
+    }
+    //========== MccExManager.MccExCallback end=============================
 }
