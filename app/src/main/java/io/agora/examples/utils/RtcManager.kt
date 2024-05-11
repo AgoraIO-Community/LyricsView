@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 object RtcManager : IAudioFrameObserver {
-    private const val TAG = "App-MccExManager"
+    private const val TAG = "MccEx-RtcManager"
 
     private var mRtcEngine: RtcEngine? = null
     private var mCallback: RtcCallback? = null

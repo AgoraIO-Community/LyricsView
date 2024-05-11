@@ -7,7 +7,7 @@ Properties properties = new Properties()
 InputStream inputStream = project.rootProject.file('local.properties').newDataInputStream()
 properties.load(inputStream)
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
         applicationId "io.agora.examples.karaoke_view"
@@ -70,7 +70,7 @@ android {
 }
 
 dependencies {
-//    api fileTree(dir: 'libs', include: ['*.jar','*.aar'])
+    api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     if (isSdkMode.toBoolean()) {
         implementation "com.github.AgoraIO-Community:LyricsView:${sdkVersion.toString()}"
     } else {
@@ -84,28 +84,20 @@ dependencies {
     androidTestImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    
+    implementation 'io.agora.rtc:agora-special-full:4.1.1.24'
 
-    if (isLocalRtcSDK.toBoolean()) {
-        implementation files('libs/agora-rtc-sdk.jar')
-    } else {
-        implementation 'io.agora.rtc:agora-special-full:4.1.1.24'
-    }
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'io.agora:authentication:2.0.0'
     implementation 'commons-codec:commons-codec:1.16.0'
     implementation 'pub.devrel:easypermissions:3.0.0'
 
-    implementation("io.github.winskyan:Agora-MccExService:2.2.0.130-alpha.1"){
-        exclude(group: "io.agora.rtc", module: "agora-special-full")
-    }
+//    implementation("io.github.winskyan:Agora-MccExService:2.2.0.130-alpha.1"){
+//        exclude(group: "io.agora.rtc", module: "agora-special-full")
+//    }
 
-//    implementation 'androidx.core:core-ktx:1.10.1'
-//    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-//    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-
-//    def room_version = "2.5.1"
-//    implementation "androidx.room:room-runtime:$room_version"
-//    implementation "androidx.room:room-ktx:$room_version"
-//    kapt "androidx.room:room-compiler:$room_version"
+    def room_version = "2.6.1"
+    implementation "androidx.room:room-runtime:$room_version"
+    implementation "androidx.room:room-ktx:$room_version"
 }

@@ -1,6 +1,7 @@
 package io.agora.examples.karaoke_view;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -44,6 +45,7 @@ import io.agora.examples.karaoke_view.databinding.ActivityMainBinding;
 import io.agora.examples.utils.MccExManager;
 import io.agora.examples.utils.MusicContentCenterManager;
 import io.agora.examples.utils.ResourceHelper;
+import io.agora.examples.utils.RtcManager;
 import io.agora.karaoke_view.v11.KaraokeEvent;
 import io.agora.karaoke_view.v11.KaraokeView;
 import io.agora.karaoke_view.v11.constants.Constants;
@@ -52,11 +54,11 @@ import io.agora.karaoke_view.v11.downloader.LyricsFileDownloader;
 import io.agora.karaoke_view.v11.downloader.LyricsFileDownloaderCallback;
 import io.agora.karaoke_view.v11.model.LyricsLineModel;
 import io.agora.karaoke_view.v11.model.LyricsModel;
-import io.agora.karaoke_view.v11.utils.LyricsParser;
 import io.agora.logging.ConsoleLogger;
 import io.agora.mccex.constants.MccExState;
 import io.agora.mccex.constants.MccExStateReason;
-import io.agora.examples.utils.RtcManager;
+import io.agora.mccex.model.LineScoreData;
+import io.agora.mccex.model.RawScoreData;
 import io.agora.rtc2.IRtcEngineEventHandler;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -80,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private MusicContentCenterManager mMusicContentCenterManager;
     private RtcManager mRtcManager;
     private MccExManager mMccExManager;
-    private boolean mMccExService = true;
+    private final boolean mMccExService = true;
     private boolean mIsMockPlay = false;
     private ConsoleLogger mConsoleLogger;
     private static final int TAG_PERMISSION_REQUEST_CODE = 1000;
@@ -177,8 +179,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
             }
         });
-
-        //loadTheLyrics(LyricsResourcePool.asList().get(mCurrentIndex).lyrics, LyricsResourcePool.asList().get(mCurrentIndex).pitches);
 
         loadPreferences();
 
@@ -279,28 +279,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (lrcUri.startsWith("https://") || lrcUri.startsWith("http://")) {
             LyricsFileDownloader.getInstance(this).download(lrcUri);
         } else {
+            File lrc;
+            File pitch;
             if (mMccExService) {
-                File lrc = new File(lrcUri);
-                File pitch = new File(pitchUri);
+                lrc = new File(lrcUri);
+                pitch = new File(pitchUri);
                 mLyricsModel = KaraokeView.parseLyricsDataEx(lrc, pitch);
 
-                if (mLyricsModel != null) {
-                    mKaraokeView.setLyricsData(mLyricsModel);
-                }
-                playMusic();
-                updateLyricsDescription();
+                mKaraokeView.setLyricsData(mLyricsModel);
             } else {
-                File lrc = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
-                File pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
+                lrc = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
+                pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
                 lrc = extractFromZipFileIfPossible(lrc);
                 mLyricsModel = KaraokeView.parseLyricsData(lrc, pitch);
 
                 if (mLyricsModel != null) {
                     mKaraokeView.setLyricsData(mLyricsModel);
                 }
-                playMusic();
-                updateLyricsDescription();
             }
+            playMusic();
+            updateLyricsDescription();
 
         }
     }
@@ -323,9 +321,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void playMusic() {
+        Log.i(TAG, "playMusic");
         if (!mIsMockPlay) {
             if (mMccExService) {
-//                mMccExManager.openMusic(LyricsResourcePool.asMusicListEx().get(mCurrentSongCodeIndex).songId);
+                mMccExManager.startScore(LyricsResourcePool.asMusicListEx().get(mCurrentSongCodeIndex).songId, "");
             } else {
                 mMusicContentCenterManager.openMusic(LyricsResourcePool.asMusicList().get(mCurrentSongCodeIndex).songCode);
             }
@@ -581,6 +580,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Player_State mState = Player_State.Uninitialized;
 
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+        super.onPointerCaptureChanged(hasCapture);
+    }
+
 
     private enum Player_State {
         Uninitialized(-1),
@@ -624,6 +628,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         mFuture = mExecutor.scheduleAtFixedRate(new Runnable() {
+            @SuppressLint("LongLogTag")
             @Override
             public void run() {
                 if (mState == Player_State.Pause) { // mock player pausing
@@ -874,16 +879,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onPreLoadEvent(@NonNull String requestId, long songCode, int percent, @NonNull String lyricPath, @NonNull String pitchPath, int offsetBegin, int offsetEnd, @NonNull MccExState state, @NonNull MccExStateReason reason) {
-        if (percent == 100 && state == MccExState.PRELOAD_STATE_COMPLETED) {
-            loadTheLyrics(lyricPath, pitchPath);
-        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (percent == 100 && state == MccExState.PRELOAD_STATE_COMPLETED) {
+                    loadTheLyrics(lyricPath, pitchPath);
+                }
+
+                updateCallback("Preload: " + songCode + "  " + percent + "%");
+            }
+        });
     }
 
+    @Override
+    public void onLineScore(long songCode, @NonNull LineScoreData value) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateCallback("score=" + value.getLinePitchScore() + ", cumulatedScore=" + value.getCumulativeTotalLinePitchScores() + ", index=" + value.getPerformedLineIndex() + ", total=" + value.getPerformedTotalLines());
+            }
+        });
+    }
 
     @Override
     public void onLyricResult(@NonNull String requestId, long songCode, @NonNull String lyricPath, int offsetBegin, int offsetEnd, @NonNull MccExStateReason reason) {
-
-
     }
 
     @Override
@@ -893,5 +912,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onPlayStateChange() {
     }
+
+    @Override
+    public void onPitch(long songCode, @NonNull RawScoreData data) {
+    }
+
     //========== MccExManager.MccExCallback end=============================
 }
