@@ -27,11 +27,20 @@ public class LyricsResourcePool {
 
         public final long songCode;
         public final String songName;
+        public final String songId;
 
         MusicResource(int index, long songCode, String songName) {
             this.index = index;
             this.songCode = songCode;
             this.songName = songName;
+            this.songId = "";
+        }
+
+        MusicResource(int index, String songId, String songName) {
+            this.index = index;
+            this.songId = songId;
+            this.songName = songName;
+            this.songCode = -1;
         }
     }
 
@@ -144,6 +153,33 @@ public class LyricsResourcePool {
 //        list.add(new MusicResource(12, 6625526603742770L, "说爱你"));
 //        list.add(new MusicResource(13, 6625526639142490L, "如果这都不算爱"));
 
+        return list;
+    }
+
+    /**
+     * [SongInfo(songId=625628712, optionJson=, songName=怨苍天变了心 (如果让我遇见你), singerName=余又),
+     * SongInfo(songId=542869354, optionJson=, songName=Arabian Adventure (Eugene Star Remix),singerName=Eugene Star),
+     * SongInfo(songId=625281172, optionJson=, songName=最后一页, singerName=王赫野),
+     * SongInfo(songId=310937426, optionJson=, songName=怀抱, singerName=弹壳),
+     * SongInfo(songId=627313975, optionJson=, songName=根本你不懂得爱我 (说唱版), singerName=朱思思Jessie,YangYang),
+     * SongInfo(songId=32259070, optionJson=, songName=奢香夫人, singerName=凤凰传奇),
+     * SongInfo(songId=288308118, optionJson=, songName=还是分开, singerName=张叶蕾),
+     * SongInfo(songId=89488966, optionJson=, songName=在你的身边, singerName=盛哲),
+     * SongInfo(songId=40289835, optionJson=, songName=十年, singerName=陈奕迅),
+     * SongInfo(songId=621162805, optionJson=, songName=梦回花事了, singerName=Lil Yo)]
+     */
+    public static List<MusicResource> asMusicListEx() {
+        ArrayList<MusicResource> list = new ArrayList<>();
+        list.add(new MusicResource(0, "625628712", "怨苍天变了心 (如果让我遇见你)"));
+        list.add(new MusicResource(1, "542869354", "Arabian Adventure (Eugene Star Remix)"));
+        list.add(new MusicResource(2, "625281172", "最后一页"));
+        list.add(new MusicResource(3, "310937426", "怀抱"));
+        list.add(new MusicResource(4, "627313975", "根本你不懂得爱我 (说唱版)"));
+        list.add(new MusicResource(4, "32259070", "奢香夫人"));
+        list.add(new MusicResource(4, "288308118", "还是分开"));
+        list.add(new MusicResource(4, "89488966", "在你的身边"));
+        list.add(new MusicResource(4, "40289835", "十年"));
+        list.add(new MusicResource(4, "621162805", "梦回花事了"));
         return list;
     }
 }
