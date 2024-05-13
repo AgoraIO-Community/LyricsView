@@ -42,7 +42,7 @@ import java.util.zip.ZipInputStream;
 import io.agora.examples.karaoke_view.databinding.ActivityMainBinding;
 import io.agora.examples.utils.MccExManager;
 import io.agora.examples.utils.MusicContentCenterManager;
-import io.agora.examples.utils.ResourceHelper;
+import io.agora.examples.utils.Utils;
 import io.agora.examples.utils.RtcManager;
 import io.agora.karaoke_view.KaraokeEvent;
 import io.agora.karaoke_view.KaraokeView;
@@ -275,8 +275,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 mKaraokeView.setLyricData(mLyricsModel);
             } else {
-                lrc = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
-                pitch = ResourceHelper.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
+                lrc = Utils.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
+                pitch = Utils.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
                 lrc = extractFromZipFileIfPossible(lrc);
                 mLyricsModel = KaraokeView.parseLyricData(lrc, pitch);
 

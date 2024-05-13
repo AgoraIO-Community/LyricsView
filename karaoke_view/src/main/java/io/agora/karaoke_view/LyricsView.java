@@ -27,13 +27,13 @@ import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 
 import io.agora.karaoke_view.constants.Constants;
+import io.agora.karaoke_view.internal.LyricMachine;
 import io.agora.karaoke_view.internal.config.Config;
 import io.agora.karaoke_view.internal.constants.LyricType;
 import io.agora.karaoke_view.internal.model.LyricsLineModel;
-import io.agora.karaoke_view.internal.LyricMachine;
+import io.agora.karaoke_view.internal.utils.LogUtils;
 import io.agora.karaoke_view.internal.utils.LyricsLineDrawerHelper;
 import io.agora.karaoke_view.model.LyricModel;
-import io.agora.logging.LogManager;
 
 /**
  * 歌词视图
@@ -50,7 +50,7 @@ public class LyricsView extends View {
 
     private volatile LyricModel mLyricsModel;
 
-    private LyricMachine mScoringMachine;
+    private LyricMachine mLyricMachine;
 
     private final TextPaint mPaintNoLyricsFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint mPaintFG = new TextPaint(Paint.ANTI_ALIAS_FLAG);
@@ -235,7 +235,7 @@ public class LyricsView extends View {
             return super.onTouchEvent(event);
         }
 
-        LyricMachine machine = this.mScoringMachine;
+        LyricMachine machine = this.mLyricMachine;
         LyricModel lyricsModel = this.mLyricsModel;
         if (uninitializedOrNoLyrics(machine)) {
             return super.onTouchEvent(event);
@@ -417,11 +417,11 @@ public class LyricsView extends View {
     }
 
     protected final boolean uninitializedOrNoLyrics(LyricMachine machine) {
-        return machine == null || mScoringMachine == null || mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty();
+        return machine == null || mLyricMachine == null || mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty();
     }
 
     public void requestRefreshUi() {
-        LyricMachine machine = this.mScoringMachine;
+        LyricMachine machine = this.mLyricMachine;
         if (machine == null) {
             return;
         }
@@ -430,7 +430,7 @@ public class LyricsView extends View {
     }
 
     private boolean refreshNoLyrics() {
-        LyricMachine machine = this.mScoringMachine;
+        LyricMachine machine = this.mLyricMachine;
         if (uninitializedOrNoLyrics(machine)) {
             if ((mCurrentTime / 1000) % 2 == 0) {
                 performInvalidateIfNecessary();
@@ -531,7 +531,7 @@ public class LyricsView extends View {
             return;
         }
 
-        LyricMachine machine = this.mScoringMachine;
+        LyricMachine machine = this.mLyricMachine;
         LyricModel lyricsModel = this.mLyricsModel;
         if (uninitializedOrNoLyrics(machine)) {
             int width = getViewportWidth();
@@ -657,7 +657,7 @@ public class LyricsView extends View {
                             float fraction = animation.getAnimatedFraction();
 
                             if (Config.DEBUG) {
-                                LogManager.instance().debug(TAG, "debugAnimation/onAnimationUpdate/REAL: fraction=" + fraction);
+                                LogUtils.d("debugAnimation/onAnimationUpdate/REAL: fraction=" + fraction);
                             }
 
                             doConfigCanvasAndTexts(fraction);
@@ -743,7 +743,7 @@ public class LyricsView extends View {
         if (!mEnablePreludeEndPositionIndicator) {
             return;
         }
-        LyricMachine machine = this.mScoringMachine;
+        LyricMachine machine = this.mLyricMachine;
         LyricModel lyricsModel = this.mLyricsModel;
         if (uninitializedOrNoLyrics(machine)) {
             return;
@@ -825,7 +825,7 @@ public class LyricsView extends View {
             mCurrentLineTranslateX = 0;
         }
         if (Config.DEBUG) {
-            LogManager.instance().debug(TAG, "checkIfXTranslationShouldApply xTranslation: " + mCurrentLineTranslateX + ", " +
+            LogUtils.d("checkIfXTranslationShouldApply xTranslation: " + mCurrentLineTranslateX + ", " +
                     "widthOfHighlightRect: " + mRectClip.width() + ", mLastRightOfRectClip: " + mLastRightOfRectClip + ", " +
                     "widthOfCurrentLine: " + currentLineDrawHelper.getWidth() + ", widthOfLyricsView: " + halfWidthOfLyricsView * 2);
         }
@@ -915,7 +915,7 @@ public class LyricsView extends View {
         if (!machine.isReady()) {
             throw new IllegalStateException("Must call ScoringMachine.prepare before attaching");
         }
-        this.mScoringMachine = machine;
+        this.mLyricMachine = machine;
         this.mLyricsModel = machine.getLyricsModel();
 
         // Update values from UI view if necessary
@@ -957,7 +957,7 @@ public class LyricsView extends View {
     }
 
     private void resetInternal() {
-        mScoringMachine = null;
+        mLyricMachine = null;
         mLyricsModel = null;
         mIndexOfCurrentLine = 0;
         mForceUpdateUI = UpdateUIType.UpdateUIType_NORMAL;
@@ -974,7 +974,7 @@ public class LyricsView extends View {
      * 二分法查找当前时间应该显示的行数（最后一个 <= time 的行数）
      */
     private int quickSearchLineByTimestamp(long time) {
-        LyricMachine machine = this.mScoringMachine;
+        LyricMachine machine = this.mLyricMachine;
         LyricModel lyricsModel = this.mLyricsModel;
         if (uninitializedOrNoLyrics(machine)) {
             return 0;

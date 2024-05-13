@@ -7,7 +7,6 @@ import java.io.File;
 import io.agora.karaoke_view.internal.LyricMachine;
 import io.agora.karaoke_view.internal.config.Config;
 import io.agora.karaoke_view.internal.lyric.parse.LyricPitchParser;
-import io.agora.karaoke_view.internal.model.KrcPitchData;
 import io.agora.karaoke_view.internal.utils.LogUtils;
 import io.agora.karaoke_view.model.LyricModel;
 import io.agora.logging.Logger;
@@ -173,16 +172,8 @@ public class KaraokeView {
     public void setPitch(float speakerPitch, int progressInMs) {
         mLyricMachine.setPitch(speakerPitch, progressInMs);
 
-        //for test
-        for (KrcPitchData data : mLyricMachine.getLyricsModel().pitchDataList) {
-            if (progressInMs >= data.startTime && progressInMs <= (data.startTime + data.duration)) {
-                LogUtils.d("setPitch data:" + data);
-                speakerPitch = data.pitch;
-                break;
-            }
-        }
         if (mScoringView != null) {
-            mScoringView.setPitch(speakerPitch, progressInMs);
+            mScoringView.setPitch(speakerPitch, mLyricMachine.getRefPitch(progressInMs));
         }
     }
 

@@ -1323,9 +1323,9 @@ public class LyricsInstrumentedTest {
 
         File lyrics = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
         File pitches = ResourceHelper.copyAssetsToCreateNewFile(appContext, fileNameOfPitch);
-         LyricsModel model = LyricsParser.parseLyricFile(lyrics,pitches);
-         assertEquals(0, model.lines.get(0).getStartTime());
-         // 移除版权信息类型
+        LyricsModel model = LyricsParser.parseLyricFile(lyrics, pitches);
+        assertEquals(0, model.lines.get(0).getStartTime());
+        // 移除版权信息类型
 //        LyricsModel model = LyricsParser.parseLyricFile(lyrics, pitches, false);
 //        assertEquals(15457, model.lines.get(0).getStartTime());
 

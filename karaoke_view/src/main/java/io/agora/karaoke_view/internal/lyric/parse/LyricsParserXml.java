@@ -16,15 +16,9 @@ import java.util.List;
 import io.agora.karaoke_view.constants.Constants;
 import io.agora.karaoke_view.internal.constants.LyricType;
 import io.agora.karaoke_view.internal.model.LyricsLineModel;
+import io.agora.karaoke_view.internal.utils.LogUtils;
 import io.agora.karaoke_view.model.LyricModel;
-import io.agora.logging.LogManager;
 
-/**
- * 加载 xml 歌词(逐字)
- *
- * @author chenhengfei(Aslanchen)
- * @date 2021/7/6
- */
 class LyricsParserXml {
     private static final String TAG = Constants.TAG + "-LyricsParserXml";
 
@@ -53,7 +47,7 @@ class LyricsParserXml {
      */
     public static LyricModel parseLrc(File lrcFile) {
         if (lrcFile == null || !lrcFile.exists()) {
-            LogManager.instance().error(TAG, "unexpected lyrics file " + lrcFile);
+            LogUtils.e("unexpected lyrics file " + lrcFile);
             return null;
         }
 
@@ -64,7 +58,7 @@ class LyricsParserXml {
             parser.nextTag();
             return parseLrcByXmlParse(parser);
         } catch (Exception e) {
-            LogManager.instance().error(TAG, Log.getStackTraceString(e));
+            LogUtils.e(Log.getStackTraceString(e));
         }
 
         return null;
@@ -75,7 +69,7 @@ class LyricsParserXml {
      */
     public static LyricModel parseLrc(byte[] lrcFileData) {
         if (lrcFileData == null || lrcFileData.length == 0) {
-            LogManager.instance().error(TAG, " lyrics file data is empty");
+            LogUtils.e("lyrics file data is empty");
             return null;
         }
 
@@ -87,7 +81,7 @@ class LyricsParserXml {
 
             return parseLrcByXmlParse(parser);
         } catch (Exception e) {
-            LogManager.instance().error(TAG, Log.getStackTraceString(e));
+            LogUtils.e(Log.getStackTraceString(e));
         }
 
         return null;
@@ -97,7 +91,7 @@ class LyricsParserXml {
         try {
             Song song = readLrc(parser);
             if (song.midi == null || song.midi.paragraphs == null) {
-                LogManager.instance().error(TAG, "no midi or paragraph");
+                LogUtils.e(" no midi or paragraph");
                 return null;
             }
 
@@ -116,7 +110,7 @@ class LyricsParserXml {
             lyrics.lines = lines;
 
             if (lyrics.duration <= 0 || lyrics.preludeEndPosition < 0) {
-                LogManager.instance().error(TAG, "no sentence or tone or unexpected timestamp of tone: " + lyrics.preludeEndPosition + " " + lyrics.duration);
+                LogUtils.e(" no sentence or tone or unexpected timestamp of tone:" + lyrics.preludeEndPosition + " " + lyrics.duration);
                 // Invalid lyrics
                 return null;
             }

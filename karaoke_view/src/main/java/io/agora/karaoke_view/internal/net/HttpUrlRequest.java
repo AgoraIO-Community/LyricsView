@@ -15,9 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-import io.agora.karaoke_view.internal.config.Config;
 import io.agora.karaoke_view.constants.Constants;
-import io.agora.logging.LogManager;
+import io.agora.karaoke_view.internal.config.Config;
+import io.agora.karaoke_view.internal.utils.LogUtils;
 
 
 public class HttpUrlRequest {
@@ -38,7 +38,7 @@ public class HttpUrlRequest {
     }
 
     public void requestPostUrl(String urlStr, Map<String, String> requestProperty, String writeData, boolean isStream) {
-        LogManager.instance().debug(TAG, "http requestPostUrl urlStr:" + urlStr + ",requestProperty:" + requestProperty + ", writeData:" + writeData);
+        LogUtils.d("http requestPostUrl urlStr:" + urlStr + ",requestProperty:" + requestProperty + ", writeData:" + writeData);
         InputStream is = null;
         StringBuilder responseContent = new StringBuilder();
         try {
@@ -79,7 +79,7 @@ public class HttpUrlRequest {
                 for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
                     String name = entry.getKey();
                     for (String value : entry.getValue()) {
-                        LogManager.instance().debug(TAG, "http response header:" + name + " : " + value);
+                        LogUtils.d("http response header:" + name + " : " + value);
                     }
                 }
             }
@@ -163,7 +163,7 @@ public class HttpUrlRequest {
     }
 
     public void requestGetUrl(String urlStr, Map<String, String> headers) {
-        LogManager.instance().debug(TAG, "http requestGetUrl urlStr:" + urlStr + ",headers:" + headers);
+        LogUtils.d("http requestGetUrl urlStr:" + urlStr + ",headers:" + headers);
         try {
             URL url = new URL(urlStr);
 
@@ -186,7 +186,7 @@ public class HttpUrlRequest {
                 for (Map.Entry<String, List<String>> entry : responseHeaders.entrySet()) {
                     String name = entry.getKey();
                     for (String value : entry.getValue()) {
-                        LogManager.instance().debug(TAG, "http response header:" + name + " : " + value);
+                        LogUtils.d("http response header:" + name + " : " + value);
                     }
                 }
             }
@@ -242,7 +242,7 @@ public class HttpUrlRequest {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            LogManager.instance().debug(TAG, "http response " + e);
+            LogUtils.d("http response " + e);
             if (null != mCallback) {
                 if (e instanceof java.net.SocketTimeoutException) {
                     mCallback.requestFail(Constants.ERROR_HTTP_TIMEOUT, e.getMessage());

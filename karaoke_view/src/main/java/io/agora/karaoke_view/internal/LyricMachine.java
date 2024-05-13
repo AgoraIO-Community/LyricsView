@@ -1,7 +1,8 @@
 package io.agora.karaoke_view.internal;
 
-import io.agora.karaoke_view.constants.Constants;
-import io.agora.karaoke_view.internal.ai.AINative;
+import java.util.ArrayList;
+import java.util.List;
+
 import io.agora.karaoke_view.internal.config.Config;
 import io.agora.karaoke_view.internal.constants.LyricType;
 import io.agora.karaoke_view.internal.model.KrcPitchData;
@@ -15,14 +16,13 @@ import io.agora.karaoke_view.model.LyricModel;
  * Non-ui related, shared by all components
  */
 public class LyricMachine {
-    private static final String TAG = Constants.TAG + "-ScoringMachine";
     private LyricModel mLyricsModel;
     private final OnLyricListener mListener;
     private long mCurrentProgress = 0;
     private float mMaximumRefPitch = 0;
     private float mMinimumRefPitch = 100;
 
-    private static final int ZERO_PITCH_COUNT_THRESHOLD = 10;
+    private List<LyricsLineModel> mShowLines;
 
     public LyricMachine(OnLyricListener listener) {
         reset();
@@ -51,14 +51,31 @@ public class LyricMachine {
                 }
             }
         } else if (model.type == LyricType.KRC) {
-
             if (model.pitchDataList != null) {
                 for (KrcPitchData data : model.pitchDataList) {
                     mMinimumRefPitch = (float) Math.min(mMinimumRefPitch, data.pitch);
                     mMaximumRefPitch = (float) Math.max(mMaximumRefPitch, data.pitch);
                 }
             }
+
+            mShowLines = new ArrayList<>(mLyricsModel.lines.size());
+            for (LyricsLineModel line : mLyricsModel.lines) {
+                LyricsLineModel lineModel = new LyricsLineModel();
+                long startTime = line.getStartTime();
+                long endTime = line.getEndTime();
+                for (KrcPitchData data : model.pitchDataList) {
+                    if (data.startTime >= startTime && data.startTime + data.duration <= endTime) {
+                        LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
+                        tone.begin = data.startTime;
+                        tone.end = data.startTime + data.duration;
+                        tone.pitch = (int) data.pitch;
+                        lineModel.tones.add(tone);
+                    }
+                }
+                mShowLines.add(lineModel);
+            }
         }
+
 
         LogUtils.d("prepare mMinimumRefPitch:" + mMinimumRefPitch + ",mMaximumRefPitch:" + mMaximumRefPitch);
     }
@@ -113,6 +130,7 @@ public class LyricMachine {
             return;
         }
 
+        mCurrentProgress = progressInMs;
         if (Config.DEBUG) {
             LogUtils.d("setPitch speakerPitch:" + speakerPitch + ",progressInMs:" + progressInMs);
         }
@@ -137,10 +155,6 @@ public class LyricMachine {
         resetProperties();
 
         resetStats();
-
-        if (Config.USE_AI_ALGORITHM) {
-            AINative.reset();
-        }
     }
 
     private void resetProperties() { // Reset when song changed
@@ -177,6 +191,31 @@ public class LyricMachine {
 
     public float getMaximumRefPitch() {
         return this.mMaximumRefPitch;
+    }
+
+    public List<LyricsLineModel> getShowLines() {
+        return mShowLines;
+    }
+
+    public float getRefPitch(int progressInMs) {
+        if (mLyricsModel.type == LyricType.KRC) {
+            if (null != mLyricsModel.pitchDataList) {
+                for (KrcPitchData data : mLyricsModel.pitchDataList) {
+                    if (data.startTime <= progressInMs && data.startTime + data.duration >= progressInMs) {
+                        return data.pitch;
+                    }
+                }
+            }
+        } else {
+            for (LyricsLineModel line : mLyricsModel.lines) {
+                for (LyricsLineModel.Tone tone : line.tones) {
+                    if (tone.begin <= progressInMs && tone.end >= progressInMs) {
+                        return tone.pitch;
+                    }
+                }
+            }
+        }
+        return 0;
     }
 
 

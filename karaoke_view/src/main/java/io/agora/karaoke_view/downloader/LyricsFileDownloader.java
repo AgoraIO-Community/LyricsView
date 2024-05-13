@@ -29,8 +29,8 @@ import io.agora.karaoke_view.constants.Constants;
 import io.agora.karaoke_view.constants.DownloadError;
 import io.agora.karaoke_view.internal.model.DownloadLyricModel;
 import io.agora.karaoke_view.internal.net.HttpUrlRequest;
+import io.agora.karaoke_view.internal.utils.LogUtils;
 import io.agora.karaoke_view.utils.Utils;
-import io.agora.logging.LogManager;
 
 public class LyricsFileDownloader {
     private static final String TAG = Constants.TAG + "-LyricsFileDownloader";
@@ -79,9 +79,9 @@ public class LyricsFileDownloader {
      * @param maxFileNum Maximum number of files
      */
     public void setMaxFileNum(int maxFileNum) {
-        LogManager.instance().debug(TAG, "setMaxFileNum maxFileNum:" + maxFileNum);
+        LogUtils.d("setMaxFileNum maxFileNum:" + maxFileNum);
         if (maxFileNum <= 0) {
-            LogManager.instance().error(TAG, "setMaxFileNum maxFileNum is invalid");
+            LogUtils.e("setMaxFileNum maxFileNum is invalid");
             return;
         }
         mMaxFileNum = maxFileNum;
@@ -91,9 +91,9 @@ public class LyricsFileDownloader {
      * @param maxFileAge Unit: seconds
      */
     public void setMaxFileAge(long maxFileAge) {
-        LogManager.instance().debug(TAG, "setMaxFileAge maxFileAge:" + maxFileAge);
+        LogUtils.d("setMaxFileAge maxFileAge:" + maxFileAge);
         if (maxFileAge <= 0) {
-            LogManager.instance().error(TAG, "setMaxFileAge maxFileAge is invalid");
+            LogUtils.e("setMaxFileAge maxFileAge is invalid");
             return;
         }
         mMaxFileAge = maxFileAge;
@@ -107,25 +107,25 @@ public class LyricsFileDownloader {
      */
     public int download(final String url) {
         if (null == mContext) {
-            LogManager.instance().error(TAG, "download context is null");
+            LogUtils.e("download context is null");
             return Constants.ERROR_GENERAL;
         }
         if (TextUtils.isEmpty(url)) {
-            LogManager.instance().error(TAG, "download url is null");
+            LogUtils.e("download url is null");
             return Constants.ERROR_GENERAL;
         }
 
         synchronized (this) {
-            LogManager.instance().debug(TAG, "download url:" + url);
+            LogUtils.d("download url:" + url);
             if (mLyricsDownloaderMap.containsKey(url)) {
-                LogManager.instance().info(TAG, "download url is downloading");
+                LogUtils.i("download url is downloading");
                 DownloadLyricModel model = mLyricsDownloaderMap.get(url);
                 if (null != model) {
                     notifyLyricsFileDownloadCompleted(model.getRequestId(), null, DownloadError.REPEAT_DOWNLOADING);
                     return model.getRequestId();
                 } else {
                     mLyricsDownloaderMap.remove(url);
-                    LogManager.instance().error(TAG, "exception and remove downloading url:" + url);
+                    LogUtils.e("exception and remove downloading url:" + url);
                 }
             }
 
@@ -147,7 +147,7 @@ public class LyricsFileDownloader {
             }
             final File file = new File(folder, urlFileName);
             if (file.exists()) {
-                LogManager.instance().debug(TAG, "download " + file.getPath() + " exists");
+                LogUtils.d("download " + file.getPath() + " exists");
                 handleDownloadedFile(mRequestId, file);
                 return mRequestId;
             }
@@ -164,7 +164,7 @@ public class LyricsFileDownloader {
             mExecutorCacheService.execute(new Runnable() {
                 @Override
                 public void run() {
-                    LogManager.instance().debug(TAG, "download requestId:" + downloadRequestId + ",url:" + url + ",saveTo:" + file.getPath());
+                    LogUtils.d("download requestId:" + downloadRequestId + ",url:" + url + ",saveTo:" + file.getPath());
                     request.setCallback(new HttpUrlRequest.RequestCallback() {
                         @Override
                         public void updateResponseData(byte[] bytes, int len, int currentLen, int total) {
@@ -176,7 +176,7 @@ public class LyricsFileDownloader {
                                 progress = ((int) (currentLen * 100 / total)) / 100.0f;
                             }
 
-                            LogManager.instance().debug(TAG, "download progress requestId:" + downloadRequestId + ",url:" + url + ",currentLen:" + currentLen + ",total:" + total + ",progress:" + progress);
+                            LogUtils.d("download progress requestId:" + downloadRequestId + ",url:" + url + ",currentLen:" + currentLen + ",total:" + total + ",progress:" + progress);
                             if (null != bytes) {
                                 try {
                                     byte[] data = new byte[len];
@@ -186,7 +186,7 @@ public class LyricsFileDownloader {
                                     fos.close();
                                 } catch (Exception e) {
                                     e.printStackTrace();
-                                    LogManager.instance().error(TAG, "download requestId:" + downloadRequestId + ",url:" + url + " write file fail:" + e);
+                                    LogUtils.e("download requestId:" + downloadRequestId + ",url:" + url + " write file fail:" + e);
                                 }
                             }
                             if (null != mLyricsFileDownloaderCallback) {
@@ -199,7 +199,7 @@ public class LyricsFileDownloader {
                             if (!mLyricsDownloaderMap.containsKey(url)) {
                                 return;
                             }
-                            LogManager.instance().error(TAG, "download fail requestId:" + downloadRequestId + ",url:" + url + " fail:" + errorCode + " " + msg);
+                            LogUtils.e("download fail requestId:" + downloadRequestId + ",url:" + url + " fail:" + errorCode + " " + msg);
                             cancelDownload(downloadRequestId);
                             if (null != mLyricsFileDownloaderCallback) {
                                 DownloadError downloadError;
@@ -222,7 +222,7 @@ public class LyricsFileDownloader {
                             if (!mLyricsDownloaderMap.containsKey(url)) {
                                 return;
                             }
-                            LogManager.instance().debug(TAG, "download finish requestId:" + downloadRequestId + ",url:" + url + " finish");
+                            LogUtils.d("download finish requestId:" + downloadRequestId + ",url:" + url + " finish");
                             handleDownloadedFile(downloadRequestId, file);
                             mLyricsDownloaderMap.remove(url);
                         }
@@ -235,11 +235,11 @@ public class LyricsFileDownloader {
     }
 
     private synchronized void handleDownloadedFile(int requestId, File file) {
-        LogManager.instance().debug(TAG, "handleDownloadedFile requestId:" + requestId + ",file:" + file.getPath());
+        LogUtils.d("handleDownloadedFile requestId:" + requestId + ",file:" + file.getPath());
         checkFileAge(new File(mContext.getExternalCacheDir(), Constants.LYRICS_FILE_DOWNLOAD_DIR));
         if (file.exists()) {
             if (file.getName().toLowerCase().endsWith(Constants.FILE_EXTENSION_ZIP)) {
-                LogManager.instance().debug(TAG, "handleDownloadedFile file is zip file");
+                LogUtils.d("handleDownloadedFile file is zip file");
                 ByteArrayOutputStream byteArrayOutputStream = null;
                 // buffer for read and write data to file
                 byte[] buffer = new byte[1024];
@@ -249,7 +249,7 @@ public class LyricsFileDownloader {
                     //get first ZipEntry
                     ZipEntry entry = zis.getNextEntry();
                     String fileName = entry.getName();
-                    LogManager.instance().debug(TAG, "handleDownloadedFile unzip file:" + fileName);
+                    LogUtils.d("handleDownloadedFile unzip file:" + fileName);
                     if (isSupportLyricsFile(fileName)) {
                         int len;
                         while ((len = zis.read(buffer)) > 0) {
@@ -262,7 +262,7 @@ public class LyricsFileDownloader {
                         // close last ZipEntry
                     } else {
                         zis.closeEntry();
-                        LogManager.instance().error(TAG, "handleDownloadedFile file is not support lyrics file " + fileName + " in zip file");
+                        LogUtils.e("handleDownloadedFile file is not support lyrics file " + fileName + " in zip file");
                         DownloadError error = DownloadError.UNZIP_FAIL;
                         error.setErrorCode(Constants.ERROR_UNZIP_ERROR);
                         notifyLyricsFileDownloadCompleted(requestId, null, error);
@@ -270,7 +270,7 @@ public class LyricsFileDownloader {
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    LogManager.instance().error(TAG, "handleDownloadedFile unzip exception:" + e);
+                    LogUtils.e("handleDownloadedFile unzip exception:" + e);
                     notifyLyricsFileDownloadCompleted(requestId, null, DownloadError.UNZIP_FAIL);
                     return;
                 }
@@ -292,31 +292,31 @@ public class LyricsFileDownloader {
                     fos.close();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    LogManager.instance().error(TAG, "handleDownloadedFile write file exception:" + e);
+                    LogUtils.e("handleDownloadedFile write file exception:" + e);
                     notifyLyricsFileDownloadCompleted(requestId, null, DownloadError.UNZIP_FAIL);
                     return;
                 }
-                LogManager.instance().debug(TAG, "handleDownloadedFile unzip file success");
+                LogUtils.d("handleDownloadedFile unzip file success");
                 handleLyricsFile(requestId, realFile, true);
             } else if (isSupportLyricsFile(file.getName())) {
                 if (file.getName().toLowerCase().endsWith(Constants.FILE_EXTENSION_XML)) {
-                    LogManager.instance().debug(TAG, "handleDownloadedFile file is xml file");
+                    LogUtils.d("handleDownloadedFile file is xml file");
                     handleLyricsFile(requestId, file, false);
                 } else if (file.getName().toLowerCase().endsWith(Constants.FILE_EXTENSION_LRC)) {
-                    LogManager.instance().debug(TAG, "handleDownloadedFile file is lrc file");
+                    LogUtils.d("handleDownloadedFile file is lrc file");
                     handleLyricsFile(requestId, file, false);
                 } else if (file.getName().toLowerCase().endsWith(Constants.FILE_EXTENSION_KRC)) {
-                    LogManager.instance().debug(TAG, "handleDownloadedFile file is krc file");
+                    LogUtils.d("handleDownloadedFile file is krc file");
                     handleLyricsFile(requestId, file, false);
                 }
             } else {
-                LogManager.instance().error(TAG, "handleDownloadedFile unknown file format and return directly");
+                LogUtils.e("handleDownloadedFile unknown file format and return directly");
                 DownloadError error = DownloadError.UNZIP_FAIL;
                 error.setErrorCode(Constants.ERROR_UNZIP_ERROR);
                 notifyLyricsFileDownloadCompleted(requestId, null, error);
             }
         } else {
-            LogManager.instance().error(TAG, "extractFromZipFileIfPossible file is not exists");
+            LogUtils.e("extractFromZipFileIfPossible file is not exists");
 
             notifyLyricsFileDownloadCompleted(requestId, null, DownloadError.HTTP_DOWNLOAD_ERROR);
         }
@@ -327,18 +327,18 @@ public class LyricsFileDownloader {
 
         if (deleteLyricsFile) {
             if (lyricFile.exists()) {
-                LogManager.instance().debug(TAG, "handleLyricsFile delete file:" + lyricFile.getPath());
+                LogUtils.d("handleLyricsFile delete file:" + lyricFile.getPath());
                 lyricFile.delete();
             }
         }
-        LogManager.instance().debug(TAG, "handleLyricsFile success");
+        LogUtils.d("handleLyricsFile success");
     }
 
     private synchronized void checkMaxFileNum() {
         File folder = new File(mContext.getExternalCacheDir(), Constants.LYRICS_FILE_DOWNLOAD_DIR);
         File[] files = folder.listFiles();
         if (null == files) {
-            LogManager.instance().info(TAG, "checkMaxFileNum files is empty");
+            LogUtils.i("checkMaxFileNum files is empty");
             return;
         }
         List<File> fileList = new ArrayList<>(Arrays.asList(files));
@@ -351,10 +351,10 @@ public class LyricsFileDownloader {
             }
         }
         if (fileList.size() <= mMaxFileNum) {
-            LogManager.instance().debug(TAG, "checkMaxFileNum fileList size:" + fileList.size() + " is less than maxFileNum:" + mMaxFileNum);
+            LogUtils.d("checkMaxFileNum fileList size:" + fileList.size() + " is less than maxFileNum:" + mMaxFileNum);
             return;
         }
-        LogManager.instance().debug(TAG, "checkMaxFileNum fileList :" + fileList);
+        LogUtils.d("checkMaxFileNum fileList :" + fileList);
         Collections.sort(fileList, new Comparator<File>() {
             @Override
             public int compare(File file1, File file2) {
@@ -385,7 +385,7 @@ public class LyricsFileDownloader {
             }
         }
         if (canDelete) {
-            LogManager.instance().debug(TAG, "maybeDeleteFile delete file:" + file.getPath());
+            LogUtils.d("maybeDeleteFile delete file:" + file.getPath());
             file.delete();
         }
 
@@ -397,11 +397,11 @@ public class LyricsFileDownloader {
         if (null == files) {
             return;
         }
-        LogManager.instance().debug(TAG, "checkFileAge files :" + Arrays.toString(files));
+        LogUtils.d("checkFileAge files :" + Arrays.toString(files));
         long now = System.currentTimeMillis();
         for (File file : files) {
             if (file.isFile() && (now - file.lastModified() > mMaxFileAge * 1000)) {
-                LogManager.instance().debug(TAG, "checkFileAge delete file:" + file.getPath());
+                LogUtils.d("checkFileAge delete file:" + file.getPath());
                 file.delete();
             }
         }
@@ -415,14 +415,14 @@ public class LyricsFileDownloader {
         checkMaxFileNum();
         if (null != mLyricsFileDownloaderCallback) {
             if (null != lyricFile) {
-                LogManager.instance().debug(TAG, "notifyLyricsFileDownloadCompleted requestId:" + requestId + ",lyricFile:" + lyricFile.getPath() + ",error:" + error);
+                LogUtils.d("notifyLyricsFileDownloadCompleted requestId:" + requestId + ",lyricFile:" + lyricFile.getPath() + ",error:" + error);
                 mLyricsFileDownloaderCallback.onLyricsFileDownloadCompleted(requestId, Utils.readFileToByteArray(lyricFile.getPath()), null);
             } else {
-                LogManager.instance().debug(TAG, "notifyLyricsFileDownloadCompleted requestId:" + requestId + ",lyricFile is null,error:" + error);
+                LogUtils.d("notifyLyricsFileDownloadCompleted requestId:" + requestId + ",lyricFile is null,error:" + error);
                 mLyricsFileDownloaderCallback.onLyricsFileDownloadCompleted(requestId, null, error);
             }
         } else {
-            LogManager.instance().debug(TAG, "notifyLyricsFileDownloadCompleted mLyricsFileDownloaderCallback is null");
+            LogUtils.d("notifyLyricsFileDownloadCompleted mLyricsFileDownloaderCallback is null");
         }
     }
 
@@ -433,10 +433,10 @@ public class LyricsFileDownloader {
      */
     public void cancelDownload(int requestId) {
         if (null == mContext) {
-            LogManager.instance().error(TAG, "cancelDownload context is null");
+            LogUtils.e("cancelDownload context is null");
             return;
         }
-        LogManager.instance().debug(TAG, "cancelDownload requestId:" + requestId);
+        LogUtils.d("cancelDownload requestId:" + requestId);
         Collection<DownloadLyricModel> values = mLyricsDownloaderMap.values();
         String url = "";
         for (DownloadLyricModel model : values) {
@@ -460,7 +460,7 @@ public class LyricsFileDownloader {
      */
     public void cleanAll() {
         if (null == mContext) {
-            LogManager.instance().error(TAG, "cleanAll context is null");
+            LogUtils.e("cleanAll context is null");
             return;
         }
         File folder = new File(mContext.getExternalCacheDir(), Constants.LYRICS_FILE_DOWNLOAD_DIR);
@@ -475,6 +475,6 @@ public class LyricsFileDownloader {
                 }
             }
         }
-        LogManager.instance().debug(TAG, "cleanAll isCleanAllSuccess:" + isCleanAllSuccess);
+        LogUtils.d("cleanAll isCleanAllSuccess:" + isCleanAllSuccess);
     }
 }
