@@ -84,7 +84,7 @@ dependencies {
     androidTestImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    
+
     implementation 'io.agora.rtc:agora-special-full:4.1.1.24'
 
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
@@ -93,11 +93,7 @@ dependencies {
     implementation 'commons-codec:commons-codec:1.16.0'
     implementation 'pub.devrel:easypermissions:3.0.0'
 
-//    implementation("io.github.winskyan:Agora-MccExService:2.2.0.130-alpha.1"){
-//        exclude(group: "io.agora.rtc", module: "agora-special-full")
-//    }
-
-    def room_version = "2.6.1"
-    implementation "androidx.room:room-runtime:$room_version"
-    implementation "androidx.room:room-ktx:$room_version"
+    implementation("io.github.winskyan:Agora-MccExService:2.2.0.130-alpha.2") {
+        exclude(group: "io.agora.rtc", module: "agora-special-full")
+    }
 }

@@ -8,7 +8,7 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        io_agora_karaoke_view_v11_ai_AINative.cpp
+        io_agora_karaoke_view_internal_ai_AINative.cpp
         Algorithm.c
         )
 

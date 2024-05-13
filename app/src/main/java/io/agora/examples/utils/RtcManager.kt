@@ -44,6 +44,10 @@ object RtcManager : IAudioFrameObserver {
                     mCallback?.onLeaveChannel(stats)
                 }
 
+                override fun onLocalAudioStats(stats: LocalAudioStats?) {
+                    super.onLocalAudioStats(stats)
+                }
+
                 override fun onLocalAudioStateChanged(state: Int, error: Int) {
                     super.onLocalAudioStateChanged(state, error)
                     Log.d(TAG, "onLocalAudioStateChanged state:$state error:$error")

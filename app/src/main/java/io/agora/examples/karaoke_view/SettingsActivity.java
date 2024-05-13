@@ -11,7 +11,7 @@ import android.widget.SeekBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import io.agora.examples.karaoke_view.databinding.ActivitySettingsBinding;
-import io.agora.karaoke_view.v11.downloader.LyricsFileDownloader;
+import io.agora.karaoke_view.downloader.LyricsFileDownloader;
 
 public class SettingsActivity extends AppCompatActivity {
 

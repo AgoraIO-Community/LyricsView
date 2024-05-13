@@ -1,14 +1,15 @@
 package io.agora.examples.karaoke_view;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 import java.io.File;
 
-import io.agora.karaoke_view.v11.VoicePitchChanger;
-import io.agora.karaoke_view.v11.internal.ScoringMachine;
-import io.agora.karaoke_view.v11.utils.LyricsParser;
+import io.agora.karaoke_view.internal.LyricMachine;
+import io.agora.karaoke_view.internal.lyric.parse.LyricPitchParser;
+import io.agora.karaoke_view.internal.utils.VoicePitchChanger;
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -30,7 +31,7 @@ public class ExampleUnitTest {
         Exception exception = null;
         File lyrics = new File("");
         try {
-            LyricsParser.parse(lyrics);
+            LyricPitchParser.parseFile(lyrics, null);
         } catch (Exception e) {
             exception = e;
         }
@@ -74,39 +75,39 @@ public class ExampleUnitTest {
     @Test
     public void testScoreCalculation2() {
         // TODO(Hai_Guo) Should figure out how to check the result if expected
-        double scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 500f, 300);
+        double scoreAfterNormalization = LyricMachine.calculateScore2(0f, 10, 0, 500f, 300);
         assertEquals(0.11564141395769778, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 500f, 300): " + scoreAfterNormalization);
 
-        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 400f, 300);
+        scoreAfterNormalization = LyricMachine.calculateScore2(0f, 10, 0, 400f, 300);
         assertEquals(0.5019550802136014, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 400f, 300): " + scoreAfterNormalization);
 
-        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 301f, 300);
+        scoreAfterNormalization = LyricMachine.calculateScore2(0f, 10, 0, 301f, 300);
         assertEquals(0.9942388175378764, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 301f, 300): " + scoreAfterNormalization);
 
-        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 300f, 300);
+        scoreAfterNormalization = LyricMachine.calculateScore2(0f, 10, 0, 300f, 300);
         assertEquals(1.0, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 300f, 300): " + scoreAfterNormalization);
 
-        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 299f, 300);
+        scoreAfterNormalization = LyricMachine.calculateScore2(0f, 10, 0, 299f, 300);
         assertEquals(0.9942195815041831, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 299f, 300): " + scoreAfterNormalization);
 
-        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 200f, 300);
+        scoreAfterNormalization = LyricMachine.calculateScore2(0f, 10, 0, 200f, 300);
         assertEquals(0.2980451578310306, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 200f, 300): " + scoreAfterNormalization);
 
-        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 100f, 300);
+        scoreAfterNormalization = LyricMachine.calculateScore2(0f, 10, 0, 100f, 300);
         assertEquals(0.0, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 100f, 300): " + scoreAfterNormalization);
 
-        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 50f, 300);
+        scoreAfterNormalization = LyricMachine.calculateScore2(0f, 10, 0, 50f, 300);
         assertEquals(0.0, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 50f, 300): " + scoreAfterNormalization);
 
-        scoreAfterNormalization = ScoringMachine.calculateScore2(0f, 10, 0, 1f, 300);
+        scoreAfterNormalization = LyricMachine.calculateScore2(0f, 10, 0, 1f, 300);
         assertEquals(0.0, scoreAfterNormalization, 0.01f);
         Logx("ScoringMachine.calculateScore2(0f, 10f, 0f, 1f, 300): " + scoreAfterNormalization);
     }

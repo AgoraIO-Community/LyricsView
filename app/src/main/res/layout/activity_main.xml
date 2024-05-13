@@ -16,7 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <io.agora.karaoke_view.v11.ScoringView
+    <io.agora.karaoke_view.ScoringView
         android:id="@+id/scoring_view"
         android:layout_width="match_parent"
         android:layout_height="120dp"
@@ -39,7 +39,7 @@
         app:layout_constraintBottom_toBottomOf="@id/scoring_view"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <io.agora.karaoke_view.v11.LyricsView
+    <io.agora.karaoke_view.LyricsView
         android:id="@+id/lyrics_view"
         android:layout_width="match_parent"
         android:layout_height="200dp"
@@ -83,16 +83,6 @@
         app:layout_constraintTop_toBottomOf="@id/lyrics_view" />
 
     <Button
-        android:id="@+id/play_mock"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="80dp"
-        android:text="Play(Mock)"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
         android:id="@+id/play"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -100,7 +90,7 @@
         android:layout_marginBottom="80dp"
         android:text="Play"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/play_mock" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/pause"
@@ -117,10 +107,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="80dp"
         android:text="Switch"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toEndOf="@id/pause" />
 
     <Button
         android:id="@+id/skip_the_intro"
@@ -130,7 +120,7 @@
         android:layout_marginBottom="30dp"
         android:text="Skip intro"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/switch_to_next" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/settings"

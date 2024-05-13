@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="LyricsView">
-        <attr name="startOfVerseIndicatorPaddingTop" format="dimension" />
-        <attr name="startOfVerseIndicatorRadius" format="dimension" />
-        <attr name="startOfVerseIndicatorColor" format="reference|color" />
+        <attr name="preludeEndPositionIndicatorPaddingTop" format="dimension" />
+        <attr name="preludeEndPositionIndicatorRadius" format="dimension" />
+        <attr name="preludeEndPositionIndicatorColor" format="reference|color" />
         <attr name="paddingTop" format="dimension" />
         <attr name="enablePreviousLines" format="boolean" />
         <attr name="enableUpcomingLines" format="boolean" />

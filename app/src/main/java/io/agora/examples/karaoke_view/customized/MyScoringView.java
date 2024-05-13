@@ -14,7 +14,7 @@ import androidx.annotation.Nullable;
 
 import com.plattysoft.leonids.ParticleSystem;
 
-import io.agora.karaoke_view.v11.ScoringView;
+import io.agora.karaoke_view.ScoringView;
 
 public class MyScoringView extends ScoringView {
 

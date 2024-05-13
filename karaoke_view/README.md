@@ -169,7 +169,7 @@ public interface KaraokeEvent {
 ### 自定义 LyricsView 控件：
 
 ```xml
-<io.agora.karaoke_view.v11.LyricsView
+<io.agora.karaoke_view.LyricsView
     android:id="@+id/lyrics_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -200,7 +200,7 @@ public interface KaraokeEvent {
 ### 自定义 ScoringView 控件：
 
 ```xml
-<io.agora.karaoke_view.v11.ScoringView
+<io.agora.karaoke_view.ScoringView
     android:id="@+id/scoring_view
     // 基准音条高度
     app:pitchStickHeight="4dp"

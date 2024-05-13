@@ -88,7 +88,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         }
 
         override fun onPositionChanged(positionMs: Long, timestampMs: Long) {
-            TODO("Not yet implemented")
+            Log.d(TAG, "onPositionChanged: $positionMs $timestampMs")
         }
 
         override fun onPlayerEvent(
@@ -359,14 +359,14 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
                 return
             }
             if (0 == mMccExService?.isPreloaded(songCode)) {
-                Log.e(TAG, "mccEx is preloaded songCode=$songCode")
+                Log.i(TAG, "mccEx is preloaded songCode=$songCode")
                 mLyricFilePath = ""
                 mPitchFilePath = ""
                 mMccExService?.getLyric(songCode, LyricType.KRC)
                 mMccExService?.getPitch(songCode)
             } else {
                 val requestId = mMccExService?.preload(songCode) ?: ""
-                Log.e(TAG, "preload requestId=$requestId")
+                Log.i(TAG, "preload requestId=$requestId")
             }
         } catch (e: Exception) {
             e.printStackTrace()
