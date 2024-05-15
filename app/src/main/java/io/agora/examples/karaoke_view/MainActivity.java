@@ -27,12 +27,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -40,10 +43,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.agora.examples.karaoke_view.databinding.ActivityMainBinding;
+import io.agora.examples.net.NetworkClient;
+import io.agora.examples.utils.KeyCenter;
 import io.agora.examples.utils.MccExManager;
 import io.agora.examples.utils.MusicContentCenterManager;
-import io.agora.examples.utils.Utils;
 import io.agora.examples.utils.RtcManager;
+import io.agora.examples.utils.ToastUtils;
+import io.agora.examples.utils.Utils;
 import io.agora.karaoke_view.KaraokeEvent;
 import io.agora.karaoke_view.KaraokeView;
 import io.agora.karaoke_view.constants.Constants;
@@ -56,6 +62,9 @@ import io.agora.mccex.constants.MccExStateReason;
 import io.agora.mccex.model.LineScoreData;
 import io.agora.mccex.model.RawScoreData;
 import io.agora.rtc2.IRtcEngineEventHandler;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener,
@@ -111,32 +120,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(binding.getRoot());
 
         if (mMccExService) {
-            mRtcManager = RtcManager.INSTANCE;
-            mRtcManager.initRtcEngine(this, new RtcManager.RtcCallback() {
-                @Override
-                public void onAudioVolumeIndication(@Nullable IRtcEngineEventHandler.AudioVolumeInfo[] speakers, int totalVolume) {
-                }
-
-                @Override
-                public void onUnMuteSuccess() {
-                }
-
-                @Override
-                public void onMuteSuccess() {
-                }
-
-                @Override
-                public void onJoinChannelSuccess(@NonNull String channel, int uid, int elapsed) {
-                }
-
-                @Override
-                public void onLeaveChannel(@NonNull IRtcEngineEventHandler.RtcStats stats) {
-
-                }
-            });
             mMccExManager = MccExManager.INSTANCE;
-            mMccExManager.setTokenAndUserId(BuildConfig.YSD_TOKEN, BuildConfig.YSD_USER_ID);
-            mMccExManager.initMccExService(RtcManager.getRtcEngine(), mRtcManager, this, MainActivity.this);
+            initMccEx();
         } else {
             mMusicContentCenterManager = new MusicContentCenterManager(this, this);
             mMusicContentCenterManager.init();
@@ -232,6 +217,70 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         });
+    }
+
+    private void initMccEx() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+
+                NetworkClient.INSTANCE.sendHttpsRequest(BuildConfig.YSD_TOKEN_HOST + KeyCenter.getUserUid(), new HashMap<>(0), "", false, new Callback() {
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                        Log.d(TAG, "initMccEx onFailure: " + e.getMessage());
+                    }
+
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                        String responseData = response.body().string();
+                        Log.d(TAG, "initMccEx onResponse: " + responseData);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    JSONObject responseJson = new JSONObject(responseData);
+                                    JSONObject dataJson = responseJson.getJSONObject("data");
+                                    String token = dataJson.getString("token");
+                                    String userId = dataJson.getString("yinsuda_uid");
+
+                                    mRtcManager = RtcManager.INSTANCE;
+                                    mRtcManager.initRtcEngine(MainActivity.this, new RtcManager.RtcCallback() {
+                                        @Override
+                                        public void onAudioVolumeIndication(@Nullable IRtcEngineEventHandler.AudioVolumeInfo[] speakers, int totalVolume) {
+                                        }
+
+                                        @Override
+                                        public void onUnMuteSuccess() {
+                                        }
+
+                                        @Override
+                                        public void onMuteSuccess() {
+                                        }
+
+                                        @Override
+                                        public void onJoinChannelSuccess(@NonNull String channel, int uid, int elapsed) {
+                                        }
+
+                                        @Override
+                                        public void onLeaveChannel(@NonNull IRtcEngineEventHandler.RtcStats stats) {
+
+                                        }
+                                    });
+                                    mMccExManager.setTokenAndUserId(token, userId);
+                                    mMccExManager.initMccExService(RtcManager.getRtcEngine(), mRtcManager, MainActivity.this, MainActivity.this);
+
+                                } catch (Exception e) {
+                                    Log.e(TAG, "initMccEx onResponse: " + e.getMessage());
+                                    ToastUtils.toastLong(MainActivity.this, "initMccEx onResponse: " + e.getMessage());
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        }).start();
+
     }
 
     @Override
@@ -552,6 +601,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private void doStop() {
+        mLyricsCurrentProgress = 0;
+        if (mMccExService) {
+            mMccExManager.stop();
+        } else {
+            mMusicContentCenterManager.stop();
+        }
+    }
+
     private void forwardToSettings() {
         Intent intent = new Intent(this, SettingsActivity.class);
         mLauncher.launch(intent);
@@ -609,24 +667,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.play:
-                updateCallback("Play");
-                doPlay();
+                if (mState == Player_State.Playing) {
+                    binding.play.setText(this.getResources().getString(R.string.play));
+                    doStop();
+                } else {
+                    binding.play.setText(this.getResources().getString(R.string.stop));
+                    updateCallback("播放");
+                    doPlay();
+                }
                 break;
             case R.id.pause:
                 if (mState != Player_State.Playing && mState != Player_State.Pause) {
                     return;
                 }
                 if (mState == Player_State.Playing) {
-                    updateCallback("Pause");
-                    binding.pause.setText("Resume");
+                    updateCallback(this.getResources().getString(R.string.pause));
+                    binding.pause.setText(this.getResources().getString(R.string.resume));
                     if (mMccExService) {
                         mMccExManager.pause();
                     } else {
                         mMusicContentCenterManager.pause();
                     }
                 } else {
-                    updateCallback("Resume");
-                    binding.pause.setText("Pause");
+                    updateCallback(this.getResources().getString(R.string.resume));
+                    binding.pause.setText(this.getResources().getString(R.string.pause));
                     if (mMccExService) {
                         mMccExManager.resume();
                     } else {

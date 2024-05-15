@@ -88,4 +88,15 @@
         <item>歌詞なし</item>
     </string-array>
 
+    <string name="play">播放</string>
+    <string name="stop">停止</string>
+    <string name="pause">暂停</string>
+    <string name="resume">继续播放</string>
+    <string name="switch_music">切歌</string>
+    <string name="skip_intro">跳过前奏</string>
+    <string name="settings">设置</string>
+    <string name="play_original" translatable="false">原唱</string>
+    <string name="play_accompany" translatable="false">伴唱</string>
+
+
 </resources>
