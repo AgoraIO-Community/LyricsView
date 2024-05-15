@@ -43,10 +43,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.agora.examples.karaoke_view.databinding.ActivityMainBinding;
-import io.agora.examples.net.NetworkClient;
 import io.agora.examples.utils.KeyCenter;
 import io.agora.examples.utils.MccExManager;
 import io.agora.examples.utils.MusicContentCenterManager;
+import io.agora.examples.utils.NetworkClient;
 import io.agora.examples.utils.RtcManager;
 import io.agora.examples.utils.ToastUtils;
 import io.agora.examples.utils.Utils;
@@ -124,6 +124,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         enableView(false);
         if (mMccExService) {
             mMccExManager = MccExManager.INSTANCE;
+            mRtcManager = RtcManager.INSTANCE;
+            mRtcManager.initRtcEngine(MainActivity.this, new RtcManager.RtcCallback() {
+                @Override
+                public void onAudioVolumeIndication(@Nullable IRtcEngineEventHandler.AudioVolumeInfo[] speakers, int totalVolume) {
+                }
+
+                @Override
+                public void onUnMuteSuccess() {
+                }
+
+                @Override
+                public void onMuteSuccess() {
+                }
+
+                @Override
+                public void onJoinChannelSuccess(@NonNull String channel, int uid, int elapsed) {
+                }
+
+                @Override
+                public void onLeaveChannel(@NonNull IRtcEngineEventHandler.RtcStats stats) {
+
+                }
+            });
             initMccEx();
         } else {
             mMusicContentCenterManager = new MusicContentCenterManager(this, this);
@@ -225,67 +248,58 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initMccEx() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        SharedPreferences prefs = getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
+        long tokenTime = prefs.getLong(io.agora.examples.utils.Constants.SP_KEY_YSD_TOKEN_TIME, 0L);
+        if (tokenTime == 0L || System.currentTimeMillis() - tokenTime > io.agora.examples.utils.Constants.TOKEN_EXPIRE_TIME) {
+            mExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    NetworkClient.INSTANCE.sendHttpsRequest(BuildConfig.YSD_TOKEN_HOST + KeyCenter.getUserUid(), new HashMap<>(0), "", false, new Callback() {
+                        @Override
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                            Log.d(TAG, "initMccEx onFailure: " + e.getMessage());
+                        }
+
+                        @Override
+                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                            String responseData = response.body().string();
+                            Log.d(TAG, "initMccEx onResponse: " + responseData);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        JSONObject responseJson = new JSONObject(responseData);
+                                        JSONObject dataJson = responseJson.getJSONObject("data");
+                                        String token = dataJson.getString("token");
+                                        String userId = dataJson.getString("yinsuda_uid");
+
+                                        SharedPreferences.Editor editor = prefs.edit();
+                                        editor.putString(io.agora.examples.utils.Constants.SP_KEY_YSD_TOKEN, token);
+                                        editor.putString(io.agora.examples.utils.Constants.SP_KEY_YSD_USER_ID, userId);
+                                        editor.putLong(io.agora.examples.utils.Constants.SP_KEY_YSD_TOKEN_TIME, System.currentTimeMillis());
+                                        editor.apply();
 
 
-                NetworkClient.INSTANCE.sendHttpsRequest(BuildConfig.YSD_TOKEN_HOST + KeyCenter.getUserUid(), new HashMap<>(0), "", false, new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        Log.d(TAG, "initMccEx onFailure: " + e.getMessage());
-                    }
-
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                        String responseData = response.body().string();
-                        Log.d(TAG, "initMccEx onResponse: " + responseData);
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    JSONObject responseJson = new JSONObject(responseData);
-                                    JSONObject dataJson = responseJson.getJSONObject("data");
-                                    String token = dataJson.getString("token");
-                                    String userId = dataJson.getString("yinsuda_uid");
-
-                                    mRtcManager = RtcManager.INSTANCE;
-                                    mRtcManager.initRtcEngine(MainActivity.this, new RtcManager.RtcCallback() {
-                                        @Override
-                                        public void onAudioVolumeIndication(@Nullable IRtcEngineEventHandler.AudioVolumeInfo[] speakers, int totalVolume) {
-                                        }
-
-                                        @Override
-                                        public void onUnMuteSuccess() {
-                                        }
-
-                                        @Override
-                                        public void onMuteSuccess() {
-                                        }
-
-                                        @Override
-                                        public void onJoinChannelSuccess(@NonNull String channel, int uid, int elapsed) {
-                                        }
-
-                                        @Override
-                                        public void onLeaveChannel(@NonNull IRtcEngineEventHandler.RtcStats stats) {
-
-                                        }
-                                    });
-                                    mMccExManager.setTokenAndUserId(token, userId);
-                                    mMccExManager.initMccExService(RtcManager.getRtcEngine(), mRtcManager, MainActivity.this, MainActivity.this);
-                                    enableView(true);
-                                } catch (Exception e) {
-                                    Log.e(TAG, "initMccEx onResponse: " + e.getMessage());
-                                    ToastUtils.toastLong(MainActivity.this, "initMccEx onResponse: " + e.getMessage());
+                                        mMccExManager.setTokenAndUserId(token, userId);
+                                        mMccExManager.initMccExService(RtcManager.getRtcEngine(), mRtcManager, MainActivity.this, MainActivity.this);
+                                        enableView(true);
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "initMccEx onResponse: " + e.getMessage());
+                                        ToastUtils.toastLong(MainActivity.this, "initMccEx onResponse: " + e.getMessage());
+                                    }
                                 }
-                            }
-                        });
-                    }
-                });
-            }
-        }).start();
-
+                            });
+                        }
+                    });
+                }
+            });
+        } else {
+            String token = prefs.getString(io.agora.examples.utils.Constants.SP_KEY_YSD_TOKEN, "");
+            String userId = prefs.getString(io.agora.examples.utils.Constants.SP_KEY_YSD_USER_ID, "");
+            mMccExManager.setTokenAndUserId(token, userId);
+            mMccExManager.initMccExService(RtcManager.getRtcEngine(), mRtcManager, MainActivity.this, MainActivity.this);
+            enableView(true);
+        }
     }
 
     @Override

@@ -7,6 +7,7 @@ import io.agora.karaoke_view.internal.config.Config;
 import io.agora.karaoke_view.internal.constants.LyricType;
 import io.agora.karaoke_view.internal.model.KrcPitchData;
 import io.agora.karaoke_view.internal.model.LyricsLineModel;
+import io.agora.karaoke_view.internal.model.LyricsPitchLineModel;
 import io.agora.karaoke_view.internal.utils.LogUtils;
 import io.agora.karaoke_view.model.LyricModel;
 
@@ -22,7 +23,7 @@ public class LyricMachine {
     private float mMaximumRefPitch = 0;
     private float mMinimumRefPitch = 100;
 
-    private List<LyricsLineModel> mShowLines;
+    private List<LyricsPitchLineModel> mShowLyricsLines;
 
     public LyricMachine(OnLyricListener listener) {
         reset();
@@ -43,14 +44,7 @@ public class LyricMachine {
 
         mLyricsModel = model;
 
-        if (model.type == LyricType.XML) {
-            for (LyricsLineModel line : model.lines) {
-                for (LyricsLineModel.Tone tone : line.tones) {
-                    mMinimumRefPitch = Math.min(mMinimumRefPitch, tone.pitch);
-                    mMaximumRefPitch = Math.max(mMaximumRefPitch, tone.pitch);
-                }
-            }
-        } else if (model.type == LyricType.KRC) {
+        if (model.type == LyricType.KRC) {
             if (model.pitchDataList != null) {
                 for (KrcPitchData data : model.pitchDataList) {
                     mMinimumRefPitch = (float) Math.min(mMinimumRefPitch, data.pitch);
@@ -58,21 +52,21 @@ public class LyricMachine {
                 }
             }
 
-            mShowLines = new ArrayList<>(mLyricsModel.lines.size());
+            mShowLyricsLines = new ArrayList<>(mLyricsModel.lines.size());
             for (LyricsLineModel line : mLyricsModel.lines) {
-                LyricsLineModel lineModel = new LyricsLineModel();
+                LyricsPitchLineModel lineModel = new LyricsPitchLineModel();
                 long startTime = line.getStartTime();
                 long endTime = line.getEndTime();
                 for (KrcPitchData data : model.pitchDataList) {
                     if (data.startTime >= startTime && data.startTime + data.duration <= endTime) {
-                        LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
-                        tone.begin = data.startTime;
-                        tone.end = data.startTime + data.duration;
-                        tone.pitch = (int) data.pitch;
-                        lineModel.tones.add(tone);
+                        LyricsPitchLineModel.Pitch pitch = new LyricsPitchLineModel.Pitch();
+                        pitch.begin = data.startTime;
+                        pitch.end = data.startTime + data.duration;
+                        pitch.pitch = (int) data.pitch;
+                        lineModel.pitches.add(pitch);
                     }
                 }
-                mShowLines.add(lineModel);
+                mShowLyricsLines.add(lineModel);
             }
         }
 
@@ -92,15 +86,6 @@ public class LyricMachine {
      *                 progress 一定要大于歌词结束时间才可以触发最后一句的回调
      */
     public void setProgress(long progress) {
-        if (this.mCurrentProgress >= 0 && progress > 0) {
-            long deltaOfUpdate = (int) (progress - this.mCurrentProgress);
-            if (deltaOfUpdate > 100 || deltaOfUpdate < 0) {
-                // TODO(Hai_Guo) Need to show warning information when this method called not smoothly
-                LogUtils.d("setProgress this method called not smoothly: current mDeltaOfUpdate=" + deltaOfUpdate + " and reset to 20ms");
-                deltaOfUpdate = 20;
-            }
-        }
-
         if (progress <= 0L) {
             resetStats();
             if (mListener != null) {
@@ -193,8 +178,8 @@ public class LyricMachine {
         return this.mMaximumRefPitch;
     }
 
-    public List<LyricsLineModel> getShowLines() {
-        return mShowLines;
+    public List<LyricsPitchLineModel> getShowLyricsLines() {
+        return mShowLyricsLines;
     }
 
     public float getRefPitch(int progressInMs) {

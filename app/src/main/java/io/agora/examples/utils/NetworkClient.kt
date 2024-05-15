@@ -1,4 +1,4 @@
-package io.agora.examples.net
+package io.agora.examples.utils
 
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull

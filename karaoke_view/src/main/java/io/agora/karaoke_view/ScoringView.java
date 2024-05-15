@@ -17,6 +17,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.AttributeSet;
+import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -27,12 +28,15 @@ import androidx.annotation.RequiresApi;
 
 import com.plattysoft.leonids.ParticleSystem;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.agora.karaoke_view.constants.Constants;
 import io.agora.karaoke_view.internal.LyricMachine;
+import io.agora.karaoke_view.internal.config.Config;
 import io.agora.karaoke_view.internal.constants.LyricType;
-import io.agora.karaoke_view.internal.model.LyricsLineModel;
+import io.agora.karaoke_view.internal.model.LyricsPitchLineModel;
 import io.agora.karaoke_view.internal.utils.LogUtils;
 import io.agora.karaoke_view.model.LyricModel;
 
@@ -43,10 +47,6 @@ import io.agora.karaoke_view.model.LyricModel;
  * @date 2021/08/04
  */
 public class ScoringView extends View {
-    private static final String TAG = Constants.TAG + "-ScoringView";
-
-    private static final boolean DEBUG = false;
-
     private float mStartPointHorizontalBias = 0.4f;
 
     private Handler mHandler;
@@ -85,6 +85,7 @@ public class ScoringView extends View {
     private boolean mEnableParticleEffect;
 
     private long mThresholdOfOffProgressTime;
+    private long mPitchHighlightedTime = -1;
 
     //<editor-fold desc="Init Related">
     public ScoringView(Context context) {
@@ -339,7 +340,7 @@ public class ScoringView extends View {
         drawPitchSticks(canvas);
         drawLocalPitchIndicator(canvas);
 
-        if (DEBUG) {
+        if (Config.DEBUG) {
             long progress = 0;
             int id = 0;
             LyricMachine machine = this.mLyricMachine;
@@ -468,6 +469,7 @@ public class ScoringView extends View {
         mPitchStickHighlightedPaint.setColor(mPitchStickHighlightedColor);
         mPitchStickHighlightedPaint.setAntiAlias(true);
 
+
         LyricMachine machine = this.mLyricMachine;
         if (uninitializedOrNoLyrics(machine)) {
             return;
@@ -476,11 +478,11 @@ public class ScoringView extends View {
         float realPitchMax = machine.getMaximumRefPitch() + 5;
         float realPitchMin = machine.getMinimumRefPitch() - 5;
 
-        List<LyricsLineModel> lines;
+        List<LyricsPitchLineModel> lines;
         if (mLyricsModel.type == LyricType.KRC) {
-            lines = mLyricMachine.getShowLines();
+            lines = mLyricMachine.getShowLyricsLines();
         } else {
-            lines = mLyricsModel.lines;
+            lines = new ArrayList<>(0);
         }
 
         float y;
@@ -490,9 +492,9 @@ public class ScoringView extends View {
         long endTimeOfPreviousLine = 0; // Not used so far
 
         for (int i = 0; i < lines.size(); i++) {
-            LyricsLineModel line = lines.get(i);
-            List<LyricsLineModel.Tone> tones = line.tones;
-            if (tones == null || tones.isEmpty()) {
+            LyricsPitchLineModel line = lines.get(i);
+            List<LyricsPitchLineModel.Pitch> pitches = line.pitches;
+            if (pitches == null || pitches.isEmpty()) {
                 return;
             }
 
@@ -533,16 +535,21 @@ public class ScoringView extends View {
                 continue;
             }
 
-            for (int toneIndex = 0; toneIndex < tones.size(); toneIndex++) {
-                LyricsLineModel.Tone tone = tones.get(toneIndex);
+            for (int pitchIndex = 0; pitchIndex < pitches.size(); pitchIndex++) {
+                LyricsPitchLineModel.Pitch pitch = pitches.get(pitchIndex);
 
-                pixelsAwayFromPilot = (tone.begin - machine.getCurrentProgress()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
+
+                pixelsAwayFromPilot = (pitch.begin - machine.getCurrentProgress()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
                 x = mCenterXOfStartPoint + pixelsAwayFromPilot;
-                widthOfPitchStick = mMovingPixelsPerMs * tone.getDuration();
+                widthOfPitchStick = mMovingPixelsPerMs * pitch.getDuration();
                 float endX = x + widthOfPitchStick;
 
+                float pitchXStart = x;
+                float pitchXEnd = x + mMovingPixelsPerMs * pitch.getDuration();
+
+
                 if (endX <= 0) { // when moves out of the view port
-                    tone.resetHighlight();
+                    pitch.resetHighlight();
                     continue;
                 }
 
@@ -550,103 +557,77 @@ public class ScoringView extends View {
                     break;
                 }
 
-                y = (realPitchMax - tone.pitch) * stickHeightPerPitchLevel;
+                y = (realPitchMax - pitch.pitch) * stickHeightPerPitchLevel;
+                boolean isCurrentPitch = machine.getCurrentProgress() >= pitch.begin && machine.getCurrentProgress() <= pitch.end;
 
-                if (Math.abs(x - mCenterXOfStartPoint) <= 2 * mLocalPitchIndicatorRadius || Math.abs(endX - mCenterXOfStartPoint) <= 2 * mLocalPitchIndicatorRadius) { // Only mark item around local pitch indicator
-                    boolean isJustHighlightTriggered = (!tone.highlight) && mInHighlightStatus;
-                    if (isJustHighlightTriggered && Math.abs(x - mCenterXOfStartPoint) <= 400 * mMovingPixelsPerMs) { // Mark the instantaneous x as the offset of highlighted stick
-                        tone.highlightOffset = Math.abs(mCenterXOfStartPoint - x);
-                        if (tone.highlightOffset >= widthOfPitchStick) { // Do some adjustment
-                            tone.highlightOffset = 0.5f * widthOfPitchStick;
-                        }
-                        if (tone.highlightOffset > 0 && tone.highlightOffset <= widthOfPitchStick / 4) { // Do some adjustment
-                            tone.highlightOffset = 0.0f;
-                        }
-                        if (mLyricsModel.type == LyricType.LRC || mLyricsModel.type == LyricType.KRC) { // Do not enable partially draw for lrc mode
-                            tone.highlightOffset = 0.0f;
+                if (!isCurrentPitch) {
+                    for (Map.Entry<Long, Pair<Long, Long>> entry : pitch.highlightPartMap.entrySet()) {
+                        long key = entry.getKey();
+                        Pair<Long, Long> value = entry.getValue();
+                        if (null == value) {
+                            entry.setValue(new Pair<>(key, pitch.end));
                         }
                     }
-                    boolean isJustDeHighlightTriggered = (tone.highlight) && !mInHighlightStatus;
-                    if (isJustDeHighlightTriggered && tone.highlightWidth < 0) {
-                        tone.highlightWidth = Math.abs(mCenterXOfStartPoint - x - tone.highlightOffset);
-                        if (tone.highlightWidth >= widthOfPitchStick) {
-                            tone.highlightWidth = widthOfPitchStick;
-                        }
-                        if (mLyricsModel.type == LyricType.LRC) { // Do not enable partially draw for lrc mode
-                            tone.highlightWidth = widthOfPitchStick;
-                        }
-                    }
-
-                    tone.highlight = tone.highlight || mInHighlightStatus; // Mark this as highlight forever
                 }
 
-                if (tone.highlight) {
-                    if (toneIndex == 1 && !tones.get(0).highlight) { // Workaround, always mark first tone highlighted if the second is highlighted
-                        tones.get(0).highlight = true;
-                    }
+                RectF rNormal = buildRectF(pitchXStart, y, pitchXEnd, y + mPitchStickHeight);
+                canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
 
-                    if (x >= mCenterXOfStartPoint) {
-                        RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
-                        canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
-                    } else if (x < mCenterXOfStartPoint && endX > mCenterXOfStartPoint) {
-                        RectF rNormalRightHalf = buildRectF(mCenterXOfStartPoint, y, endX, y + mPitchStickHeight);
-                        canvas.drawRoundRect(rNormalRightHalf, 8, 8, mPitchStickPaint);
-
-                        RectF rNormalLeftHalf = buildRectF(x, y, mCenterXOfStartPoint, y + mPitchStickHeight);
-                        canvas.drawRoundRect(rNormalLeftHalf, 8, 8, mPitchStickPaint);
-
-                        if (tone.highlightOffset >= 0) { // Partially draw
-                            float highlightStartX = x + tone.highlightOffset;
-                            float highlightEndX = mCenterXOfStartPoint;
-                            if (tone.highlightWidth >= 0) {
-                                highlightEndX = x + tone.highlightOffset + tone.highlightWidth;
-                                if (highlightEndX > mCenterXOfStartPoint) {
-                                    highlightEndX = mCenterXOfStartPoint;
-                                }
+                if (isCurrentPitch) {
+                    if (mInHighlightStatus) {
+                        if (!mPreHighlightStatus) {
+                            mPitchHighlightedTime = machine.getCurrentProgress();
+                            if (machine.getCurrentProgress() - pitch.begin < Constants.INTERVAL_AUDIO_PCM) {
+                                mPitchHighlightedTime = pitch.begin;
                             }
-
-                            RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
-                            if (tone.highlightOffset <= 0 || highlightEndX == mCenterXOfStartPoint) {
-                                canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
-                            } else {
-                                // Should be drawRect
-                                canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
-                            }
+                            mPreHighlightStatus = mInHighlightStatus;
                         }
-                    } else if (endX <= mCenterXOfStartPoint) {
-                        RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
-                        canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
-
-                        if (tone.highlightOffset >= 0) { // Partially draw
-                            float highlightStartX = x + tone.highlightOffset;
-                            float highlightEndX = endX;
-                            if (tone.highlightWidth >= 0) {
-                                highlightEndX = x + tone.highlightOffset + tone.highlightWidth;
-                            }
-
-                            RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
-                            if (tone.highlightOffset <= 0 && tone.highlightWidth <= 0 || highlightEndX == endX) {
-                                canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
-                            } else {
-                                // Should be drawRect
-                                canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
-                            }
+                        float highlightStartX = mCenterXOfStartPoint + (mPitchHighlightedTime - machine.getCurrentProgress()) * mMovingPixelsPerMs;
+                        //着色 40ms一段
+                        float highlightEndX = mCenterXOfStartPoint - mMovingPixelsPerMs * Constants.INTERVAL_AUDIO_PCM;
+                        RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
+                        canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
+                        if (!pitch.highlightPartMap.containsKey(mPitchHighlightedTime)) {
+                            pitch.highlightPartMap.put(mPitchHighlightedTime, null);
+                        }
+                    } else {
+                        mPreHighlightStatus = false;
+                        if (-1 != mPitchHighlightedTime) {
+                            pitch.highlightPartMap.put(mPitchHighlightedTime, new Pair<>(mPitchHighlightedTime, machine.getCurrentProgress()));
+                            mPitchHighlightedTime = -1;
                         }
                     }
-                    tweakTheHighlightAnimation(endX);
                 } else {
-                    RectF rNormal = buildRectF(x, y, endX, y + mPitchStickHeight);
-                    canvas.drawRoundRect(rNormal, 8, 8, mPitchStickPaint);
-                }
-
-                if (DEBUG) {
-                    if (tone.word != null) { // Ignore debugging information when no word especially in the lrc mode, or it shows massive debugging information on the screen
-                        mPitchStickHighlightedPaint.setTextSize(28);
-                        canvas.drawText(tone.word, x, 30, mPitchStickHighlightedPaint);
-                        canvas.drawText((int) (x) + "_" + (int) (endX), x, 60, mPitchStickHighlightedPaint);
-                        canvas.drawText((int) (tone.begin) + "", x, 90, mPitchStickHighlightedPaint);
-                        canvas.drawText((int) (tone.end) + "", x, 120, mPitchStickHighlightedPaint);
+                    if (mPreHighlightStatus) {
+                        mPreHighlightStatus = false;
                     }
+                    if (-1 != mPitchHighlightedTime) {
+                        mPitchHighlightedTime = -1;
+                    }
+                }
+                if (x < mCenterXOfStartPoint) {
+                    for (Map.Entry<Long, Pair<Long, Long>> entry : pitch.highlightPartMap.entrySet()) {
+                        Pair<Long, Long> value = entry.getValue();
+                        if (null != value) {
+                            long highlightStartTime = value.first;
+                            long highlightEndTime = value.second;
+
+                            float highlightStartX = mCenterXOfStartPoint + (highlightStartTime - machine.getCurrentProgress()) * mMovingPixelsPerMs;
+                            float highlightEndX = highlightStartX + mMovingPixelsPerMs * (highlightEndTime - highlightStartTime);
+                            RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
+                            canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
+                        } else {
+                            if (isCurrentPitch) {
+                                long highlightStartTime = entry.getKey();
+
+                                float highlightStartX = mCenterXOfStartPoint + (highlightStartTime - machine.getCurrentProgress()) * mMovingPixelsPerMs;
+                                float highlightEndX = mCenterXOfStartPoint;
+                                RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
+                                canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
+                            }
+                        }
+                    }
+
                 }
             }
         }
@@ -756,40 +737,36 @@ public class ScoringView extends View {
             return;
         }
         double scoreAfterNormalization = 0;
-        if (mLyricsModel.type == LyricType.KRC) {
-            switch ((int) speakerPitch) {
-                case 1:
-                    speakerPitch = refPitch - 2;
-                    scoreAfterNormalization = 100;
-                    break;
+        if (refPitch != 0) {
+            if (mLyricsModel.type == LyricType.KRC) {
+                switch ((int) speakerPitch) {
+                    case 1:
+                        speakerPitch = refPitch - 2;
+                        scoreAfterNormalization = 100;
+                        break;
 
-                case 2:
-                    speakerPitch = refPitch - 1;
-                    scoreAfterNormalization = 100;
-                    break;
-                case 3:
-                    scoreAfterNormalization = 100;
-                    speakerPitch = refPitch;
-                    break;
-                case 4:
-                    scoreAfterNormalization = 100;
-                    speakerPitch = refPitch + 1;
-                    break;
-                case 5:
-                    scoreAfterNormalization = 100;
-                    speakerPitch = refPitch + 2;
-                    break;
-                default:
+                    case 2:
+                        speakerPitch = refPitch - 1;
+                        scoreAfterNormalization = 100;
+                        break;
+                    case 3:
+                        scoreAfterNormalization = 100;
+                        speakerPitch = refPitch;
+                        break;
+                    case 4:
+                        scoreAfterNormalization = 100;
+                        speakerPitch = refPitch + 1;
+                        break;
+                    case 5:
+                        scoreAfterNormalization = 100;
+                        speakerPitch = refPitch + 2;
+                        break;
+                    default:
+                }
             }
-
         }
+
         mLocalPitch = speakerPitch;
-        if (speakerPitch <= 0) {
-            // Actually no pitch <= 0 comes here
-            performIndicatorAnimationIfNecessary(scoreAfterNormalization); // When invalid pitches coming, we just stop animation
-            return;
-        }
-
 
         final float finalScore = (float) scoreAfterNormalization;
         if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
@@ -808,12 +785,11 @@ public class ScoringView extends View {
     private long lastCurrentTs = 0;
 
     private void performIndicatorAnimationIfNecessary(final double scoreAfterNormalization) {
-
-        if (System.currentTimeMillis() - lastCurrentTs > 100) {
-            //int duration = (ScoringView.this.mLocalPitch == 0 && pitch > 0) ? 20 : 80;
-            //ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, pitch).setDuration(duration).start();
-            lastCurrentTs = System.currentTimeMillis();
-            assureAnimationForPitchIndicator(scoreAfterNormalization);
+        if (System.currentTimeMillis() - lastCurrentTs >= 80) {
+        //int duration = (ScoringView.this.mLocalPitch == 0 && pitch > 0) ? 20 : 80;
+        //ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, pitch).setDuration(duration).start();
+        lastCurrentTs = System.currentTimeMillis();
+        assureAnimationForPitchIndicator(scoreAfterNormalization);
         }
     }
 
@@ -824,6 +800,7 @@ public class ScoringView extends View {
         // Animation for particle
         if (scoreAfterNormalization >= mThresholdOfHitScore * 100) {
             if (mEnableParticleEffect && mParticleSystem != null) {
+                mInHighlightStatus = true;
                 float value = getYForPitchIndicator();
                 // It works with an emision range
                 int[] location = new int[2];
@@ -836,12 +813,11 @@ public class ScoringView extends View {
                 }
                 mParticleSystem.resumeEmitting();
             }
-            mInHighlightStatus = true;
         } else {
+            mInHighlightStatus = false;
             if (mEnableParticleEffect && mParticleSystem != null) {
                 mParticleSystem.stopEmitting();
             }
-            mInHighlightStatus = false;
         }
     }
 
@@ -878,6 +854,7 @@ public class ScoringView extends View {
     }
 
     private boolean mInHighlightStatus;
+    private boolean mPreHighlightStatus = false;
 
     public void reset() {
         resetInternal();
@@ -895,6 +872,8 @@ public class ScoringView extends View {
         mLyricMachine = null;
         mLyricsModel = null;
         mInHighlightStatus = false;
+        mPreHighlightStatus = false;
+        mPitchHighlightedTime = -1;
     }
 
     @Override

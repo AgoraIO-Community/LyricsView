@@ -26,7 +26,6 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 
-import io.agora.karaoke_view.constants.Constants;
 import io.agora.karaoke_view.internal.LyricMachine;
 import io.agora.karaoke_view.internal.config.Config;
 import io.agora.karaoke_view.internal.constants.LyricType;
@@ -44,10 +43,6 @@ import io.agora.karaoke_view.model.LyricModel;
  */
 @SuppressLint("StaticFieldLeak")
 public class LyricsView extends View {
-    private static final String TAG = Constants.TAG + "-LyricsView";
-
-    private static final boolean DEBUG = false;
-
     private volatile LyricModel mLyricsModel;
 
     private LyricMachine mLyricMachine;
@@ -730,7 +725,6 @@ public class LyricsView extends View {
             @Override
             public void onAnimationEnd(Animator animation) {
                 mContentScrolling = false;
-
                 performInvalidateIfNecessary();
             }
         });

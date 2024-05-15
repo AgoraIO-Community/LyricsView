@@ -1,7 +1,7 @@
 package io.agora.karaoke_view.constants;
 
 public class Constants {
-    public static final String TAG = "MccExKtv";
+    public static final String TAG = "LyricsView";
     public static final String LOG_FILE_NAME = "agora.AgoraLyricsScore";
     //seconds
     public static final int HTTP_TIMEOUT = 60;
@@ -21,4 +21,8 @@ public class Constants {
     public static final int ERROR_HTTP_TIMEOUT = -1001;
     public static final int ERROR_HTTP_UNKNOWN_HOST = -1003;
     public static final int ERROR_HTTP_NOT_CONNECT = -1004;
+
+
+    //ms
+    public static final long INTERVAL_AUDIO_PCM = 40;
 }
