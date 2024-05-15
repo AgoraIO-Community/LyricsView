@@ -1,8 +1,11 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
+apply from: "${project.rootProject.projectDir}/publishing.gradle"
 android {
     compileSdk 34
+    namespace 'io.agora.karaoke_view'
 
     defaultConfig {
         minSdkVersion 17
@@ -14,10 +17,20 @@ android {
         consumerProguardFiles "consumer-rules.pro"
     }
 
+    signingConfigs {
+        release {
+            storeFile file('./keystore/testkey.jks')
+            storePassword '123456'
+            keyAlias 'key0'
+            keyPassword '123456'
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 
@@ -29,26 +42,29 @@ android {
     publishing {
         singleVariant("release") {
             withSourcesJar()
+            withJavadocJar()
         }
     }
 
-    namespace 'io.agora.karaoke_view'
-
-    libraryVariants.all { variant ->
-        variant.outputs.all {
+    libraryVariants.configureEach { variant ->
+        variant.outputs.configureEach {
             outputFileName = "karaoke_view_v" +
                     defaultConfig.versionName + ".aar"
         }
     }
 
-    externalNativeBuild {
+//    externalNativeBuild {
 //        cmake {
 //            path './src/main/cpp/CMakeLists.txt'
 //        }
-    }
+//    }
     lintOptions {
         checkReleaseBuilds false
         abortOnError false
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 }
 
@@ -57,22 +73,5 @@ dependencies {
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
     api 'io.github.winskyan:Agora-LoggingService:1.0.9'
     implementation 'com.google.code.gson:gson:2.10.1'
-}
-
-afterEvaluate {
-    publishing {
-        repositories {
-            it.mavenLocal()
-        }
-        publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                from components.release
-                groupId = 'com.github.AgoraIO-Community'
-                artifactId = 'LyricsView'
-                version = android.defaultConfig.versionName
-            }
-        }
-    }
 }
 
