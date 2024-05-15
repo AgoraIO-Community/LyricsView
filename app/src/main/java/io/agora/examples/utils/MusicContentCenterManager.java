@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.agora.examples.karaoke_view.BuildConfig;
 import io.agora.examples.karaoke_view.R;
+import io.agora.mccex.constants.MusicPlayMode;
 import io.agora.mediaplayer.IMediaPlayerObserver;
 import io.agora.mediaplayer.data.PlayerUpdatedInfo;
 import io.agora.mediaplayer.data.SrcInfo;
@@ -402,6 +403,9 @@ public class MusicContentCenterManager {
         if (mStatus == Status.Started) {
             mCurrentMusicPosition = position;
         }
+    }
+
+    public void setPlayMode(MusicPlayMode playMode) {
     }
 
     public interface MccCallback {

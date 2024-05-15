@@ -123,6 +123,16 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
+        android:id="@+id/play_original"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="30dp"
+        android:text="@string/play_accompany"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/skip_the_intro" />
+
+    <Button
         android:id="@+id/settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -130,6 +140,6 @@
         android:layout_marginBottom="30dp"
         android:text="@string/settings"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/skip_the_intro" />
+        app:layout_constraintStart_toEndOf="@id/play_original" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
