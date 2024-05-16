@@ -158,12 +158,11 @@ public class LyricsResourcePool {
 
     public static List<MusicResource> asMusicListEx() {
         ArrayList<MusicResource> list = new ArrayList<>();
-        list.add(new MusicResource(2, "625281172", "最后一页"));
-        list.add(new MusicResource(3, "310937426", "怀抱"));
-        list.add(new MusicResource(4, "32259070", "奢香夫人"));
-        list.add(new MusicResource(4, "288308118", "还是分开"));
-        list.add(new MusicResource(4, "89488966", "在你的身边"));
-        list.add(new MusicResource(4, "621162805", "梦回花事了"));
+        list.add(new MusicResource(0, "89488966", "在你的身边"));
+        list.add(new MusicResource(0, "310937426", "怀抱"));
+        list.add(new MusicResource(0, "625281172", "最后一页"));
+        list.add(new MusicResource(0, "621162805", "梦回花事了"));
+        list.add(new MusicResource(0, "288308118", "还是分开"));
         return list;
     }
 }

@@ -130,7 +130,8 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
             mToken,
             mUserId,
             Utils.getUuid(),
-            ChargeMode.ONCE
+            ChargeMode.ONCE,
+            60 * 15
         )
         configuration.eventHandler = this
         configuration.scoreEventHandler = this

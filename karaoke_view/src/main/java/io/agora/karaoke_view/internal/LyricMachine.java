@@ -58,7 +58,7 @@ public class LyricMachine {
                 long startTime = line.getStartTime();
                 long endTime = line.getEndTime();
                 for (KrcPitchData data : model.pitchDataList) {
-                    if (data.startTime >= startTime && data.startTime + data.duration <= endTime) {
+                    if (data.startTime >= startTime && data.startTime < endTime) {
                         LyricsPitchLineModel.Pitch pitch = new LyricsPitchLineModel.Pitch();
                         pitch.begin = data.startTime;
                         pitch.end = data.startTime + data.duration;
