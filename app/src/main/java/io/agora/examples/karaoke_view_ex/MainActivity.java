@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long mLyricsCurrentProgress = 0;
     private ScheduledFuture mFuture;
     private boolean mIsOriginal = false;
+    private boolean mSetNoLyric = false;
 
     private Player_State mState = Player_State.Uninitialized;
 
@@ -228,8 +229,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d(TAG, "onLyricsFileDownloadCompleted fileData:" + fileData.length);
                     mLyricsModel = KaraokeView.parseLyricData(fileData, null);
 
-                    if (mLyricsModel != null) {
+                    if (mLyricsModel != null && !mSetNoLyric) {
                         mKaraokeView.setLyricData(mLyricsModel);
+                    } else {
+                        mKaraokeView.setLyricData(null);
                     }
                     playMusic();
                     updateLyricsDescription();
@@ -340,16 +343,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 lrc = new File(lrcUri);
                 pitch = new File(pitchUri);
                 mLyricsModel = KaraokeView.parseLyricData(lrc, pitch);
-
-                mKaraokeView.setLyricData(mLyricsModel);
+                if (mSetNoLyric) {
+                    mKaraokeView.setLyricData(null);
+                } else {
+                    mKaraokeView.setLyricData(mLyricsModel);
+                }
             } else {
                 lrc = Utils.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
                 pitch = Utils.copyAssetsToCreateNewFile(getApplicationContext(), pitchUri);
                 lrc = extractFromZipFileIfPossible(lrc);
                 mLyricsModel = KaraokeView.parseLyricData(lrc, pitch);
 
-                if (mLyricsModel != null) {
+                if (mLyricsModel != null && !mSetNoLyric) {
                     mKaraokeView.setLyricData(mLyricsModel);
+                } else {
+                    mKaraokeView.setLyricData(null);
                 }
             }
             playMusic();
@@ -387,6 +395,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //mKaraokeView.setScoringLevel(scoringLevel);
         //int scoringOffset = prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), mKaraokeView.getScoringCompensationOffset());
         //mKaraokeView.setScoringCompensationOffset(scoringOffset);
+        mSetNoLyric = prefs.getBoolean(getString(R.string.prefs_key_set_no_lyric), false);
+        if (mSetNoLyric) {
+            mKaraokeView.setLyricData(null);
+        } else {
+            mKaraokeView.setLyricData(mLyricsModel);
+        }
+
 
         boolean indicatorOn = prefs.getBoolean(getString(R.string.prefs_key_start_of_verse_indicator_switch), true);
         binding.lyricsView.enablePreludeEndPositionIndicator(indicatorOn);
@@ -437,18 +452,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String highlightedRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_highlighted_ref_pitch_stick_color), "Default");
         binding.scoringView.setRefPitchStickHighlightedColor(colorInStringToDex(highlightedRefPitchStickColor));
 
-        boolean particleEffectOn = prefs.getBoolean(getString(R.string.prefs_key_particle_effect_switch), true);
-        binding.scoringView.enableParticleEffect(particleEffectOn);
-
+        Drawable[] drawables = null;
         boolean customizedIndicatorAndParticleOn = prefs.getBoolean(getString(R.string.prefs_key_customized_indicator_and_particle_switch), false);
         if (customizedIndicatorAndParticleOn) {
             Bitmap bitmap = drawableToBitmap(getDrawable(R.drawable.pitch_indicator));
             binding.scoringView.setLocalPitchIndicator(bitmap);
-            setParticles(false);
+            drawables = new Drawable[]{getDrawable(R.drawable.pitch_indicator), getDrawable(R.drawable.pitch_indicator_yellow), getDrawable(R.drawable.ic_launcher_background), getDrawable(R.drawable.star7), getDrawable(R.drawable.star8)};
         } else {
             binding.scoringView.setLocalPitchIndicator(null);
-            setParticles(true);
         }
+
+        boolean particleEffectOn = prefs.getBoolean(getString(R.string.prefs_key_particle_effect_switch), true);
+        binding.scoringView.enableParticleEffect(particleEffectOn, drawables);
+
 
         float particleHitOnThreshold = prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f);
         binding.scoringView.setThresholdOfHitScore(particleHitOnThreshold);

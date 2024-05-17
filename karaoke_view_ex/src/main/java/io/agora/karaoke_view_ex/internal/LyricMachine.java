@@ -19,7 +19,8 @@ import io.agora.karaoke_view_ex.model.LyricModel;
 public class LyricMachine {
     private LyricModel mLyricsModel;
     private final OnLyricListener mListener;
-    private long mCurrentProgress = 0;
+    private long mCurrentLyricProgress = 0;
+    private long mCurrentPitchProgress = 0;
     private float mMaximumRefPitch = 0;
     private float mMinimumRefPitch = 100;
 
@@ -92,8 +93,7 @@ public class LyricMachine {
                 mListener.resetUi();
             }
         }
-
-        this.mCurrentProgress = progress;
+        this.mCurrentLyricProgress = progress;
 
         if (mLyricsModel == null) {
             if (mListener != null) {
@@ -115,7 +115,7 @@ public class LyricMachine {
             return;
         }
 
-        mCurrentProgress = progressInMs;
+        mCurrentPitchProgress = progressInMs;
         if (Config.DEBUG) {
             LogUtils.d("setPitch speakerPitch:" + speakerPitch + ",progressInMs:" + progressInMs);
         }
@@ -133,7 +133,7 @@ public class LyricMachine {
             }
         }
 
-        mCurrentProgress = progress;
+        mCurrentLyricProgress = progress;
     }
 
     public void reset() {
@@ -153,7 +153,8 @@ public class LyricMachine {
     }
 
     private void minorReset() { // Will recover immediately
-        mCurrentProgress = 0;
+        mCurrentLyricProgress = 0;
+        mCurrentPitchProgress = 0;
     }
 
     public void prepareUi() {
@@ -166,8 +167,12 @@ public class LyricMachine {
         return this.mLyricsModel;
     }
 
-    public long getCurrentProgress() {
-        return mCurrentProgress;
+    public long getCurrentLyricProgress() {
+        return mCurrentLyricProgress;
+    }
+
+    public long getCurrentPitchProgress() {
+        return mCurrentPitchProgress;
     }
 
     public float getMinimumRefPitch() {

@@ -1,8 +1,10 @@
 package io.agora.examples.utils
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import io.agora.examples.karaoke_view_ex.BuildConfig
+import io.agora.examples.karaoke_view_ex.R
 import io.agora.mccex.utils.Utils
 import io.agora.rtc2.ChannelMediaOptions
 import io.agora.rtc2.Constants
@@ -68,6 +70,13 @@ object RtcManager : IAudioFrameObserver {
             }
             rtcEngineConfig.mAudioScenario = Constants.AUDIO_SCENARIO_DEFAULT
             mRtcEngine = RtcEngine.create(rtcEngineConfig)
+
+            val prefs: SharedPreferences =
+                context.getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE)
+            if (prefs.getBoolean(context.getString(R.string.prefs_key_rtc_audio_dump), false)) {
+                mRtcEngine?.setParameters("{\"rtc.debug.enable\": true}")
+                mRtcEngine?.setParameters("{\"che.audio.apm_dump\": true}")
+            }
 
             mRtcEngine?.setParameters("{\"rtc.enable_debug_log\":true}")
 

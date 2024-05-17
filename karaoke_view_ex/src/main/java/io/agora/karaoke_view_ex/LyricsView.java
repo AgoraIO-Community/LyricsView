@@ -422,7 +422,7 @@ public class LyricsView extends View {
             return;
         }
         // Always update progress even UI or data is not ready
-        updateByProgress(machine.getCurrentProgress());
+        updateByProgress(machine.getCurrentLyricProgress());
     }
 
     private boolean refreshNoLyrics() {

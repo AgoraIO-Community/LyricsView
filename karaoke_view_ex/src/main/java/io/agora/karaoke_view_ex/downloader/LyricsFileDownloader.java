@@ -408,7 +408,7 @@ public class LyricsFileDownloader {
     }
 
     private boolean isSupportLyricsFile(String fileName) {
-        return fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_XML) || fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_LRC);
+        return fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_XML) || fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_LRC) || fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_KRC);
     }
 
     private synchronized void notifyLyricsFileDownloadCompleted(int requestId, File lyricFile, DownloadError error) {

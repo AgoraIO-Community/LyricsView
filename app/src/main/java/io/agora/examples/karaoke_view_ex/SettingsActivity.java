@@ -11,7 +11,9 @@ import android.widget.SeekBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import io.agora.examples.karaoke_view_ex.databinding.ActivitySettingsBinding;
+import io.agora.examples.utils.ToastUtils;
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloader;
+import io.agora.karaoke_view_ex.utils.Utils;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -39,7 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
 
-        loadPreferencesScoringAlgo(prefs, editor);
+        loadPreferencesKaraoke(prefs, editor);
 
         loadPreferencesLyricsUI(prefs, editor);
 
@@ -50,7 +52,7 @@ public class SettingsActivity extends AppCompatActivity {
         loadPreferencesOtherSettingsUI(prefs, editor);
     }
 
-    private void loadPreferencesScoringAlgo(SharedPreferences prefs, SharedPreferences.Editor editor) {
+    private void loadPreferencesKaraoke(SharedPreferences prefs, SharedPreferences.Editor editor) {
         binding.scoringLevelTune.setProgress(prefs.getInt(getString(R.string.prefs_key_scoring_level), 15)); // 0...100
         binding.scoringLevelTuneValue.setText(String.valueOf(prefs.getInt(getString(R.string.prefs_key_scoring_level), 15)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -99,6 +101,20 @@ public class SettingsActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+
+        binding.setNoLyrics.setChecked(prefs.getBoolean(getString(R.string.prefs_key_set_no_lyric), false));
+        binding.setNoLyrics.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            editor.putBoolean(getString(R.string.prefs_key_set_no_lyric), isChecked);
+            editor.apply();
+        });
+
+        binding.btnClearMusicCache.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Utils.deleteFolder(SettingsActivity.this.getExternalCacheDir().getPath() + "/song/");
+                ToastUtils.toastLong(SettingsActivity.this, "Music cache cleared success");
             }
         });
     }
@@ -480,7 +496,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void loadPreferencesDownloaderUI(SharedPreferences prefs, SharedPreferences.Editor editor) {
-        binding.downloaderCleanAll.setOnClickListener(new View.OnClickListener() {
+        binding.downloaderClearAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 LyricsFileDownloader.getInstance(getApplicationContext()).cleanAll();

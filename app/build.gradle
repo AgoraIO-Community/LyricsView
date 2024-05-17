@@ -77,7 +77,6 @@ dependencies {
     api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     if (isSdkMode.toBoolean()) {
         implementation "io.github.winskyan:Agora-LyricsViewEx:${sdkVersion.toString()}"
-        api "com.github.AgoraIO-Community:LyricsView:1.2.0-beta.1"
     } else {
         implementation project(':karaoke_view_ex')
     }

@@ -1,8 +1,8 @@
 package io.agora.karaoke_view_ex.constants;
 
 public class Constants {
-    public static final String TAG = "LyricsView";
-    public static final String LOG_FILE_NAME = "agora.AgoraLyricsScore";
+    public static final String TAG = "LyricsViewEx";
+    public static final String LOG_FILE_NAME = "agora.AgoraLyricsViewEx";
     //seconds
     public static final int HTTP_TIMEOUT = 60;
     public static final String UTF_8 = "UTF-8";
