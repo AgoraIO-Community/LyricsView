@@ -5,7 +5,7 @@ apply plugin: 'signing'
 apply from: "${project.rootProject.projectDir}/publishing.gradle"
 android {
     compileSdk 34
-    namespace 'io.agora.karaoke_view'
+    namespace 'io.agora.karaoke_view_ex'
 
     defaultConfig {
         minSdkVersion 17

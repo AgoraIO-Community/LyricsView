@@ -1,4 +1,4 @@
-package io.agora.examples.karaoke_view;
+package io.agora.examples.karaoke_view_ex;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

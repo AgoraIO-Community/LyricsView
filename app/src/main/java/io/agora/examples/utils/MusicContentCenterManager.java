@@ -11,8 +11,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import io.agora.examples.karaoke_view.BuildConfig;
-import io.agora.examples.karaoke_view.R;
+import io.agora.examples.karaoke_view_ex.BuildConfig;
+import io.agora.examples.karaoke_view_ex.R;
 import io.agora.mccex.constants.MusicPlayMode;
 import io.agora.mediaplayer.IMediaPlayerObserver;
 import io.agora.mediaplayer.data.PlayerUpdatedInfo;

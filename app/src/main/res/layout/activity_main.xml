@@ -16,7 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <io.agora.karaoke_view.ScoringView
+    <io.agora.karaoke_view_ex.ScoringView
         android:id="@+id/scoring_view"
         android:layout_width="match_parent"
         android:layout_height="120dp"
@@ -39,7 +39,7 @@
         app:layout_constraintBottom_toBottomOf="@id/scoring_view"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <io.agora.karaoke_view.LyricsView
+    <io.agora.karaoke_view_ex.LyricsView
         android:id="@+id/lyrics_view"
         android:layout_width="match_parent"
         android:layout_height="200dp"
@@ -139,7 +139,6 @@
         android:layout_marginStart="8dp"
         android:layout_marginBottom="30dp"
         android:text="@string/settings"
-        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/play_original" />
 

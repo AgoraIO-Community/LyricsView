@@ -2,7 +2,7 @@ package io.agora.examples.utils
 
 import android.content.Context
 import android.util.Log
-import io.agora.examples.karaoke_view.BuildConfig
+import io.agora.examples.karaoke_view_ex.BuildConfig
 import io.agora.mccex.utils.Utils
 import io.agora.rtc2.ChannelMediaOptions
 import io.agora.rtc2.Constants

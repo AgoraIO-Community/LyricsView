@@ -2,7 +2,7 @@ package io.agora.examples.utils
 
 import android.content.Context
 import android.util.Log
-import io.agora.examples.karaoke_view.BuildConfig
+import io.agora.examples.karaoke_view_ex.BuildConfig
 import io.agora.mccex.IMusicContentCenterEx
 import io.agora.mccex.IMusicContentCenterExEventHandler
 import io.agora.mccex.IMusicContentCenterExScoreEventHandler
