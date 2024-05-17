@@ -76,10 +76,10 @@ android {
 dependencies {
     api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     if (isSdkMode.toBoolean()) {
-        implementation "io.github.winskyan:Agora-LyricsView:${sdkVersion.toString()}"
+        implementation "io.github.winskyan:Agora-LyricsViewEx:${sdkVersion.toString()}"
         api "com.github.AgoraIO-Community:LyricsView:1.2.0-beta.1"
     } else {
-        implementation project(':karaoke_view')
+        implementation project(':karaoke_view_ex')
     }
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
