@@ -104,7 +104,9 @@ public class LyricPitchParser {
         if (type == LyricType.KRC) {
             return parseKrcLyricData(lyricData, pitchData, includeCopyrightSentence);
         } else if (type == LyricType.LRC) {
-            return null;
+            return parseLrcLyricData(lyricData, pitchData, includeCopyrightSentence);
+        } else if (type == LyricType.XML) {
+            return parseXmlLyricData(lyricData, pitchData, includeCopyrightSentence);
         } else {
             LogUtils.e("Do not support the lyrics file type " + type);
         }

@@ -279,7 +279,7 @@ public class LyricsFileDownloader {
                 if (!folder.exists()) {
                     folder.mkdirs();
                 }
-                String path = folder.getPath() + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")) + Constants.FILE_EXTENSION_XML;
+                String path = folder.getPath() + File.separator + file.getName().substring(0, file.getName().lastIndexOf(".")) + "." + Constants.FILE_EXTENSION_XML;
 
                 File realFile = new File(path);
 

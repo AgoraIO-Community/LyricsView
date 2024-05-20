@@ -51,23 +51,24 @@ public class LyricMachine {
                     mMinimumRefPitch = (float) Math.min(mMinimumRefPitch, data.pitch);
                     mMaximumRefPitch = (float) Math.max(mMaximumRefPitch, data.pitch);
                 }
-            }
-
-            mShowLyricsLines = new ArrayList<>(mLyricsModel.lines.size());
-            for (LyricsLineModel line : mLyricsModel.lines) {
-                LyricsPitchLineModel lineModel = new LyricsPitchLineModel();
-                long startTime = line.getStartTime();
-                long endTime = line.getEndTime();
-                for (KrcPitchData data : model.pitchDataList) {
-                    if (data.startTime >= startTime && data.startTime < endTime) {
-                        LyricsPitchLineModel.Pitch pitch = new LyricsPitchLineModel.Pitch();
-                        pitch.begin = data.startTime;
-                        pitch.end = data.startTime + data.duration;
-                        pitch.pitch = (int) data.pitch;
-                        lineModel.pitches.add(pitch);
+                if (null != mLyricsModel.lines) {
+                    mShowLyricsLines = new ArrayList<>(mLyricsModel.lines.size());
+                    for (LyricsLineModel line : mLyricsModel.lines) {
+                        LyricsPitchLineModel lineModel = new LyricsPitchLineModel();
+                        long startTime = line.getStartTime();
+                        long endTime = line.getEndTime();
+                        for (KrcPitchData data : model.pitchDataList) {
+                            if (data.startTime >= startTime && data.startTime < endTime) {
+                                LyricsPitchLineModel.Pitch pitch = new LyricsPitchLineModel.Pitch();
+                                pitch.begin = data.startTime;
+                                pitch.end = data.startTime + data.duration;
+                                pitch.pitch = (int) data.pitch;
+                                lineModel.pitches.add(pitch);
+                            }
+                        }
+                        mShowLyricsLines.add(lineModel);
                     }
                 }
-                mShowLyricsLines.add(lineModel);
             }
         }
 
@@ -125,6 +126,12 @@ public class LyricMachine {
     public void whenDraggingHappen(long progress) {
         minorReset();
 
+        mCurrentLyricProgress = progress;
+
+        if (null == mLyricsModel.lines) {
+            return;
+        }
+
         for (int index = 0; index < mLyricsModel.lines.size(); index++) {
             LyricsLineModel line = mLyricsModel.lines.get(index);
             for (int toneIndex = 0; toneIndex < line.tones.size(); toneIndex++) {
@@ -132,8 +139,6 @@ public class LyricMachine {
                 tone.resetHighlight();
             }
         }
-
-        mCurrentLyricProgress = progress;
     }
 
     public void reset() {
@@ -197,10 +202,12 @@ public class LyricMachine {
                 }
             }
         } else {
-            for (LyricsLineModel line : mLyricsModel.lines) {
-                for (LyricsLineModel.Tone tone : line.tones) {
-                    if (tone.begin <= progressInMs && tone.end >= progressInMs) {
-                        return tone.pitch;
+            if (null != mLyricsModel.lines) {
+                for (LyricsLineModel line : mLyricsModel.lines) {
+                    for (LyricsLineModel.Tone tone : line.tones) {
+                        if (tone.begin <= progressInMs && tone.end >= progressInMs) {
+                            return tone.pitch;
+                        }
                     }
                 }
             }

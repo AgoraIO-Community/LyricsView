@@ -27,10 +27,12 @@ public class LyricParser {
 
     public static LyricModel doParseKrc(byte[] krcFileData) {
         String content = new String(krcFileData);
-        Map<String, String> metadata = new HashMap<>();
-        List<LyricsLineModel> lineModels = new ArrayList<>();
 
-        String[] lines = content.split("\r\n");
+        String[] lines = content.split("\\n|\\r\\n");
+
+        Map<String, String> metadata = new HashMap<>(lines.length);
+
+        List<LyricsLineModel> lineModels = new ArrayList<>();
 
         for (String line : lines) {
             // 处理metadata部分：`[ti:星晴]`
@@ -44,15 +46,20 @@ public class LyricParser {
                     metadata.put(key, value);
                 } else {
                     if (line.contains("<") && line.contains(">")) {
-                        String offsetString = metadata.get("offset");
-                        if (offsetString != null) {
-                            long offsetValue = Long.parseLong(offsetString);
-                            LyricsLineModel lineModel = parseKrcLine(line, offsetValue);
-                            if (lineModel != null) {
-                                lineModels.add(lineModel);
-                            } else {
-                                LogUtils.e("parseLine error");
+                        long offsetValue = 0;
+                        if (metadata.containsKey("offset")) {
+                            try {
+                                offsetValue = Long.parseLong(Objects.requireNonNull(metadata.get("offset")));
+                            } catch (Exception e) {
+                                LogUtils.e("parse offset error");
                             }
+
+                        }
+                        LyricsLineModel lineModel = parseKrcLine(line, offsetValue);
+                        if (lineModel != null) {
+                            lineModels.add(lineModel);
+                        } else {
+                            LogUtils.e("parseLine error");
                         }
                     }
                 }

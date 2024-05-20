@@ -503,6 +503,10 @@ public class ScoringView extends View {
             lines = new ArrayList<>(0);
         }
 
+        if (null == lines) {
+            return;
+        }
+
         float y;
         float widthOfPitchStick;
         float stickHeightPerPitchLevel = (getHeight() - mPitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);

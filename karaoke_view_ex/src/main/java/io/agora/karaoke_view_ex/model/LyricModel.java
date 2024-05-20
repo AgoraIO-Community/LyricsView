@@ -1,5 +1,7 @@
 package io.agora.karaoke_view_ex.model;
 
+import androidx.annotation.NonNull;
+
 import java.util.List;
 
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
@@ -25,5 +27,20 @@ public class LyricModel {
 
     public LyricModel(LyricType type) {
         this.type = type;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "LyricModel{" +
+                "name='" + name + '\'' +
+                ", singer='" + singer + '\'' +
+                ", type=" + type +
+                ", lines=" + lines +
+                ", preludeEndPosition=" + preludeEndPosition +
+                ", duration=" + duration +
+                ", hasPitch=" + hasPitch +
+                ", pitchDataList=" + pitchDataList +
+                '}';
     }
 }
