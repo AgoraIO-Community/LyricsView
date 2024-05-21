@@ -57,6 +57,7 @@ import io.agora.karaoke_view_ex.constants.DownloadError;
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloader;
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloaderCallback;
 import io.agora.karaoke_view_ex.model.LyricModel;
+import io.agora.karaoke_view_ex.utils.LineScoreRecorder;
 import io.agora.mccex.constants.MccExState;
 import io.agora.mccex.constants.MccExStateReason;
 import io.agora.mccex.constants.MusicPlayMode;
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ScheduledFuture mFuture;
     private boolean mIsOriginal = false;
     private boolean mSetNoLyric = false;
+    private LineScoreRecorder mLineScoreRecorder;
 
     private Player_State mState = Player_State.Uninitialized;
 
@@ -121,6 +123,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        mLineScoreRecorder = new LineScoreRecorder();
 
         enableView(false);
         if (mMccExService) {
@@ -170,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onDragTo(KaraokeView view, long position) {
                 mKaraokeView.setProgress(position);
                 mLyricsCurrentProgress = position;
+                mLineScoreRecorder.seek(position);
                 updateCallback("Dragging, new progress " + position);
                 if (mMccExService) {
                     mMccExManager.seek(position);
@@ -231,6 +236,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     if (mLyricsModel != null && !mSetNoLyric) {
                         mKaraokeView.setLyricData(mLyricsModel);
+                        mLineScoreRecorder.setLyricData(mLyricsModel);
                     } else {
                         mKaraokeView.setLyricData(null);
                     }
@@ -347,6 +353,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mKaraokeView.setLyricData(null);
                 } else {
                     mKaraokeView.setLyricData(mLyricsModel);
+                    mLineScoreRecorder.setLyricData(mLyricsModel);
                 }
             } else {
                 lrc = Utils.copyAssetsToCreateNewFile(getApplicationContext(), lrcUri);
@@ -356,6 +363,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if (mLyricsModel != null && !mSetNoLyric) {
                     mKaraokeView.setLyricData(mLyricsModel);
+                    mLineScoreRecorder.setLyricData(mLyricsModel);
                 } else {
                     mKaraokeView.setLyricData(null);
                 }
@@ -400,6 +408,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mKaraokeView.setLyricData(null);
         } else {
             mKaraokeView.setLyricData(mLyricsModel);
+            mLineScoreRecorder.setLyricData(mLyricsModel);
         }
 
 
@@ -664,6 +673,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         mLyricsCurrentProgress = mLyricsModel.preludeEndPosition - 1000; // Jump to slight earlier
 
+        mLineScoreRecorder.seek(mLyricsCurrentProgress);
         if (mMccExService) {
             mMccExManager.seek(mLyricsCurrentProgress);
             mMccExManager.updateMusicPosition(mLyricsCurrentProgress);
@@ -886,10 +896,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onLineScore(long songCode, @NonNull LineScoreData value) {
+        float totalScore = mLineScoreRecorder.setLineScore(value.getPerformedLineIndex(), value.getLinePitchScore());
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                updateCallback("score=" + value.getLinePitchScore() + ", cumulatedScore=" + value.getCumulativeTotalLinePitchScores() + ", index=" + value.getPerformedLineIndex() + ", total=" + value.getPerformedTotalLines());
+                updateCallback("score=" + value.getLinePitchScore() + ", cumulatedScore=" + totalScore + ", index=" + value.getPerformedLineIndex() + ", total=" + value.getPerformedTotalLines());
             }
         });
     }

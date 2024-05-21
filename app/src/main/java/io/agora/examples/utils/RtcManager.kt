@@ -1,5 +1,6 @@
 package io.agora.examples.utils
 
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
@@ -24,10 +25,12 @@ object RtcManager : IAudioFrameObserver {
     private var mRtcEngine: RtcEngine? = null
     private var mCallback: RtcCallback? = null
     private var mChannelId: String = ""
-    private var mTime: String = ""
     private val SAVE_AUDIO_RECORD_PCM = false
+    private var mApplication: Application? = null
+    private var mSongCode: Long = 0
 
     fun initRtcEngine(context: Context, rtcCallback: RtcCallback) {
+        mApplication = context.applicationContext as Application
         mCallback = rtcCallback
         try {
             Log.d(TAG, "RtcEngine version:" + RtcEngine.getSdkVersion())
@@ -137,12 +140,14 @@ object RtcManager : IAudioFrameObserver {
         buffer.flip()
         if (SAVE_AUDIO_RECORD_PCM) {
             try {
-                val fos = FileOutputStream(
-                    "/sdcard/Android/Data/io.agora.mccex_demo/cache/audio_" + mTime + ".pcm",
-                    true
-                )
-                fos.write(origin)
-                fos.close()
+                if (0L != mSongCode) {
+                    val fos = FileOutputStream(
+                        mApplication?.externalCacheDir?.absolutePath + "/audio_" + mSongCode + ".pcm",
+                        true
+                    )
+                    fos.write(origin)
+                    fos.close()
+                }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
             }
@@ -253,7 +258,6 @@ object RtcManager : IAudioFrameObserver {
         if (SAVE_AUDIO_RECORD_PCM) {
             if (!enable) {
                 val format = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.getDefault())
-                mTime = format.format(System.currentTimeMillis())
             }
         }
     }
@@ -272,6 +276,10 @@ object RtcManager : IAudioFrameObserver {
 
     fun getChannelId(): String {
         return mChannelId
+    }
+
+    fun setSongCode(songCode: Long) {
+        mSongCode = songCode
     }
 
     @JvmStatic

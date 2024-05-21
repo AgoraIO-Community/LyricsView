@@ -523,9 +523,10 @@ public class ScoringView extends View {
             long startTime = line.getStartTime();
             long durationOfCurrentLine = line.getEndTime() - startTime;
 
-            if (machine.getCurrentPitchProgress() - startTime <= -(2 * durationOfCurrentLine)) { // If still to early for current line, we do not draw the sticks
-                // If we show the sticks too late, they will appear suddenly in the central of screen, not start from the right side
-                break;
+            if (Math.abs(machine.getCurrentPitchProgress() - line.getEndTime()) * mMovingPixelsPerMs >= getWidth() &&
+                    Math.abs(machine.getCurrentPitchProgress() - line.getStartTime()) * mMovingPixelsPerMs >= getWidth() &&
+                    !(machine.getCurrentPitchProgress() >= line.getStartTime() && machine.getCurrentPitchProgress() <= line.getEndTime())) { // If still to early for current line, we do not draw the sticks
+                continue;
             }
 
             if (i + 1 < lines.size() && line.getStartTime() < machine.getCurrentPitchProgress()) { // Has next line

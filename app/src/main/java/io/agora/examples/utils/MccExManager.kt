@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit
 
 object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExScoreEventHandler {
 
-    private const val TAG = "MccExManager"
+    private const val TAG = "LyricsView-MccExManager"
 
     private var mMccExService: IMusicContentCenterEx? = null
     private var mCallback: MccExCallback? = null
@@ -315,6 +315,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
     private fun openMusic(songCode: Long) {
         Log.d(TAG, "openMusic() called songCode=$songCode")
         mMusicPlayer?.setPlayMode(mMusicPlayMode)
+        RtcManager.setSongCode(songCode)
         mMusicPlayer?.open(songCode, 0)
     }
 
@@ -325,6 +326,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         }
         mStatus = Status.IDLE
         mMusicPlayer?.stop()
+        RtcManager.setSongCode(0L)
     }
 
     fun pause() {

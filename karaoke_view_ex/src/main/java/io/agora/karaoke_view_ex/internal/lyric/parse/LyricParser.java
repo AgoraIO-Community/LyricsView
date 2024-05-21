@@ -55,7 +55,7 @@ public class LyricParser {
                             }
 
                         }
-                        LyricsLineModel lineModel = parseKrcLine(line, offsetValue);
+                        LyricsLineModel lineModel = parseKrcLine(line, 0);
                         if (lineModel != null) {
                             lineModels.add(lineModel);
                         } else {

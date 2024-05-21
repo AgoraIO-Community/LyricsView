@@ -158,6 +158,7 @@ public class LyricsResourcePool {
 
     public static List<MusicResource> asMusicListEx() {
         ArrayList<MusicResource> list = new ArrayList<>();
+//        list.add(new MusicResource(0, "632753741", "十年"));
         list.add(new MusicResource(0, "40289835", "十年"));
         list.add(new MusicResource(0, "542869354", "Masih Mencintainya"));
         list.add(new MusicResource(0, "89488966", "在你的身边"));
@@ -165,6 +166,7 @@ public class LyricsResourcePool {
         list.add(new MusicResource(0, "625281172", "最后一页"));
         list.add(new MusicResource(0, "621162805", "梦回花事了"));
         list.add(new MusicResource(0, "288308118", "还是分开"));
+        list.add(new MusicResource(0, "130598261", "火力全开"));
         return list;
     }
 }

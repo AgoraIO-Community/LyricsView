@@ -3,8 +3,8 @@ package io.agora.karaoke_view_ex.internal.lyric.parse;
 import android.text.TextUtils;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import io.agora.karaoke_view_ex.constants.Constants;
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
@@ -124,15 +124,16 @@ public class LyricPitchParser {
 
         // 移除版权信息类型的句子
         if (includeCopyrightSentence && lyricsModel.lines != null && !lyricsModel.lines.isEmpty()) {
-            List<LyricsLineModel> tempLines = lyricsModel.lines;
-            List<LyricsLineModel> newLines = new ArrayList<>();
-            for (int i = 0; i < tempLines.size(); i++) {
-                LyricsLineModel lineModel = tempLines.get(i);
-                if (lineModel.getEndTime() > lyricsModel.preludeEndPosition) {
-                    newLines.add(lineModel);
+            ListIterator<LyricsLineModel> iterator = lyricsModel.lines.listIterator();
+            while (iterator.hasNext()) {
+                LyricsLineModel element = iterator.next();
+                if (element.getEndTime() < lyricsModel.preludeEndPosition) {
+                    lyricsModel.copyrightSentenceLineCount++;
+                    iterator.remove();
+                } else {
+                    break;
                 }
             }
-            lyricsModel.lines = newLines;
         }
 
         return lyricsModel;

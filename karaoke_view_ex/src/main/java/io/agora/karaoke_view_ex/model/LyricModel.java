@@ -23,10 +23,11 @@ public class LyricModel {
     public long duration;
     public boolean hasPitch;
     public List<KrcPitchData> pitchDataList;
-
+    public int copyrightSentenceLineCount;
 
     public LyricModel(LyricType type) {
         this.type = type;
+        copyrightSentenceLineCount = 0;
     }
 
     @NonNull
