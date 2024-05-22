@@ -26,8 +26,8 @@ object RtcManager : IAudioFrameObserver {
     private var mCallback: RtcCallback? = null
     private var mChannelId: String = ""
     private val SAVE_AUDIO_RECORD_PCM = false
+    private var mAudioRecordFileName = ""
     private var mApplication: Application? = null
-    private var mSongCode: Long = 0
 
     fun initRtcEngine(context: Context, rtcCallback: RtcCallback) {
         mApplication = context.applicationContext as Application
@@ -71,7 +71,7 @@ object RtcManager : IAudioFrameObserver {
                     mCallback?.onAudioVolumeIndication(speakers, totalVolume)
                 }
             }
-            rtcEngineConfig.mAudioScenario = Constants.AUDIO_SCENARIO_DEFAULT
+            rtcEngineConfig.mAudioScenario = Constants.AUDIO_SCENARIO_CHORUS
             mRtcEngine = RtcEngine.create(rtcEngineConfig)
 
             val prefs: SharedPreferences =
@@ -79,19 +79,33 @@ object RtcManager : IAudioFrameObserver {
             if (prefs.getBoolean(context.getString(R.string.prefs_key_rtc_audio_dump), false)) {
                 mRtcEngine?.setParameters("{\"rtc.debug.enable\": true}")
                 mRtcEngine?.setParameters("{\"che.audio.apm_dump\": true}")
+                mRtcEngine?.setParameters("{\"rtc.enable_debug_log\":true}")
             }
 
-            mRtcEngine?.setParameters("{\"rtc.enable_debug_log\":true}")
+            if (prefs.getBoolean(context.getString(R.string.prefs_key_rtc_ains), false)) {
+                mRtcEngine?.setParameters(
+                    "{\n" +
+                            "\n" +
+                            "\"che.audio.enable.nsng\":true,\n" +
+                            "\"che.audio.ains_mode\":2,\n" +
+                            "\"che.audio.ns.mode\":2,\n" +
+                            "\"che.audio.nsng.lowerBound\":80,\n" +
+                            "\"che.audio.nsng.lowerMask\":50,\n" +
+                            "\"che.audio.nsng.statisticalbound\":5,\n" +
+                            "\"che.audio.nsng.finallowermask\":30\n" +
+                            "}"
+                )
+            }
 
             mRtcEngine?.enableAudio()
 
             mRtcEngine?.setDefaultAudioRoutetoSpeakerphone(true)
 
 //            mRtcEngine?.setRecordingAudioFrameParameters(
-//                16000,
+//                48000,
 //                1,
 //                Constants.RAW_AUDIO_FRAME_OP_MODE_READ_ONLY,
-//                640
+//                48000 * 4 / 100
 //            )
 
             //min 50ms
@@ -140,9 +154,9 @@ object RtcManager : IAudioFrameObserver {
         buffer.flip()
         if (SAVE_AUDIO_RECORD_PCM) {
             try {
-                if (0L != mSongCode) {
+                if (mAudioRecordFileName.isNotEmpty()) {
                     val fos = FileOutputStream(
-                        mApplication?.externalCacheDir?.absolutePath + "/audio_" + mSongCode + ".pcm",
+                        mApplication?.externalCacheDir?.absolutePath + "/audio_" + mAudioRecordFileName + ".pcm",
                         true
                     )
                     fos.write(origin)
@@ -278,8 +292,12 @@ object RtcManager : IAudioFrameObserver {
         return mChannelId
     }
 
-    fun setSongCode(songCode: Long) {
-        mSongCode = songCode
+    fun setPlayingSongCode(songCode: Long) {
+        mAudioRecordFileName = if (songCode > 0L) {
+            songCode.toString() + "_" + Utils.getCurrentDateStr("yyyyMMdd_HHmmss")
+        } else {
+            ""
+        }
     }
 
     @JvmStatic

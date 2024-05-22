@@ -315,7 +315,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
     private fun openMusic(songCode: Long) {
         Log.d(TAG, "openMusic() called songCode=$songCode")
         mMusicPlayer?.setPlayMode(mMusicPlayMode)
-        RtcManager.setSongCode(songCode)
+        RtcManager.setPlayingSongCode(songCode)
         mMusicPlayer?.open(songCode, 0)
     }
 
@@ -326,7 +326,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         }
         mStatus = Status.IDLE
         mMusicPlayer?.stop()
-        RtcManager.setSongCode(0L)
+        RtcManager.setPlayingSongCode(0L)
     }
 
     fun pause() {
