@@ -79,7 +79,6 @@ object RtcManager : IAudioFrameObserver {
             if (prefs.getBoolean(context.getString(R.string.prefs_key_rtc_audio_dump), false)) {
                 mRtcEngine?.setParameters("{\"rtc.debug.enable\": true}")
                 mRtcEngine?.setParameters("{\"che.audio.apm_dump\": true}")
-                mRtcEngine?.setParameters("{\"rtc.enable_debug_log\":true}")
             }
 
             if (prefs.getBoolean(context.getString(R.string.prefs_key_rtc_ains), false)) {
@@ -96,6 +95,8 @@ object RtcManager : IAudioFrameObserver {
                             "}"
                 )
             }
+
+            mRtcEngine?.setParameters("{\"rtc.enable_debug_log\":true}")
 
             mRtcEngine?.enableAudio()
 
@@ -115,7 +116,8 @@ object RtcManager : IAudioFrameObserver {
                 true
             )
 
-            mChannelId = Utils.getCurrentDateStr("yyyyMMddHHmmss") + Utils.getRandomString(2)
+            //mChannelId = Utils.getCurrentDateStr("yyyyMMddHHmmss") + Utils.getRandomString(2)
+            mChannelId = "88911"
             val ret = mRtcEngine?.joinChannel(
                 KeyCenter.getRtcToken(
                     mChannelId,
@@ -298,6 +300,13 @@ object RtcManager : IAudioFrameObserver {
         } else {
             ""
         }
+    }
+
+    fun enableMediaPlayerOptions(playerId: Int, enable: Boolean) {
+        val mediaOptions = ChannelMediaOptions()
+        mediaOptions.publishMediaPlayerAudioTrack = enable
+        mediaOptions.publishMediaPlayerId = playerId
+        mRtcEngine?.updateChannelMediaOptions(mediaOptions)
     }
 
     @JvmStatic

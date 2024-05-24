@@ -152,6 +152,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         Log.d(TAG, "onInitializeResult: state = $state, reason = $reason")
         mMusicPlayer = mMccExService?.createMusicPlayer()
         mMusicPlayer?.registerPlayerObserver(mMediaPlayerObserver)
+        //mMusicPlayer?.let { RtcManager.enableMediaPlayerOptions(it.mediaPlayerId, true) }
         mCallback?.onInitializeResult(state, reason)
     }
 
