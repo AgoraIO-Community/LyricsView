@@ -1,4 +1,4 @@
-package io.agora.examples.utils
+package io.agora.examples.karaoke_view_ex.agora
 
 import android.content.Context
 import android.util.Log
@@ -87,9 +87,10 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
             }
         }
 
-        override fun onPositionChanged(positionMs: Long, timestampMs: Long) {
-            Log.d(TAG, "onPositionChanged: $positionMs $timestampMs")
+        override fun onPositionChanged(position_ms: Long) {
+            TODO("Not yet implemented")
         }
+
 
         override fun onPlayerEvent(
             eventCode: Constants.MediaPlayerEvent?,
@@ -278,7 +279,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         Log.d(TAG, "onMusicPlaying")
         mStatus = Status.Started
         mCallback?.onPlayStateChange()
-        mCallback?.onMusicPlaying()
+        mCallback?.onMusicPlayingEx()
     }
 
     private fun onMusicPause() {
@@ -293,7 +294,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
             mStatus = Status.Stopped
         }
 
-        mCallback?.onMusicStop();
+        mCallback?.onMusicStopEx();
         stopDisplayLrc()
         reset()
         mCallback?.onPlayStateChange()
@@ -301,7 +302,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
 
     private fun onMusicCompleted() {
         Log.d(TAG, "onMusicCompleted")
-        mCallback?.onMusicStop()
+        mCallback?.onMusicStopEx()
         stopDisplayLrc()
         reset()
         mCallback?.onPlayStateChange()
@@ -430,7 +431,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
                 } else {
                     mCurrentMusicPosition += MUSIC_POSITION_UPDATE_INTERVAL.toLong()
                 }
-                mCallback?.onMusicPositionChange(mCurrentMusicPosition)
+                mCallback?.onMusicPositionChangeEx(mCurrentMusicPosition)
             }
         }, 0, MUSIC_POSITION_UPDATE_INTERVAL.toLong(), TimeUnit.MILLISECONDS)
     }
@@ -489,13 +490,13 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
 
         }
 
-        fun onMusicPositionChange(position: Long) {
+        fun onMusicPositionChangeEx(position: Long) {
 
         }
 
-        fun onMusicPlaying() {}
+        fun onMusicPlayingEx() {}
 
-        fun onMusicStop() {}
+        fun onMusicStopEx() {}
 
         fun onPitch(songCode: Long, data: RawScoreData) {
 

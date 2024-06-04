@@ -1,8 +1,6 @@
-package io.agora.examples.utils;
+package io.agora.examples.karaoke_view_ex.agora;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -12,8 +10,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import io.agora.examples.karaoke_view_ex.BuildConfig;
-import io.agora.examples.karaoke_view_ex.R;
-import io.agora.mccex.constants.MusicPlayMode;
+import io.agora.examples.utils.KeyCenter;
+import io.agora.karaoke_view_ex.constants.Constants;
 import io.agora.mediaplayer.IMediaPlayerObserver;
 import io.agora.mediaplayer.data.PlayerUpdatedInfo;
 import io.agora.mediaplayer.data.SrcInfo;
@@ -21,17 +19,14 @@ import io.agora.musiccontentcenter.IAgoraMusicContentCenter;
 import io.agora.musiccontentcenter.IAgoraMusicPlayer;
 import io.agora.musiccontentcenter.IMusicContentCenterEventHandler;
 import io.agora.musiccontentcenter.Music;
+import io.agora.musiccontentcenter.MusicCacheInfo;
 import io.agora.musiccontentcenter.MusicChartInfo;
 import io.agora.musiccontentcenter.MusicContentCenterConfiguration;
-import io.agora.rtc2.ChannelMediaOptions;
-import io.agora.rtc2.Constants;
-import io.agora.rtc2.IRtcEngineEventHandler;
 import io.agora.rtc2.RtcEngine;
-import io.agora.rtc2.RtcEngineConfig;
 
-public class MusicContentCenterManager {
-    private static final String TAG = "KaraokeView-MCCManager";
-    private final Context mContext;
+public class MccManager {
+    private static final String TAG = Constants.TAG + "-MCCManager";
+    private Context mContext;
     private IAgoraMusicContentCenter mMcc;
     private IAgoraMusicPlayer mAgoraMusicPlayer;
     private MusicContentCenterConfiguration mConfig;
@@ -111,7 +106,8 @@ public class MusicContentCenterManager {
         }
 
         @Override
-        public void onPositionChanged(long positionMs, long timestampMs) {
+        public void onPositionChanged(long position_ms) {
+
         }
 
         @Override
@@ -155,7 +151,7 @@ public class MusicContentCenterManager {
         }
     };
 
-    public MusicContentCenterManager(Context context, MccCallback callback) {
+    public MccManager(Context context, MccCallback callback) {
         mContext = context;
         mCallback = callback;
         initData();
@@ -165,85 +161,8 @@ public class MusicContentCenterManager {
         mScheduledExecutorService = Executors.newScheduledThreadPool(5);
     }
 
-    public void init() {
-        if (TextUtils.isEmpty(BuildConfig.APP_ID) || TextUtils.isEmpty(BuildConfig.APP_CERTIFICATE)) {
-            ToastUtils.toastLong(mContext, "please check your app id and app certificate!");
-            return;
-        }
-
+    public void init(RtcEngine rtcEngine) {
         try {
-
-            RtcEngineConfig config = new RtcEngineConfig();
-            config.mContext = mContext;
-            config.mAppId = BuildConfig.APP_ID;
-            config.mChannelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING;
-            config.mEventHandler = new IRtcEngineEventHandler() {
-                @Override
-                public void onAudioVolumeIndication(AudioVolumeInfo[] speakers, int totalVolume) {
-                    super.onAudioVolumeIndication(speakers, totalVolume);
-                    if (null != speakers && mStatus == Status.Started) {
-                        for (IRtcEngineEventHandler.AudioVolumeInfo audioVolumeInfo : speakers) {
-                            if (audioVolumeInfo.uid == 0) {
-                                mCallback.onMusicPitch(audioVolumeInfo.voicePitch);
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                @Override
-                public void onJoinChannelSuccess(String channel, int uid, int elapsed) {
-                    super.onJoinChannelSuccess(channel, uid, elapsed);
-                    Log.i(TAG, "onJoinChannelSuccess " + channel + " " + uid + " " + elapsed);
-                }
-            };
-
-            RtcEngine rtcEngine = RtcEngine.create(config);
-
-            SharedPreferences prefs = mContext.getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
-            if (prefs.getBoolean(mContext.getString(R.string.prefs_key_rtc_audio_dump), false)) {
-                rtcEngine.setParameters("{\"rtc.debug.enable\": true}");
-                rtcEngine.setParameters("{\"che.audio.apm_dump\": true}");
-            }
-
-            if (prefs.getBoolean(mContext.getString(R.string.prefs_key_rtc_ains), false)) {
-                rtcEngine.setParameters("{\n" +
-                        "\n" +
-                        "\"che.audio.enable.nsng\":true,\n" +
-                        "\"che.audio.ains_mode\":2,\n" +
-                        "\"che.audio.ns.mode\":2,\n" +
-                        "\"che.audio.nsng.lowerBound\":80,\n" +
-                        "\"che.audio.nsng.lowerMask\":50,\n" +
-                        "\"che.audio.nsng.statisticalbound\":5,\n" +
-                        "\"che.audio.nsng.finallowermask\":30\n" +
-                        "}");
-            }
-
-            ChannelMediaOptions option = new ChannelMediaOptions();
-            option.autoSubscribeAudio = true;
-            rtcEngine.updateChannelMediaOptions(option);
-
-            rtcEngine.enableAudio();
-            rtcEngine.setAudioProfile(
-                    io.agora.rtc2.Constants.AUDIO_PROFILE_DEFAULT, io.agora.rtc2.Constants.AUDIO_SCENARIO_GAME_STREAMING
-            );
-            rtcEngine.setDefaultAudioRoutetoSpeakerphone(true);
-            rtcEngine.enableAudioVolumeIndication(50, 3, true);
-
-            int ret = rtcEngine.joinChannel(
-                    KeyCenter.getRtcToken(KeyCenter.CHANNEL_NAME, KeyCenter.getUserUid()),
-                    KeyCenter.CHANNEL_NAME,
-                    KeyCenter.getUserUid(),
-                    new ChannelMediaOptions() {{
-                        publishMicrophoneTrack = true;
-                        publishCustomAudioTrack = true;
-                        autoSubscribeAudio = true;
-                        clientRoleType = io.agora.rtc2.Constants.CLIENT_ROLE_BROADCASTER;
-                    }});
-
-
-            Log.i(TAG, "SDK version:" + RtcEngine.getSdkVersion());
-
             mMcc = IAgoraMusicContentCenter.create(rtcEngine);
 
             mConfig = new MusicContentCenterConfiguration();
@@ -405,20 +324,40 @@ public class MusicContentCenterManager {
         }
     }
 
-    public void setPlayMode(MusicPlayMode playMode) {
+    public void setPlayMode(IAgoraMusicPlayer.MusicPlayMode playMode) {
+        mAgoraMusicPlayer.setPlayMode(playMode);
+    }
+
+    public void clearCache() {
+        MusicCacheInfo[] caches = mMcc.getCaches();
+        for (MusicCacheInfo cache : caches) {
+            mMcc.removeCache(cache.songCode);
+        }
     }
 
     public interface MccCallback {
-        void onMusicLyricRequest(long songCode, String lyricUrl);
+        default void onMusicLyricRequest(long songCode, String lyricUrl) {
 
-        void onMusicPreloadResult(long songCode, int percent);
+        }
 
-        void onMusicPositionChange(long position);
+        default void onMusicPreloadResult(long songCode, int percent) {
 
-        void onMusicPitch(double voicePitch);
+        }
 
-        void onMusicPlaying();
+        default void onMusicPositionChange(long position) {
 
-        void onMusicStop();
+        }
+
+        default void onMusicPitch(double voicePitch, long progressInMs) {
+
+        }
+
+        default void onMusicPlaying() {
+
+        }
+
+        default void onMusicStop() {
+
+        }
     }
 }

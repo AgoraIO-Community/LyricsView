@@ -10,10 +10,11 @@ import android.widget.SeekBar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import io.agora.examples.karaoke_view_ex.agora.ServiceManager;
 import io.agora.examples.karaoke_view_ex.databinding.ActivitySettingsBinding;
+import io.agora.examples.utils.ServiceType;
 import io.agora.examples.utils.ToastUtils;
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloader;
-import io.agora.karaoke_view_ex.utils.Utils;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -46,8 +47,6 @@ public class SettingsActivity extends AppCompatActivity {
         loadPreferencesLyricsUI(prefs, editor);
 
         loadPreferencesScoringUI(prefs, editor);
-
-        loadPreferencesDownloaderUI(prefs, editor);
 
         loadPreferencesOtherSettingsUI(prefs, editor);
     }
@@ -110,10 +109,28 @@ public class SettingsActivity extends AppCompatActivity {
             editor.apply();
         });
 
+        binding.radioMcc.setChecked(prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType()) == ServiceType.MCC.getType());
+        binding.radioMccEx.setChecked(prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType()) == ServiceType.MCC_EX.getType());
+
+        binding.radioMcc.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType());
+                editor.apply();
+            }
+        });
+
+        binding.radioMccEx.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.MCC_EX.getType());
+                editor.apply();
+            }
+        });
+
+
         binding.btnClearMusicCache.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Utils.deleteFolder(SettingsActivity.this.getExternalCacheDir().getPath() + "/song/");
+                ServiceManager.INSTANCE.clearCache(SettingsActivity.this);
                 ToastUtils.toastLong(SettingsActivity.this, "Music cache cleared success");
             }
         });
@@ -491,15 +508,6 @@ public class SettingsActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-        });
-    }
-
-    private void loadPreferencesDownloaderUI(SharedPreferences prefs, SharedPreferences.Editor editor) {
-        binding.downloaderClearAll.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                LyricsFileDownloader.getInstance(getApplicationContext()).cleanAll();
             }
         });
     }

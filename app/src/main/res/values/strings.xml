@@ -5,6 +5,7 @@
     <string name="prefs_key_scoring_level" translatable="false">prefs_key_scoring_level</string>
     <string name="prefs_key_scoring_compensation_offset" translatable="false">prefs_key_scoring_compensation_offset</string>
     <string name="prefs_key_set_no_lyric" translatable="false">prefs_key_set_no_lyric</string>
+    <string name="prefs_key_service_type" translatable="false">prefs_key_service_type</string>
 
     <string name="prefs_key_start_of_verse_indicator_switch" translatable="false">prefs_key_start_of_verse_indicator_switch</string>
     <string name="prefs_key_start_of_verse_indicator_color" translatable="false">prefs_key_start_of_verse_indicator_color</string>
@@ -103,6 +104,8 @@
     <string name="rtc_audio_dump">Rtc Audio Dump</string>
     <string name="rtc_ains">Rtc AINS</string>
     <string name="set_no_lyric">Set No Lyric</string>
+    <string name="mcc_type">Mcc</string>
+    <string name="mccEx_type">MccEx</string>
     <string name="clear_music_cache">Clear Music Cache</string>
 
 

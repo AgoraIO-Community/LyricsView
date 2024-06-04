@@ -1,4 +1,4 @@
-package io.agora.examples.utils
+package io.agora.examples.karaoke_view_ex.agora
 
 import android.app.Application
 import android.content.Context
@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import io.agora.examples.karaoke_view_ex.BuildConfig
 import io.agora.examples.karaoke_view_ex.R
+import io.agora.examples.utils.KeyCenter
 import io.agora.mccex.utils.Utils
 import io.agora.rtc2.ChannelMediaOptions
 import io.agora.rtc2.Constants
@@ -224,25 +225,11 @@ object RtcManager : IAudioFrameObserver {
         samplesPerSec: Int,
         buffer: ByteBuffer?,
         renderTimeMs: Long,
-        avsync_type: Int
+        avsync_type: Int,
+        rtpTimestamp: Int
     ): Boolean {
         TODO("Not yet implemented")
     }
-
-    override fun onPublishAudioFrame(
-        channelId: String?,
-        type: Int,
-        samplesPerChannel: Int,
-        bytesPerSample: Int,
-        channels: Int,
-        samplesPerSec: Int,
-        buffer: ByteBuffer?,
-        renderTimeMs: Long,
-        avsync_type: Int
-    ): Boolean {
-        TODO("Not yet implemented")
-    }
-
 
     override fun getObservedAudioFramePosition(): Int {
         TODO("Not yet implemented")
@@ -261,10 +248,6 @@ object RtcManager : IAudioFrameObserver {
     }
 
     override fun getEarMonitoringAudioParams(): AudioParams {
-        TODO("Not yet implemented")
-    }
-
-    override fun getPublishAudioParams(): AudioParams {
         TODO("Not yet implemented")
     }
 
@@ -315,8 +298,14 @@ object RtcManager : IAudioFrameObserver {
     }
 
     interface RtcCallback {
-        fun onJoinChannelSuccess(channel: String, uid: Int, elapsed: Int)
-        fun onLeaveChannel(stats: IRtcEngineEventHandler.RtcStats)
+        fun onJoinChannelSuccess(channel: String, uid: Int, elapsed: Int) {
+
+        }
+
+        fun onLeaveChannel(stats: IRtcEngineEventHandler.RtcStats) {
+
+        }
+
         fun onMuteSuccess() {
 
         }
