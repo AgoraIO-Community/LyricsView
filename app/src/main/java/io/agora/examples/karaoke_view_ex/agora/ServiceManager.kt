@@ -36,6 +36,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     private var mCurrentSongCodeIndex = 0
     private var mIsOriginal = true
     private var mServiceCallback: ServiceCallback? = null
+    private var mLyricType: Int = 0
 
     fun setServiceType(serviceType: ServiceType) {
         mServiceType = serviceType
@@ -43,6 +44,10 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
     fun getServiceType(): ServiceType? {
         return mServiceType
+    }
+
+    fun setLyricType(lyricType: Int) {
+        mLyricType = lyricType
     }
 
     fun initService(context: Context, serviceCallback: ServiceCallback) {
@@ -183,7 +188,10 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
             )
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.setPlayMode(IAgoraMusicPlayer.MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL)
-            mMccManager?.preloadMusic(LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode)
+            mMccManager?.preloadMusic(
+                LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode,
+                mLyricType
+            )
         }
     }
 
@@ -241,6 +249,12 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.clearCache()
             LyricsFileDownloader.getInstance(context).cleanAll()
+        }
+    }
+
+    fun updateSpeakerPitch(speakerPitch: Double) {
+        if (ServiceType.MCC == mServiceType) {
+            mMccManager?.getPlayPosition()?.let { mServiceCallback?.onMusicPitch(speakerPitch, it) }
         }
     }
 

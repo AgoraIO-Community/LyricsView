@@ -18,16 +18,6 @@ public class LyricsLineModel {
         public String word;
         public Lang lang = Lang.Chinese;
         public int pitch = 0;
-        public boolean highlight;
-
-        public float highlightOffset = -1;
-        public float highlightWidth = -1;
-
-        public void resetHighlight() {
-            this.highlight = false;
-            this.highlightOffset = -1;
-            this.highlightWidth = -1;
-        }
 
         public long getDuration() {
             return end - begin;
@@ -43,11 +33,7 @@ public class LyricsLineModel {
             }
             Tone tone = (Tone) obj;
             // 比较各个属性是否相等
-            // ...
-            if (this.begin == tone.begin && this.end == tone.end && this.word.equals(tone.word) && this.lang == tone.lang && this.pitch == tone.pitch) {
-                return true;
-            }
-            return false;
+            return this.begin == tone.begin && this.end == tone.end && this.word.equals(tone.word) && this.lang == tone.lang && this.pitch == tone.pitch;
         }
 
         @Override
@@ -64,9 +50,6 @@ public class LyricsLineModel {
                     ", word='" + word + '\'' +
                     ", lang=" + lang +
                     ", pitch=" + pitch +
-                    ", highlight=" + highlight +
-                    ", highlightOffset=" + highlightOffset +
-                    ", highlightWidth=" + highlightWidth +
                     '}';
         }
     }
@@ -76,8 +59,6 @@ public class LyricsLineModel {
     }
 
     public List<Tone> tones;
-    // 总时长 (ms), krc 有值，其他格式文件解析没有赋值
-    public long duartion;
 
     public LyricsLineModel() {
         this.tones = new ArrayList<>();

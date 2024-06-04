@@ -88,7 +88,6 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         }
 
         override fun onPositionChanged(position_ms: Long) {
-            TODO("Not yet implemented")
         }
 
 

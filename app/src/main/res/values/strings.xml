@@ -6,6 +6,7 @@
     <string name="prefs_key_scoring_compensation_offset" translatable="false">prefs_key_scoring_compensation_offset</string>
     <string name="prefs_key_set_no_lyric" translatable="false">prefs_key_set_no_lyric</string>
     <string name="prefs_key_service_type" translatable="false">prefs_key_service_type</string>
+    <string name="prefs_key_lyric_type" translatable="false">prefs_key_lyric_type</string>
 
     <string name="prefs_key_start_of_verse_indicator_switch" translatable="false">prefs_key_start_of_verse_indicator_switch</string>
     <string name="prefs_key_start_of_verse_indicator_color" translatable="false">prefs_key_start_of_verse_indicator_color</string>
@@ -107,6 +108,9 @@
     <string name="mcc_type">Mcc</string>
     <string name="mccEx_type">MccEx</string>
     <string name="clear_music_cache">Clear Music Cache</string>
+    <string name="lyric_type">Lyric Type</string>
+    <string name="lyric_xml">XML</string>
+    <string name="lyric_lrc">LRC</string>
 
 
 </resources>

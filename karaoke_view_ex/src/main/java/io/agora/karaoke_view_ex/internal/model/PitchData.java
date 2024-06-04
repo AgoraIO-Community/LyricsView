@@ -2,7 +2,7 @@ package io.agora.karaoke_view_ex.internal.model;
 
 import androidx.annotation.NonNull;
 
-public class KrcPitchData {
+public class PitchData {
     public float pitch;
     public int startTime;
     public int duration;
@@ -10,7 +10,7 @@ public class KrcPitchData {
     @NonNull
     @Override
     public String toString() {
-        return "KrcPitchData{" +
+        return "PitchData{" +
                 "pitch=" + pitch +
                 ", startTime=" + startTime +
                 ", duration=" + duration +

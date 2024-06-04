@@ -146,6 +146,38 @@
                             android:text="@string/mccEx_type" />
                     </RadioGroup>
 
+                    <TextView
+                        android:id="@+id/lyric_type_tv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="@string/lyric_type"
+                        app:layout_constraintBottom_toBottomOf="@id/lyric_type_radio_group"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/lyric_type_radio_group" />
+
+                    <RadioGroup
+                        android:id="@+id/lyric_type_radio_group"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:orientation="horizontal"
+                        app:layout_constraintStart_toEndOf="@id/lyric_type_tv"
+                        app:layout_constraintTop_toBottomOf="@id/service_type_radio_group">
+
+                        <RadioButton
+                            android:id="@+id/radio_lyric_xml"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/lyric_xml" />
+
+                        <RadioButton
+                            android:id="@+id/radio_lyric_lrc"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/lyric_lrc" />
+                    </RadioGroup>
+
                     <Button
                         android:id="@+id/btn_clear_music_cache"
                         android:layout_width="0dp"
@@ -156,7 +188,7 @@
                         android:textAllCaps="false"
                         app:layout_constraintHorizontal_bias="0.6"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/service_type_radio_group" />
+                        app:layout_constraintTop_toBottomOf="@id/lyric_type_radio_group" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 

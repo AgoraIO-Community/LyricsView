@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import io.agora.karaoke_view_ex.internal.model.KrcPitchData;
+import io.agora.karaoke_view_ex.internal.model.PitchData;
 import io.agora.karaoke_view_ex.internal.model.XmlPitchData;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 
@@ -123,7 +123,7 @@ public class PitchParser {
     }
 
 
-    public static List<KrcPitchData> doParseKrc(byte[] fileData) {
+    public static List<PitchData> doParseKrc(byte[] fileData) {
         if (fileData == null || fileData.length == 0) {
             return null;
         }
@@ -133,7 +133,7 @@ public class PitchParser {
             if (jsonObject.has("pitchDatas")) {
                 jsonData = jsonObject.getString("pitchDatas");
                 Gson gson = new Gson();
-                return Arrays.asList(gson.fromJson(jsonData, KrcPitchData[].class));
+                return Arrays.asList(gson.fromJson(jsonData, PitchData[].class));
             }
         } catch (Exception e) {
             LogUtils.e("doParse error: " + e.getMessage());

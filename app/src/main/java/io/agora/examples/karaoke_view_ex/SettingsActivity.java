@@ -14,7 +14,7 @@ import io.agora.examples.karaoke_view_ex.agora.ServiceManager;
 import io.agora.examples.karaoke_view_ex.databinding.ActivitySettingsBinding;
 import io.agora.examples.utils.ServiceType;
 import io.agora.examples.utils.ToastUtils;
-import io.agora.karaoke_view_ex.downloader.LyricsFileDownloader;
+import io.agora.karaoke_view_ex.internal.constants.LyricType;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -117,6 +117,8 @@ public class SettingsActivity extends AppCompatActivity {
                 editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType());
                 editor.apply();
             }
+            binding.radioLyricXml.setEnabled(isChecked);
+            binding.radioLyricLrc.setEnabled(isChecked);
         });
 
         binding.radioMccEx.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -126,6 +128,25 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+        binding.radioLyricXml.setEnabled(binding.radioMcc.isChecked());
+        binding.radioLyricLrc.setEnabled(binding.radioMcc.isChecked());
+
+        binding.radioLyricXml.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.XML.ordinal());
+        binding.radioLyricLrc.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.LRC.ordinal());
+
+        binding.radioLyricXml.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
+                editor.apply();
+            }
+        });
+
+        binding.radioLyricLrc.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.LRC.ordinal());
+                editor.apply();
+            }
+        });
 
         binding.btnClearMusicCache.setOnClickListener(new View.OnClickListener() {
             @Override

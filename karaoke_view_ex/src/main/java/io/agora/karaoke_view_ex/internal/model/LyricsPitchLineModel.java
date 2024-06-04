@@ -61,8 +61,6 @@ public class LyricsPitchLineModel {
 
 
     public List<Pitch> pitches;
-    // 总时长 (ms), krc 有值，其他格式文件解析没有赋值
-    public long duartion;
 
     public LyricsPitchLineModel() {
         this.pitches = new ArrayList<>();

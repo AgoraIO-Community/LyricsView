@@ -8,8 +8,8 @@ import java.util.ListIterator;
 
 import io.agora.karaoke_view_ex.constants.Constants;
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
-import io.agora.karaoke_view_ex.internal.model.KrcPitchData;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
+import io.agora.karaoke_view_ex.internal.model.PitchData;
 import io.agora.karaoke_view_ex.internal.model.XmlPitchData;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.internal.utils.Utils;
@@ -60,10 +60,11 @@ public class LyricPitchParser {
             if (lines.length > 0) {
                 String firstLine = lines[0];
                 if (!TextUtils.isEmpty(firstLine)) {
-                    //fix here
                     if (firstLine.contains(Constants.FILE_EXTENSION_XML) || firstLine.contains("<song>")) {
                         type = LyricType.XML;
-                    } else {
+                    } else if (firstLine.matches(".*\\[\\d{2}:\\d{2}\\].*")) {
+                        return LyricType.LRC;
+                    } else if (firstLine.matches("\\[id:\\$[0-9a-fA-F]+\\]")) {
                         type = LyricType.KRC;
                     }
                 }
@@ -115,7 +116,7 @@ public class LyricPitchParser {
 
     public static LyricModel parseKrcLyricData(byte[] krcData, byte[] pitchData, boolean includeCopyrightSentence) {
         LyricModel lyricsModel = LyricParser.doParseKrc(krcData);
-        List<KrcPitchData> pitchDataList = PitchParser.doParseKrc(pitchData);
+        List<PitchData> pitchDataList = PitchParser.doParseKrc(pitchData);
         lyricsModel.pitchDataList = pitchDataList;
         lyricsModel.hasPitch = pitchDataList != null && !pitchDataList.isEmpty();
         if (lyricsModel.hasPitch) {
@@ -150,6 +151,7 @@ public class LyricPitchParser {
         if (model == null) {
             return null;
         }
+        model.hasPitch = pitchesModel != null && !pitchesModel.pitches.isEmpty();
 
         // Replace tones and set the pitch value
         // Each tone lasts for 100ms
@@ -192,7 +194,6 @@ public class LyricPitchParser {
         // Each tone lasts for the specified time
         for (int i = 0; i < model.lines.size() - 1; i++) {
             LyricsLineModel cur = model.lines.get(i);
-
         }
         return model;
     }

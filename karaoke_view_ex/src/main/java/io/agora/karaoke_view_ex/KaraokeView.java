@@ -5,6 +5,7 @@ import android.content.Context;
 import java.io.File;
 
 import io.agora.karaoke_view_ex.internal.LyricMachine;
+import io.agora.karaoke_view_ex.internal.ScoreMachine;
 import io.agora.karaoke_view_ex.internal.config.Config;
 import io.agora.karaoke_view_ex.internal.lyric.parse.LyricPitchParser;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
@@ -14,8 +15,9 @@ import io.agora.logging.Logger;
 public class KaraokeView {
     private KaraokeEvent mKaraokeEvent;
     private LyricsView mLyricsView;
-    private ScoringView mScoringView;
     private LyricMachine mLyricMachine;
+    private ScoringView mScoringView;
+    private ScoreMachine mScoreMachine;
     private Context mContext;
 
     public KaraokeView(LyricsView lyricsView, ScoringView scoringView) {
@@ -57,7 +59,33 @@ public class KaraokeView {
 
             public void requestRefreshUi() {
                 if (Config.DEBUG) {
-                    LogUtils.d("requestRefreshUi");
+                    LogUtils.d("LyricMachine requestRefreshUi");
+                }
+                if (mLyricsView != null) {
+                    mLyricsView.requestRefreshUi();
+                }
+                if (mScoringView != null) {
+                    mScoringView.requestRefreshUi();
+                }
+            }
+        });
+
+        mScoreMachine = new ScoreMachine(new ScoreMachine.OnScoreListener() {
+            @Override
+            public void resetUi() {
+                LogUtils.d("resetUi");
+                if (mLyricsView != null) {
+                    mLyricsView.requestRefreshUi();
+                }
+                if (mScoringView != null) {
+                    mScoringView.resetPitchIndicatorAndAnimation();
+                    mScoringView.requestRefreshUi();
+                }
+            }
+
+            public void requestRefreshUi() {
+                if (Config.DEBUG) {
+                    LogUtils.d("ScoreMachine requestRefreshUi");
                 }
                 if (mLyricsView != null) {
                     mLyricsView.requestRefreshUi();
@@ -82,6 +110,7 @@ public class KaraokeView {
             mScoringView.reset();
         }
         mLyricMachine.reset();
+        mScoreMachine.reset();
     }
 
 
@@ -105,6 +134,10 @@ public class KaraokeView {
     public void attachUi(LyricsView lyrics, ScoringView scoring) {
         LogUtils.d("attachUi lyrics:" + lyrics + ",scoring:" + scoring);
         if (mLyricMachine == null) {
+            throw new IllegalStateException("Call this after KaraokeView initialized, this is a convenient method for attach/detach on-the-fly");
+        }
+
+        if (mScoreMachine == null) {
             throw new IllegalStateException("Call this after KaraokeView initialized, this is a convenient method for attach/detach on-the-fly");
         }
 
@@ -137,23 +170,25 @@ public class KaraokeView {
         }
 
         if (mScoringView != null) {
-            mScoringView.attachToLyricMachine(mLyricMachine);
+            mScoringView.attachToScoreMachine(mScoreMachine);
         }
     }
 
     public void setLyricData(LyricModel model) {
         LogUtils.d("setLyricData model:" + model);
         mLyricMachine.prepare(model);
+        mScoreMachine.prepare(model);
 
         if (mLyricsView != null) {
             mLyricsView.attachToLyricMachine(mLyricMachine);
         }
 
         if (mScoringView != null) {
-            mScoringView.attachToLyricMachine(mLyricMachine);
+            mScoringView.attachToScoreMachine(mScoreMachine);
         }
 
         mLyricMachine.prepareUi();
+        mScoreMachine.prepareUi();
     }
 
     public final LyricModel getLyricData() {
@@ -170,10 +205,9 @@ public class KaraokeView {
      * @param progressInMs 当前音高、得分对应的实时进度（ms）
      */
     public void setPitch(float speakerPitch, int progressInMs) {
-        mLyricMachine.setPitch(speakerPitch, progressInMs);
-
-        if (mScoringView != null) {
-            mScoringView.setPitch(speakerPitch, mLyricMachine.getRefPitch(progressInMs));
+        double calculateScore = mScoreMachine.calculateScoreWithPitch(speakerPitch, progressInMs);
+        if (null != mScoringView) {
+            mScoringView.updatePitchAndScore(speakerPitch, (float) calculateScore);
         }
     }
 

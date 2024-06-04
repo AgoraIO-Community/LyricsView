@@ -45,13 +45,13 @@ class LyricsParserXml {
     /**
      * 从文件解析歌词
      */
-    public static LyricModel parseLrc(File lrcFile) {
-        if (lrcFile == null || !lrcFile.exists()) {
-            LogUtils.e("unexpected lyrics file " + lrcFile);
+    public static LyricModel parseXml(File xmlFile) {
+        if (xmlFile == null || !xmlFile.exists()) {
+            LogUtils.e("unexpected lyrics file " + xmlFile);
             return null;
         }
 
-        try (FileInputStream in = new FileInputStream(lrcFile)) {
+        try (FileInputStream in = new FileInputStream(xmlFile)) {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
             parser.setInput(in, null);
@@ -67,8 +67,8 @@ class LyricsParserXml {
     /**
      * 从文件内容解析歌词
      */
-    public static LyricModel parseLrc(byte[] lrcFileData) {
-        if (lrcFileData == null || lrcFileData.length == 0) {
+    public static LyricModel parseXml(byte[] xmlFileData) {
+        if (xmlFileData == null || xmlFileData.length == 0) {
             LogUtils.e("lyrics file data is empty");
             return null;
         }
@@ -76,7 +76,7 @@ class LyricsParserXml {
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(new StringReader(new String(lrcFileData, Constants.UTF_8)));
+            parser.setInput(new StringReader(new String(xmlFileData, Constants.UTF_8)));
             parser.nextTag();
 
             return parseLrcByXmlParse(parser);
@@ -89,7 +89,7 @@ class LyricsParserXml {
 
     private static LyricModel parseLrcByXmlParse(XmlPullParser parser) {
         try {
-            Song song = readLrc(parser);
+            Song song = readXml(parser);
             if (song.midi == null || song.midi.paragraphs == null) {
                 LogUtils.e(" no midi or paragraph");
                 return null;
@@ -100,7 +100,7 @@ class LyricsParserXml {
             for (Paragraph paragraph : song.midi.paragraphs) {
                 lines.addAll(paragraph.lines);
             }
-            if (lines.size() > 0) {
+            if (!lines.isEmpty()) {
                 lyrics.duration = lines.get(lines.size() - 1).getEndTime();
             }
             // Always the first line of lyrics
@@ -114,15 +114,18 @@ class LyricsParserXml {
                 // Invalid lyrics
                 return null;
             }
+            if (!lyrics.lines.isEmpty()) {
+                lyrics.hasPitch = lyrics.lines.get(0).tones.get(0).pitch != 0;
+            }
             return lyrics;
         } catch (Exception e) {
-            e.printStackTrace();
+            LogUtils.e(Log.getStackTraceString(e));
         }
         return null;
     }
 
 
-    private static Song readLrc(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private static Song readXml(XmlPullParser parser) throws XmlPullParserException, IOException {
         Song song = new Song();
 //        parser.require(XmlPullParser.START_TAG, null, "song");
         while (parser.next() != XmlPullParser.END_TAG) {

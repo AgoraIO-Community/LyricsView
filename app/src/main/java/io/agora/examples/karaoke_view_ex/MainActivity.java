@@ -36,6 +36,7 @@ import io.agora.karaoke_view_ex.constants.Constants;
 import io.agora.karaoke_view_ex.constants.DownloadError;
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloader;
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloaderCallback;
+import io.agora.karaoke_view_ex.internal.constants.LyricType;
 import io.agora.karaoke_view_ex.model.LyricModel;
 import io.agora.rtc2.IRtcEngineEventHandler;
 import pub.devrel.easypermissions.EasyPermissions;
@@ -146,7 +147,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onAudioVolumeIndication(@Nullable IRtcEngineEventHandler.AudioVolumeInfo[] speakers, int totalVolume) {
-
+                if (null != speakers && mState == PlayerState.PLAYING) {
+                    for (IRtcEngineEventHandler.AudioVolumeInfo audioVolumeInfo : speakers) {
+                        if (audioVolumeInfo.uid == 0) {
+                            ServiceManager.INSTANCE.updateSpeakerPitch(audioVolumeInfo.voicePitch);
+                            break;
+                        }
+                    }
+                }
             }
 
             @Override
@@ -281,6 +289,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ServiceManager.INSTANCE.setServiceType(Objects.requireNonNull(ServiceType.Companion.fromType(serviceType)));
             ServiceManager.INSTANCE.initService(this.getApplicationContext(), this);
         }
+
+        int lyricType = prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
+        ServiceManager.INSTANCE.setLyricType(lyricType);
 
         boolean indicatorOn = prefs.getBoolean(getString(R.string.prefs_key_start_of_verse_indicator_switch), true);
         binding.lyricsView.enablePreludeEndPositionIndicator(indicatorOn);

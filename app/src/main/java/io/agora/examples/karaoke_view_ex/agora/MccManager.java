@@ -36,6 +36,7 @@ public class MccManager {
     private final static int MUSIC_POSITION_UPDATE_INTERVAL = 20;
 
     private static volatile Status mStatus = Status.IDLE;
+    private int mLyricType = 0;
 
     enum Status {
         IDLE(0), Opened(1), Started(2), Paused(3), Stopped(4);
@@ -57,7 +58,7 @@ public class MccManager {
             Log.d(TAG, "onPreLoadEvent requestId:" + requestId + " songCode:" + songCode + " percent:" + percent + " lyricUrl:" + lyricUrl + " status:" + status + " errorCode:" + errorCode);
             mCallback.onMusicPreloadResult(songCode, percent);
             if (status == 0 && percent == 100) {
-                mCallback.onMusicLyricRequest(songCode, lyricUrl);
+                mMcc.getLyric(songCode, mLyricType);
             }
         }
 
@@ -269,12 +270,14 @@ public class MccManager {
         mAgoraMusicPlayer.seek(time);
     }
 
-    public void preloadMusic(final long songCode) {
-        Log.i(TAG, "preloadMusic call with music songCode:" + songCode);
+    public void preloadMusic(final long songCode, final int lyricType) {
+        Log.i(TAG, "preloadMusic call with music songCode:" + songCode + " lyricType:" + lyricType);
+        mLyricType = lyricType;
         try {
             if (0 == mMcc.isPreloaded(songCode)) {
                 Log.i(TAG, "mcc is preloaded songCode=" + songCode);
-                mMcc.getLyric(songCode, 0);
+                //0 xml  1 lrc
+                mMcc.getLyric(songCode, mLyricType);
             } else {
                 String requestId = mMcc.preload(songCode);
                 Log.i(TAG, "preload song code requestId=" + requestId);
@@ -287,7 +290,7 @@ public class MccManager {
     private void startDisplayLrc() {
         maybeCreateNewScheduledService();
         mCurrentMusicPosition = -1;
-        mScheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+        mScheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
                 if (mStatus == Status.Started) {
@@ -333,6 +336,10 @@ public class MccManager {
         for (MusicCacheInfo cache : caches) {
             mMcc.removeCache(cache.songCode);
         }
+    }
+
+    public long getPlayPosition() {
+        return mCurrentMusicPosition;
     }
 
     public interface MccCallback {

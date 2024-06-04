@@ -1,13 +1,6 @@
 package io.agora.karaoke_view_ex.internal;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import io.agora.karaoke_view_ex.internal.config.Config;
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
-import io.agora.karaoke_view_ex.internal.model.KrcPitchData;
-import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
-import io.agora.karaoke_view_ex.internal.model.LyricsPitchLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 
@@ -20,11 +13,7 @@ public class LyricMachine {
     private LyricModel mLyricsModel;
     private final OnLyricListener mListener;
     private long mCurrentLyricProgress = 0;
-    private long mCurrentPitchProgress = 0;
-    private float mMaximumRefPitch = 0;
-    private float mMinimumRefPitch = 100;
 
-    private List<LyricsPitchLineModel> mShowLyricsLines;
 
     public LyricMachine(OnLyricListener listener) {
         reset();
@@ -44,36 +33,6 @@ public class LyricMachine {
         }
 
         mLyricsModel = model;
-
-        if (model.type == LyricType.KRC) {
-            if (model.pitchDataList != null) {
-                for (KrcPitchData data : model.pitchDataList) {
-                    mMinimumRefPitch = (float) Math.min(mMinimumRefPitch, data.pitch);
-                    mMaximumRefPitch = (float) Math.max(mMaximumRefPitch, data.pitch);
-                }
-                if (null != mLyricsModel.lines) {
-                    mShowLyricsLines = new ArrayList<>(mLyricsModel.lines.size());
-                    for (LyricsLineModel line : mLyricsModel.lines) {
-                        LyricsPitchLineModel lineModel = new LyricsPitchLineModel();
-                        long startTime = line.getStartTime();
-                        long endTime = line.getEndTime();
-                        for (KrcPitchData data : model.pitchDataList) {
-                            if (data.startTime >= startTime && data.startTime < endTime) {
-                                LyricsPitchLineModel.Pitch pitch = new LyricsPitchLineModel.Pitch();
-                                pitch.begin = data.startTime;
-                                pitch.end = data.startTime + data.duration;
-                                pitch.pitch = (int) data.pitch;
-                                lineModel.pitches.add(pitch);
-                            }
-                        }
-                        mShowLyricsLines.add(lineModel);
-                    }
-                }
-            }
-        }
-
-
-        LogUtils.d("prepare mMinimumRefPitch:" + mMinimumRefPitch + ",mMaximumRefPitch:" + mMaximumRefPitch);
     }
 
     public boolean isReady() {
@@ -108,37 +67,10 @@ public class LyricMachine {
         }
     }
 
-    public void setPitch(float speakerPitch, int progressInMs) {
-        if (mLyricsModel == null) {
-            if (mListener != null) {
-                mListener.resetUi();
-            }
-            return;
-        }
-
-        mCurrentPitchProgress = progressInMs;
-        if (Config.DEBUG) {
-            LogUtils.d("setPitch speakerPitch:" + speakerPitch + ",progressInMs:" + progressInMs);
-        }
-    }
-
-
     public void whenDraggingHappen(long progress) {
         minorReset();
 
         mCurrentLyricProgress = progress;
-
-        if (null == mLyricsModel.lines) {
-            return;
-        }
-
-        for (int index = 0; index < mLyricsModel.lines.size(); index++) {
-            LyricsLineModel line = mLyricsModel.lines.get(index);
-            for (int toneIndex = 0; toneIndex < line.tones.size(); toneIndex++) {
-                LyricsLineModel.Tone tone = line.tones.get(toneIndex);
-                tone.resetHighlight();
-            }
-        }
     }
 
     public void reset() {
@@ -149,8 +81,6 @@ public class LyricMachine {
 
     private void resetProperties() { // Reset when song changed
         mLyricsModel = null;
-        mMinimumRefPitch = 100;
-        mMaximumRefPitch = 0;
     }
 
     private void resetStats() {
@@ -159,7 +89,6 @@ public class LyricMachine {
 
     private void minorReset() { // Will recover immediately
         mCurrentLyricProgress = 0;
-        mCurrentPitchProgress = 0;
     }
 
     public void prepareUi() {
@@ -175,46 +104,6 @@ public class LyricMachine {
     public long getCurrentLyricProgress() {
         return mCurrentLyricProgress;
     }
-
-    public long getCurrentPitchProgress() {
-        return mCurrentPitchProgress;
-    }
-
-    public float getMinimumRefPitch() {
-        return this.mMinimumRefPitch;
-    }
-
-    public float getMaximumRefPitch() {
-        return this.mMaximumRefPitch;
-    }
-
-    public List<LyricsPitchLineModel> getShowLyricsLines() {
-        return mShowLyricsLines;
-    }
-
-    public float getRefPitch(int progressInMs) {
-        if (mLyricsModel.type == LyricType.KRC) {
-            if (null != mLyricsModel.pitchDataList) {
-                for (KrcPitchData data : mLyricsModel.pitchDataList) {
-                    if (data.startTime <= progressInMs && data.startTime + data.duration >= progressInMs) {
-                        return data.pitch;
-                    }
-                }
-            }
-        } else {
-            if (null != mLyricsModel.lines) {
-                for (LyricsLineModel line : mLyricsModel.lines) {
-                    for (LyricsLineModel.Tone tone : line.tones) {
-                        if (tone.begin <= progressInMs && tone.end >= progressInMs) {
-                            return tone.pitch;
-                        }
-                    }
-                }
-            }
-        }
-        return 0;
-    }
-
 
     public interface OnLyricListener {
         public void resetUi();

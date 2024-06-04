@@ -26,7 +26,6 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 
-import io.agora.karaoke_view_ex.R;
 import io.agora.karaoke_view_ex.internal.LyricMachine;
 import io.agora.karaoke_view_ex.internal.config.Config;
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
@@ -36,11 +35,8 @@ import io.agora.karaoke_view_ex.internal.utils.LyricsLineDrawerHelper;
 import io.agora.karaoke_view_ex.model.LyricModel;
 
 /**
- * 歌词视图
- * 主要负责歌词的显示，支持上下拖动调整进度。
- *
- * @author chenhengfei(Aslanchen)
- * @date 2021/7/6
+ * A view to display lyrics with karaoke effect
+
  */
 @SuppressLint("StaticFieldLeak")
 public class LyricsView extends View {
@@ -66,7 +62,7 @@ public class LyricsView extends View {
     private float mLineSpacing;
     private float mPaddingTop;
     private String mNoLyricsLabel;
-    private int mIndexOfCurrentLine = 0;
+    private int mIndexOfCurrentLine = -1;
 
     private boolean mEnablePreludeEndPositionIndicator = true;
     private float mPreludeEndPositionIndicatorPaddingTop;
@@ -954,7 +950,7 @@ public class LyricsView extends View {
     private void resetInternal() {
         mLyricMachine = null;
         mLyricsModel = null;
-        mIndexOfCurrentLine = 0;
+        mIndexOfCurrentLine = -1;
         mForceUpdateUI = UpdateUIType.UpdateUIType_NORMAL;
         mCurrentTime = 0;
         mOffset = 0;
