@@ -2,6 +2,7 @@ package io.agora.karaoke_view_ex.model;
 
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
@@ -14,7 +15,7 @@ public class LyricModel {
      */
     public LyricType type;
     /**
-     * 歌星名称
+     * 歌曲名称
      */
     public String name;
     /**
@@ -55,6 +56,22 @@ public class LyricModel {
     public LyricModel(LyricType type) {
         this.type = type;
         copyrightSentenceLineCount = 0;
+    }
+
+    public LyricModel copy() {
+        LyricModel lyricModel = new LyricModel(type);
+        lyricModel.name = name;
+        lyricModel.singer = singer;
+        if (null != lines) {
+            lyricModel.lines = new ArrayList<>(lines);
+        }
+        lyricModel.preludeEndPosition = preludeEndPosition;
+        lyricModel.duration = duration;
+        lyricModel.hasPitch = hasPitch;
+        if (null != pitchDataList) {
+            lyricModel.pitchDataList = new ArrayList<>(pitchDataList);
+        }
+        return lyricModel;
     }
 
     @NonNull

@@ -59,6 +59,7 @@ public class LyricsLineModel {
     }
 
     public List<Tone> tones;
+    public long duration;
 
     public LyricsLineModel() {
         this.tones = new ArrayList<>();

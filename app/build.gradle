@@ -97,10 +97,10 @@ dependencies {
     implementation 'commons-codec:commons-codec:1.16.0'
     implementation 'pub.devrel:easypermissions:3.0.0'
 
-    implementation("io.github.winskyan:Agora-MccExService:2.2.0.131-alpha.4") {
+    implementation("io.github.winskyan:Agora-MccExService:2.2.0.131-alpha.5") {
         exclude(group: "io.agora.rtc", module: "agora-special-full")
     }
-//    def roomVersion = "2.6.1"
+//    def roomVersion = "2.5.2"
 //    implementation("androidx.room:room-runtime:${roomVersion.toString()}")
 //    implementation("androidx.room:room-ktx:${roomVersion.toString()}")
 }

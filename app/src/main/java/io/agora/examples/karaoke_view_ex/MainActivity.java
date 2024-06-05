@@ -37,6 +37,8 @@ import io.agora.karaoke_view_ex.constants.DownloadError;
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloader;
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloaderCallback;
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
+import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
+import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 import io.agora.rtc2.IRtcEngineEventHandler;
 import pub.devrel.easypermissions.EasyPermissions;
@@ -49,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ActivityResultLauncher mLauncher;
     private long mLyricsCurrentProgress = 0;
     private boolean mSetNoLyric = false;
+    private boolean mUseInternalScoring = false;
     private PlayerState mState = PlayerState.UNINITIALIZED;
 
     private enum PlayerState {
@@ -103,6 +106,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mLyricsCurrentProgress = position;
                 updateCallback("Dragging, new progress " + position);
                 ServiceManager.INSTANCE.seek(position);
+            }
+
+            @Override
+            public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulativeScore, int index, int lineCount) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateCallback("score=" + score + ", cumulatedScore=" + cumulativeScore + ", index=" + index + ", lineCount=" + lineCount);
+                    }
+                });
             }
         });
 
@@ -191,11 +204,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (null == error && null != fileData) {
                     Log.d(TAG, "onLyricsFileDownloadCompleted fileData:" + fileData.length);
                     mLyricsModel = KaraokeView.parseLyricData(fileData, null);
-
+                    mUseInternalScoring = true;
                     if (mLyricsModel != null && !mSetNoLyric) {
-                        mKaraokeView.setLyricData(mLyricsModel);
+                        mKaraokeView.setLyricData(mLyricsModel, true);
                     } else {
-                        mKaraokeView.setLyricData(null);
+                        mKaraokeView.setLyricData(null, true);
                     }
                 }
                 ServiceManager.INSTANCE.openMusic();
@@ -229,7 +242,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mLyricsModel = null;
 
             // Call this will trigger no/invalid lyrics ui
-            mKaraokeView.setLyricData(null);
+            mKaraokeView.setLyricData(null, mUseInternalScoring);
             ServiceManager.INSTANCE.openMusic();
             updateLyricsDescription();
         } else if (lrcUri.startsWith("https://") || lrcUri.startsWith("http://")) {
@@ -240,10 +253,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             lrc = new File(lrcUri);
             pitch = new File(pitchUri);
             mLyricsModel = KaraokeView.parseLyricData(lrc, pitch);
+            mUseInternalScoring = false;
             if (mSetNoLyric) {
-                mKaraokeView.setLyricData(null);
+                mKaraokeView.setLyricData(null, false);
             } else {
-                mKaraokeView.setLyricData(mLyricsModel);
+                mKaraokeView.setLyricData(mLyricsModel, false);
             }
             ServiceManager.INSTANCE.openMusic();
             updateLyricsDescription();
@@ -266,15 +280,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void loadPreferences() {
         Log.i(TAG, "loadPreferences");
         SharedPreferences prefs = getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
-        //int scoringLevel = prefs.getInt(getString(R.string.prefs_key_scoring_level), mKaraokeView.getScoringLevel());
-        //mKaraokeView.setScoringLevel(scoringLevel);
-        //int scoringOffset = prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), mKaraokeView.getScoringCompensationOffset());
-        //mKaraokeView.setScoringCompensationOffset(scoringOffset);
+        int scoringLevel = prefs.getInt(getString(R.string.prefs_key_scoring_level), mKaraokeView.getScoringLevel());
+        mKaraokeView.setScoringLevel(scoringLevel);
+        int scoringOffset = prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), mKaraokeView.getScoringCompensationOffset());
+        mKaraokeView.setScoringCompensationOffset(scoringOffset);
+
         mSetNoLyric = prefs.getBoolean(getString(R.string.prefs_key_set_no_lyric), false);
         if (mSetNoLyric) {
-            mKaraokeView.setLyricData(null);
+            mKaraokeView.setLyricData(null, mUseInternalScoring);
         } else {
-            mKaraokeView.setLyricData(mLyricsModel);
+            mKaraokeView.setLyricData(mLyricsModel, mUseInternalScoring);
         }
 
         int serviceType = prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType());
@@ -284,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 updateCallback("停止");
                 doStop();
             }
-            mKaraokeView.setLyricData(null);
+            mKaraokeView.setLyricData(null, mUseInternalScoring);
             ServiceManager.INSTANCE.destroy();
             ServiceManager.INSTANCE.setServiceType(Objects.requireNonNull(ServiceType.Companion.fromType(serviceType)));
             ServiceManager.INSTANCE.initService(this.getApplicationContext(), this);
@@ -356,7 +371,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.scoringView.enableParticleEffect(particleEffectOn, drawables);
 
 
-        float particleHitOnThreshold = prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f);
+        float particleHitOnThreshold = prefs.getFloat(getString(R.string.prefs_key_hit_score_threshold), 0.8f);
         binding.scoringView.setThresholdOfHitScore(particleHitOnThreshold);
     }
 

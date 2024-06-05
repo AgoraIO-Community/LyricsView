@@ -14,50 +14,31 @@ import io.agora.logging.LogManager;
 import io.agora.logging.Logger;
 
 public class LogUtils {
-    private static boolean mEnableLog = false;
-    private static boolean mSaveLogFile = false;
-
-    private static String mLogPath;
     private static final List<Logger> LOGGERS = new ArrayList<>(3);
 
     public static void enableLog(Context context, boolean enableLog, boolean saveLogFile, String logFilePath) {
-        mEnableLog = enableLog;
-        mSaveLogFile = saveLogFile;
-        if (mEnableLog) {
-            try {
-                initLog(context, logFilePath);
-            } catch (Exception e) {
-                e.printStackTrace();
-                Log.i(Constants.TAG, "initLog error:" + e.getMessage());
+        try {
+            String logPath = logFilePath;
+            if (TextUtils.isEmpty(logPath)) {
+                logPath = context.getExternalFilesDir(null).getPath();
             }
-        }
-    }
 
-    public static boolean isEnableLog() {
-        return mEnableLog;
-    }
+            destroy();
 
-    public static String getLogPath() {
-        return mLogPath;
-    }
+            if (enableLog) {
+                LOGGERS.add(new ConsoleLogger());
+            }
 
-
-    private static void initLog(Context context, String logFilePath) {
-        mLogPath = context.getExternalFilesDir(null).getPath();
-        if (!TextUtils.isEmpty(logFilePath)) {
-            mLogPath = logFilePath;
-        }
-
-        LogManager.instance().removeAllLogger();
-
-        LOGGERS.add(new ConsoleLogger());
-        if (mSaveLogFile) {
-            LOGGERS.add(new FileLogger(mLogPath, Constants.LOG_FILE_NAME, 1024 * 1024, 2, new ArrayList<String>(1) {{
-                add(Constants.TAG);
-            }}));
-        }
-        for (Logger logger : LOGGERS) {
-            LogManager.instance().addLogger(logger);
+            if (saveLogFile) {
+                LOGGERS.add(new FileLogger(logPath, Constants.LOG_FILE_NAME, 1024 * 1024, 2, new ArrayList<String>(1) {{
+                    add(Constants.TAG);
+                }}));
+            }
+            for (Logger logger : LOGGERS) {
+                LogManager.instance().addLogger(logger);
+            }
+        } catch (Exception e) {
+            Log.i(Constants.TAG, "initLog error:" + e.getMessage());
         }
     }
 
@@ -72,7 +53,6 @@ public class LogUtils {
     }
 
 
-
     public static void destroy() {
         for (Logger logger : LOGGERS) {
             LogManager.instance().removeLogger(logger);
@@ -82,20 +62,14 @@ public class LogUtils {
 
 
     public static void d(String msg) {
-        if (mEnableLog) {
-            LogManager.instance().debug(Constants.TAG, msg);
-        }
+        LogManager.instance().debug(Constants.TAG, msg);
     }
 
     public static void i(String msg) {
-        if (mEnableLog) {
-            LogManager.instance().info(Constants.TAG, msg);
-        }
+        LogManager.instance().info(Constants.TAG, msg);
     }
 
     public static void e(String msg) {
-        if (mEnableLog) {
-            LogManager.instance().error(Constants.TAG, msg);
-        }
+        LogManager.instance().error(Constants.TAG, msg);
     }
 }

@@ -202,6 +202,9 @@ class LyricsParserXml {
             if (name.equals("sentence")) {
                 List<LyricsLineModel> lines = new ArrayList<>();
                 readLines(parser, lines);
+                for (LyricsLineModel line : lines) {
+                    line.duration = line.getEndTime() - line.getStartTime();
+                }
                 paragraph.lines.addAll(lines);
             } else {
                 skip(parser);

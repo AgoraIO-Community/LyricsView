@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 object RtcManager : IAudioFrameObserver {
-    private const val TAG = "MccEx-RtcManager"
+    private const val TAG = io.agora.karaoke_view_ex.constants.Constants.TAG + "-RtcManager"
 
     private var mRtcEngine: RtcEngine? = null
     private var mCallback: RtcCallback? = null
@@ -68,6 +68,7 @@ object RtcManager : IAudioFrameObserver {
                     speakers: Array<out AudioVolumeInfo>?,
                     totalVolume: Int
                 ) {
+                    //Log.d(TAG, "onAudioVolumeIndication totalVolume:$totalVolume")
                     super.onAudioVolumeIndication(speakers, totalVolume)
                     mCallback?.onAudioVolumeIndication(speakers, totalVolume)
                 }
@@ -117,8 +118,7 @@ object RtcManager : IAudioFrameObserver {
                 true
             )
 
-            //mChannelId = Utils.getCurrentDateStr("yyyyMMddHHmmss") + Utils.getRandomString(2)
-            mChannelId = "88911"
+            mChannelId = Utils.getCurrentDateStr("yyyyMMddHHmmss") + Utils.getRandomString(2)
             val ret = mRtcEngine?.joinChannel(
                 KeyCenter.getRtcToken(
                     mChannelId,

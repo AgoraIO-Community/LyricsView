@@ -75,8 +75,7 @@ public class LyricParser {
             lyrics.duration = 0;
         } else {
             LyricsLineModel lastLine = lineModels.get(lineModels.size() - 1);
-            lyrics.duration = lastLine.getEndTime();
-
+            lyrics.duration = lastLine.getStartTime() + lastLine.duration;
         }
         return lyrics;
     }
@@ -129,7 +128,9 @@ public class LyricParser {
                 }
             }
         }
-        return new LyricsLineModel(tones);
+        LyricsLineModel lineModel = new LyricsLineModel(tones);
+        lineModel.duration = lineDuration;
+        return lineModel;
     }
 
 

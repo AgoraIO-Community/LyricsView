@@ -11,6 +11,7 @@ import android.graphics.drawable.Drawable;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,7 +19,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public final class Utils {
-
     @Nullable
     public static File copyAssetsToCreateNewFile(@NonNull Context context, @NonNull String name) {
         final AssetManager assets = context.getAssets();
@@ -60,6 +60,44 @@ public final class Utils {
         int read;
         while ((read = in.read(buffer)) != -1) {
             out.write(buffer, 0, read);
+        }
+    }
+
+    @Nullable
+    public static String loadAsString(@NonNull Context context, @NonNull String name) {
+        final AssetManager assets = context.getAssets();
+
+        if (assets == null) {
+            return null;
+        }
+
+        try {
+            try (final InputStream input = assets.open(name)) {
+                return loadAsString(input);
+            }
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    @Nullable
+    public static String loadAsString(@Nullable InputStream inputStream) {
+        if (inputStream == null) {
+            return null;
+        }
+
+        try {
+            try (final ByteArrayOutputStream result = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[4096];
+                int length;
+
+                while ((length = inputStream.read(buffer)) > 0) {
+                    result.write(buffer, 0, length);
+                }
+                return result.toString("UTF-8");
+            }
+        } catch (IOException e) {
+            return null;
         }
     }
 

@@ -5,9 +5,9 @@ import android.content.Context;
 import java.io.File;
 
 import io.agora.karaoke_view_ex.internal.LyricMachine;
-import io.agora.karaoke_view_ex.internal.ScoreMachine;
-import io.agora.karaoke_view_ex.internal.config.Config;
+import io.agora.karaoke_view_ex.internal.ScoringMachine;
 import io.agora.karaoke_view_ex.internal.lyric.parse.LyricPitchParser;
+import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 import io.agora.logging.Logger;
@@ -17,7 +17,7 @@ public class KaraokeView {
     private LyricsView mLyricsView;
     private LyricMachine mLyricMachine;
     private ScoringView mScoringView;
-    private ScoreMachine mScoreMachine;
+    private ScoringMachine mScoringMachine;
     private Context mContext;
 
     public KaraokeView(LyricsView lyricsView, ScoringView scoringView) {
@@ -45,9 +45,6 @@ public class KaraokeView {
         mLyricMachine = new LyricMachine(new LyricMachine.OnLyricListener() {
             @Override
             public void resetUi() {
-                if (Config.DEBUG) {
-                    LogUtils.d("resetUi");
-                }
                 if (mLyricsView != null) {
                     mLyricsView.requestRefreshUi();
                 }
@@ -58,9 +55,6 @@ public class KaraokeView {
             }
 
             public void requestRefreshUi() {
-                if (Config.DEBUG) {
-                    LogUtils.d("LyricMachine requestRefreshUi");
-                }
                 if (mLyricsView != null) {
                     mLyricsView.requestRefreshUi();
                 }
@@ -70,7 +64,30 @@ public class KaraokeView {
             }
         });
 
-        mScoreMachine = new ScoreMachine(new ScoreMachine.OnScoreListener() {
+        mScoringMachine = new ScoringMachine(new ScoringMachine.OnScoringListener() {
+
+            @Override
+            public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int index, int lineCount) {
+                LogUtils.d("onLineFinished line startTime:" + line.getStartTime() + ",line endTime:" + line.getEndTime() +
+                        ",score:" + score + ",cumulativeScore:" + cumulativeScore + ",index:" + index + ",lineCount:" + lineCount);
+
+                if (mScoringView != null) {
+                    mScoringView.resetPitchIndicatorAndAnimationWhenFullLineFinished(score);
+                }
+
+                if (mKaraokeEvent != null) {
+                    mKaraokeEvent.onLineFinished(KaraokeView.this, line, score, cumulativeScore, index, lineCount);
+                }
+            }
+
+            @Override
+            public void onPitchAndScoreUpdate(float speakerPitch, double scoreAfterNormalization, long progress) {
+                LogUtils.d("onPitchAndScoreUpdate speakerPitch:" + speakerPitch + ",scoreAfterNormalization:" + scoreAfterNormalization + ",progress:" + progress);
+                if (mScoringView != null) {
+                    mScoringView.updatePitchAndScore(speakerPitch, (float) scoreAfterNormalization);
+                }
+            }
+
             @Override
             public void resetUi() {
                 LogUtils.d("resetUi");
@@ -84,9 +101,6 @@ public class KaraokeView {
             }
 
             public void requestRefreshUi() {
-                if (Config.DEBUG) {
-                    LogUtils.d("ScoreMachine requestRefreshUi");
-                }
                 if (mLyricsView != null) {
                     mLyricsView.requestRefreshUi();
                 }
@@ -110,7 +124,7 @@ public class KaraokeView {
             mScoringView.reset();
         }
         mLyricMachine.reset();
-        mScoreMachine.reset();
+        mScoringMachine.reset();
     }
 
 
@@ -137,7 +151,7 @@ public class KaraokeView {
             throw new IllegalStateException("Call this after KaraokeView initialized, this is a convenient method for attach/detach on-the-fly");
         }
 
-        if (mScoreMachine == null) {
+        if (mScoringMachine == null) {
             throw new IllegalStateException("Call this after KaraokeView initialized, this is a convenient method for attach/detach on-the-fly");
         }
 
@@ -170,25 +184,25 @@ public class KaraokeView {
         }
 
         if (mScoringView != null) {
-            mScoringView.attachToScoreMachine(mScoreMachine);
+            mScoringView.attachToScoreMachine(mScoringMachine);
         }
     }
 
-    public void setLyricData(LyricModel model) {
+    public void setLyricData(LyricModel model, boolean usingInternalScoring) {
         LogUtils.d("setLyricData model:" + model);
         mLyricMachine.prepare(model);
-        mScoreMachine.prepare(model);
+        mScoringMachine.prepare(model, usingInternalScoring);
 
         if (mLyricsView != null) {
             mLyricsView.attachToLyricMachine(mLyricMachine);
         }
 
         if (mScoringView != null) {
-            mScoringView.attachToScoreMachine(mScoreMachine);
+            mScoringView.attachToScoreMachine(mScoringMachine);
         }
 
         mLyricMachine.prepareUi();
-        mScoreMachine.prepareUi();
+        mScoringMachine.prepareUi();
     }
 
     public final LyricModel getLyricData() {
@@ -205,9 +219,15 @@ public class KaraokeView {
      * @param progressInMs 当前音高、得分对应的实时进度（ms）
      */
     public void setPitch(float speakerPitch, int progressInMs) {
-        double calculateScore = mScoreMachine.calculateScoreWithPitch(speakerPitch, progressInMs);
-        if (null != mScoringView) {
-            mScoringView.updatePitchAndScore(speakerPitch, (float) calculateScore);
+        if (null != mScoringMachine) {
+            if (mScoringMachine.isUsingInternalScoring()) {
+                mScoringMachine.setPitch(speakerPitch, progressInMs);
+            } else {
+                double calculateScore = mScoringMachine.calculateScoreWithPitch(speakerPitch, progressInMs);
+                if (null != mScoringView) {
+                    mScoringView.updatePitchAndScore(speakerPitch, (float) calculateScore);
+                }
+            }
         }
     }
 
@@ -220,6 +240,7 @@ public class KaraokeView {
      */
     public void setProgress(long progress) {
         mLyricMachine.setProgress(progress);
+        mScoringMachine.setLyricProgress(progress);
     }
 
     public void setKaraokeEvent(KaraokeEvent event) {
@@ -234,6 +255,7 @@ public class KaraokeView {
                         mKaraokeEvent.onDragTo(KaraokeView.this, progress);
                     }
                     mLyricMachine.whenDraggingHappen(progress);
+                    mScoringMachine.whenDraggingHappen(progress);
                 }
 
                 @Override
@@ -247,6 +269,41 @@ public class KaraokeView {
                 }
             });
         }
+    }
+
+    public void setScoringAlgorithm(IScoringAlgorithm algorithm) {
+        LogUtils.d("setScoringAlgorithm algorithm:" + algorithm);
+        if (mScoringMachine != null) {
+            mScoringMachine.setScoringAlgorithm(algorithm);
+        }
+    }
+
+    public void setScoringLevel(int level) {
+        LogUtils.d("setScoringLevel level:" + level);
+        if (null != mScoringMachine) {
+            mScoringMachine.setScoringLevel(level);
+        }
+    }
+
+    public int getScoringLevel() {
+        if (null != mScoringMachine) {
+            return mScoringMachine.getScoringLevel();
+        }
+        return 15;
+    }
+
+    public void setScoringCompensationOffset(int offset) {
+        LogUtils.d("setScoringCompensationOffset offset:" + offset);
+        if (null != mScoringMachine) {
+            mScoringMachine.setScoringCompensationOffset(offset);
+        }
+    }
+
+    public int getScoringCompensationOffset() {
+        if (null != mScoringMachine) {
+            return mScoringMachine.getScoringCompensationOffset();
+        }
+        return 0;
     }
 
     public void addLogger(Logger logger) {

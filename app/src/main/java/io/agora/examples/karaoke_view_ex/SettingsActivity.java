@@ -505,21 +505,21 @@ public class SettingsActivity extends AppCompatActivity {
             editor.apply();
         });
 
-        int particleHitThreshold = (int) (prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f) * 100);
-        binding.particleHitOnThresholdTune.setProgress(particleHitThreshold); // 0...100
-        binding.particleHitOnThresholdTuneValue.setText(String.valueOf(prefs.getFloat(getString(R.string.prefs_key_particle_hit_on_threshold), 0.8f)));
+        int hitScoreThreshold = (int) (prefs.getFloat(getString(R.string.prefs_key_hit_score_threshold), 0.8f) * 100);
+        binding.hitScoreThresholdTune.setProgress(hitScoreThreshold); // 0...100
+        binding.hitScoreThresholdTuneValue.setText(String.valueOf(prefs.getFloat(getString(R.string.prefs_key_hit_score_threshold), 0.8f)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            binding.particleHitOnThresholdTune.setMin(1);
+            binding.hitScoreThresholdTune.setMin(1);
         }
-        binding.particleHitOnThresholdTune.setMax(100);
-        binding.particleHitOnThresholdTune.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        binding.hitScoreThresholdTune.setMax(100);
+        binding.hitScoreThresholdTune.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
                     float threshold = (float) progress / 100.f;
-                    editor.putFloat(getString(R.string.prefs_key_particle_hit_on_threshold), threshold);
+                    editor.putFloat(getString(R.string.prefs_key_hit_score_threshold), threshold);
                     editor.apply();
-                    binding.particleHitOnThresholdTuneValue.setText(String.valueOf(threshold));
+                    binding.hitScoreThresholdTuneValue.setText(String.valueOf(threshold));
                 }
             }
 
