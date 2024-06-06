@@ -90,7 +90,6 @@ public class KaraokeView {
 
             @Override
             public void resetUi() {
-                LogUtils.d("resetUi");
                 if (mLyricsView != null) {
                     mLyricsView.requestRefreshUi();
                 }

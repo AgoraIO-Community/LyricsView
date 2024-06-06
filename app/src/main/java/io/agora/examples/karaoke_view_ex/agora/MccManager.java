@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import io.agora.examples.karaoke_view_ex.BuildConfig;
 import io.agora.examples.utils.KeyCenter;
 import io.agora.karaoke_view_ex.constants.Constants;
+import io.agora.mccex.constants.MusicPlayMode;
 import io.agora.mediaplayer.IMediaPlayerObserver;
 import io.agora.mediaplayer.data.PlayerUpdatedInfo;
 import io.agora.mediaplayer.data.SrcInfo;
@@ -107,7 +108,7 @@ public class MccManager {
         }
 
         @Override
-        public void onPositionChanged(long position_ms) {
+        public void onPositionChanged(long positionMs, long timestampMs) {
 
         }
 
@@ -327,8 +328,25 @@ public class MccManager {
         }
     }
 
-    public void setPlayMode(IAgoraMusicPlayer.MusicPlayMode playMode) {
-        mAgoraMusicPlayer.setPlayMode(playMode);
+    public void setPlayMode(MusicPlayMode playMode, int musicType) {
+//        mAgoraMusicPlayer.setPlayMode(playMode);
+        int ret = -1;
+        if (MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL == playMode) {
+            if (musicType == 1) {
+                ret = mAgoraMusicPlayer.setAudioDualMonoMode(io.agora.mediaplayer.Constants.AudioDualMonoMode.AUDIO_DUAL_MONO_R.ordinal());
+            } else if (musicType == 4 || musicType == 6) {
+                ret = mAgoraMusicPlayer.selectAudioTrack(0);
+            }
+        } else if (MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY == playMode) {
+            if (musicType == 1) {
+                //左伴右唱
+                ret = mAgoraMusicPlayer.setAudioDualMonoMode(io.agora.mediaplayer.Constants.AudioDualMonoMode.AUDIO_DUAL_MONO_L.ordinal());
+            } else if (musicType == 4 || musicType == 6) {
+                //多音轨
+                ret = mAgoraMusicPlayer.selectAudioTrack(1);
+            }
+        }
+        Log.i(TAG, "setPlayMode() called with: playMode = " + playMode + " ret=" + ret);
     }
 
     public void clearCache() {

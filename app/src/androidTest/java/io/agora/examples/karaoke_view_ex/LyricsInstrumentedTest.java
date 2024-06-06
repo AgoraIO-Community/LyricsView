@@ -1204,4 +1204,55 @@ public class LyricsInstrumentedTest {
         assertEquals(180203, model.pitchDataList.get(model.pitchDataList.size() - 1).startTime);
         assertEquals(50, model.pitchDataList.get(model.pitchDataList.size() - 1).pitch, 0);
     }
+
+    @Test
+    public void testKrcCalculateScoreWithPitch() {
+        String fileNameOfSong = "4875936889260991133.krc";
+        String fileNameOfPitch = "4875936889260991133.pitch";
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        File lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        File pitches = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfPitch);
+        LyricModel model = LyricPitchParser.parseFile(lyrics, pitches);
+        assertEquals(11590, model.lines.get(0).getStartTime());
+
+        assertFalse(model.lines.isEmpty());
+        assertEquals("十年 (《明年今日》国语版|《隐婚男女》电影插曲|《摆渡人》电影插曲)", model.name);
+        assertEquals("陈奕迅", model.singer);
+        assertEquals(LyricType.KRC, model.type);
+
+        ScoringMachine scoringMachine = new ScoringMachine(new ScoringMachine.OnScoringListener() {
+            @Override
+            public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int index, int numberOfLines) {
+                Log.d(TAG, "onLineFinished line:" + line + " score:" + score + " cumulativeScore:" + cumulativeScore + " index:" + index + " numberOfLines:" + numberOfLines);
+            }
+
+            @Override
+            public void resetUi() {
+                Log.d(TAG, "resetUi");
+            }
+
+            @Override
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, long progress) {
+                Log.d(TAG, "onPitchAndScoreUpdate pitch:" + pitch + " scoreAfterNormalization:" + scoreAfterNormalization + " progress:" + progress);
+            }
+
+            @Override
+            public void requestRefreshUi() {
+                Log.d(TAG, "requestRefreshUi");
+            }
+        });
+
+        scoringMachine.prepare(model, false);
+
+        assertEquals(100, scoringMachine.calculateScoreWithPitch(66, 15686), 0);
+        assertEquals(100, scoringMachine.calculateScoreWithPitch(65, 15886), 0);
+        assertEquals(100, scoringMachine.calculateScoreWithPitch(68, 15888), 0);
+        assertEquals(0, scoringMachine.calculateScoreWithPitch(30, 15686), 0);
+        assertEquals(0, scoringMachine.calculateScoreWithPitch(90, 15686), 0);
+        assertEquals(0, scoringMachine.calculateScoreWithPitch(0, 15686), 0);
+        assertEquals(0, scoringMachine.calculateScoreWithPitch(0, 15786), 0);
+
+    }
 }

@@ -10,12 +10,14 @@ public class LyricsResourcePool {
         public final long songCode;
         public final String songName;
         public final String songId;
+        public final int songType;
 
-        MusicResource(int index, long songCode, String songName) {
+        MusicResource(int index, long songCode, String songName, int songType) {
             this.index = index;
             this.songCode = songCode;
             this.songName = songName;
             this.songId = "";
+            this.songType = songType;
         }
 
         MusicResource(int index, String songId, String songName) {
@@ -23,17 +25,18 @@ public class LyricsResourcePool {
             this.songId = songId;
             this.songName = songName;
             this.songCode = -1;
+            this.songType = 0;
         }
     }
 
 
     public static List<MusicResource> asMusicList() {
         ArrayList<MusicResource> list = new ArrayList<>();
-        list.add(new MusicResource(0, 6246262727282860L, "爱情转移"));
-        list.add(new MusicResource(1, 6654550221757560L, "说爱你"));
-        list.add(new MusicResource(2, 6246262727300580L, "江南"));
-        list.add(new MusicResource(3, 6625526608670440L, "容易受伤的女人"));
-        list.add(new MusicResource(4, 6625526618861450L, "卖汤圆"));
+        list.add(new MusicResource(0, 6246262727282860L, "爱情转移", 1));
+        list.add(new MusicResource(1, 6654550221757560L, "说爱你", 4));
+        list.add(new MusicResource(2, 6246262727300580L, "江南", 1));
+        list.add(new MusicResource(3, 6625526608670440L, "容易受伤的女人", 4));
+        list.add(new MusicResource(4, 6625526618861450L, "卖汤圆", 4));
 
         //test domain mccDomain = "api-test.agora.io";
 //        list.add(new MusicResource(0, 6625526604952630L, "日不落"));

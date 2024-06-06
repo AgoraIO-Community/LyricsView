@@ -225,11 +225,25 @@ object RtcManager : IAudioFrameObserver {
         samplesPerSec: Int,
         buffer: ByteBuffer?,
         renderTimeMs: Long,
-        avsync_type: Int,
-        rtpTimestamp: Int
+        avsync_type: Int
     ): Boolean {
-        TODO("Not yet implemented")
+        return true
     }
+
+    override fun onPublishAudioFrame(
+        channelId: String?,
+        type: Int,
+        samplesPerChannel: Int,
+        bytesPerSample: Int,
+        channels: Int,
+        samplesPerSec: Int,
+        buffer: ByteBuffer?,
+        renderTimeMs: Long,
+        avsync_type: Int
+    ): Boolean {
+        return true
+    }
+
 
     override fun getObservedAudioFramePosition(): Int {
         TODO("Not yet implemented")
@@ -248,6 +262,10 @@ object RtcManager : IAudioFrameObserver {
     }
 
     override fun getEarMonitoringAudioParams(): AudioParams {
+        TODO("Not yet implemented")
+    }
+
+    override fun getPublishAudioParams(): AudioParams {
         TODO("Not yet implemented")
     }
 

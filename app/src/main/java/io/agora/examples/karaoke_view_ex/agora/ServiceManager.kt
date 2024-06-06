@@ -18,7 +18,6 @@ import io.agora.mccex.constants.MccExStateReason
 import io.agora.mccex.constants.MusicPlayMode
 import io.agora.mccex.model.LineScoreData
 import io.agora.mccex.model.RawScoreData
-import io.agora.musiccontentcenter.IAgoraMusicPlayer
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Response
@@ -187,7 +186,10 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
                 ""
             )
         } else if (ServiceType.MCC == mServiceType) {
-            mMccManager?.setPlayMode(IAgoraMusicPlayer.MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL)
+            mMccManager?.setPlayMode(
+                MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
+                LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
+            )
             mMccManager?.preloadMusic(
                 LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode,
                 mLyricType
@@ -215,10 +217,16 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         } else if (ServiceType.MCC == mServiceType) {
             if (mIsOriginal) {
                 mIsOriginal = false
-                mMccManager?.setPlayMode(IAgoraMusicPlayer.MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY)
+                mMccManager?.setPlayMode(
+                    MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY,
+                    LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
+                )
             } else {
                 mIsOriginal = true
-                mMccManager?.setPlayMode(IAgoraMusicPlayer.MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL)
+                mMccManager?.setPlayMode(
+                    MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
+                    LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
+                )
             }
         }
     }

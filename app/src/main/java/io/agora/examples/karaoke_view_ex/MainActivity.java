@@ -38,7 +38,6 @@ import io.agora.karaoke_view_ex.downloader.LyricsFileDownloader;
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloaderCallback;
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
-import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 import io.agora.rtc2.IRtcEngineEventHandler;
 import pub.devrel.easypermissions.EasyPermissions;

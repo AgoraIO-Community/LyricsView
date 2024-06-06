@@ -4,10 +4,9 @@ Build KTV app effortlessly with KaraokeView
 
 # 简介
 
-声网 KTV 控件(KaraokeView)支持在歌曲播放的同时同步显示歌词，支持演唱打分以及相关效果显示。本文介绍如何在项目中集成并使用
-KaraokeView。
+声网 KTV 控件(KaraokeView)支持在歌曲播放的同时同步显示歌词，支持演唱打分以及相关效果显示。本文介绍如何在项目中集成并使用 KaraokeView。
 
-`注意：该版本版本同当前稳定版 2.x 在 API 上并不兼容1.x版本`
+`注意：该版本稳定版 2.x 在 API 上并不兼容1.x版本`
 
 `功能描述`
 
@@ -70,24 +69,33 @@ public class LiveActivity extends RtcBaseActivity {
         // 1. Initialize
         mKaraokeView = new KaraokeView(binding.enableLyrics.isChecked() ? binding.lyricsView : null, binding.enableScoring.isChecked() ? binding.scoringView : null);
 
-        // 2. Parse the lyrics and set up the lyrics model for KaraokeView
-        mLyricsModel = KaraokeView.parseLyricData(lrc, pitch);
-        if (mLyricsModel != null) {
-            mKaraokeView.setLyricData(mLyricsModel);
-        }
-
-        // 3. Set up event callbacks
+        // 2. Set up event callbacks
         mKaraokeView.setKaraokeEvent(new KaraokeEvent() {
             @Override
             public void onDragTo(KaraokeView view, long position) {
                 mKaraokeView.setProgress(position);
             }
+
+            @Override
+            public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulativeScore, int index, int lineCount) {
+                //if enable internal scoring, the callback will be triggered when a line of lyrics is finished
+            }
         });
+
+        // 3. Parse the lyrics and set up the lyrics model for KaraokeView
+        mLyricsModel = KaraokeView.parseLyricData(lrc, pitch);
+        if (mLyricsModel != null) {
+            // Set the lyrics data to KaraokeView with whether to enable internal scoring
+            mKaraokeView.setLyricData(mLyricsModel, true);
+        }
 
         // 4. Drive the KaraokeView running based on the progress of media player
         mKaraokeView.setProgress(position);
 
-        // 5. Reset
+        // 5. set the pitch of the speaker and the progress of the media player
+        mKaraokeView.setPitch((float) speakerPitch, (int) progressInMs);
+
+        // 6. Reset
         mKaraokeView.reset();
         ...
     }
@@ -106,6 +114,20 @@ public interface KaraokeEvent {
      */
     public void onDragTo(KaraokeView view, long position);
 
+
+    /**
+     * 歌词组件内置的打分回调, 每句歌词结束的时候提供回调(句指 xml 中的 sentence 节点),
+     * 并提供 totalScore 参考值用于按照百分比方式显示分数
+     *
+     * @param view            当前组件对象
+     * @param line            当前句歌词模型对象
+     * @param score           当前句得分
+     * @param cumulativeScore 累计的分数 初始分累计到当前的分数
+     * @param index           当前句索引
+     * @param lineCount       整个歌词总句数
+     */
+    void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulativeScore, int index, int lineCount);
+
 }
 
 ```
@@ -116,19 +138,43 @@ public interface KaraokeEvent {
 
 ```xml
 
-<io.agora.karaoke_view_ex.LyricsView android:id="@+id/lyrics_view"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:paddingStart="10dp" android:paddingTop="20dp" android:paddingEnd="10dp"
-    android:paddingBottom="20dp"// 当前行歌词颜色app:currentTextColor="@color/ktv_lrc_current"// 当前行歌词字体大小app:currentLineTextSize="26sp"// 当前行歌词高亮颜色app:currentLineHighlightedTextColor="@color/ktv_lrc_highlight"// 歌词行间距app:lineSpacing="20dp"// 无歌词情况下的默认文字app:labelWhenNoLyrics="暂无歌词"// 已经唱过歌词颜色app:previousLineTextColor="@color/ktv_lrc_nomal"// 即将显示歌词颜色app:upcomingLineTextColor="@color/ktv_lrc_nomal"// 歌词字体大小app:textSize="16sp"// 歌词文字显示对齐方式app:textGravity="center" />
+<io.agora.karaoke_view_ex.LyricsView 
+    android:id="@+id/lyrics_view"
+    android:layout_width="match_parent" 
+    android:layout_height="match_parent"
+    android:paddingStart="10dp" 
+    android:paddingTop="20dp" 
+    android:paddingEnd="10dp"
+    // 当前行歌词颜色
+    app:currentTextColor="@color/ktv_lrc_current"
+    // 当前行歌词字体大小
+    app:currentLineTextSize="26sp"
+    // 当前行歌词高亮颜色
+    app:currentLineHighlightedTextColor="@color/ktv_lrc_highlight"
+    // 歌词行间距
+    app:lineSpacing="20dp"
+    // 无歌词情况下的默认文字
+    app:labelWhenNoLyrics="暂无歌词"
+    // 已经唱过歌词颜色
+    app:previousLineTextColor="@color/ktv_lrc_nomal"
+    // 即将显示歌词颜色
+    app:upcomingLineTextColor="@color/ktv_lrc_nomal"
+    // 歌词字体大小
+    app:textSize="16sp"
+    // 歌词文字显示对齐方式
+    app:textGravity="center" />
 ```
 
 ### 自定义 ScoringView 控件：
 
 ```xml
 
-<io.agora.karaoke_view_ex.ScoringView android:id="@+id/scoring_view
+<io.agora.karaoke_view_ex.ScoringView
+    android:id="@+id/scoring_view
     // 基准音条高度
-    app:pitchStickHeight="4dp"// 基准音条高亮状态颜色app:pitchStickHighlightedColor="@color/pink_b4"/>
+    app:pitchStickHeight="4dp"
+    // 基准音条高亮状态颜色
+    app:pitchStickHighlightedColor="@color/pink_b4"
 ```
 
 ### 重写粒子动画效果:
@@ -152,3 +198,27 @@ public class MyScoringView extends ScoringView {
     }
 }
 ```
+
+### 重写打分逻辑:
+```Java
+public class MyScoringAlgorithm implements IScoringAlgorithm {
+    public MyScoringAlgorithm() {
+    }
+
+    @Override
+    public float getPitchScore(float currentPitch, float currentRefPitch) {
+        final float scoreAfterNormalization = ScoringMachine.calculateScore2(0, mScoringLevel, mScoringCompensationOffset, currentPitch, currentRefPitch);
+        // 返回的为 [0, 1] 之间的规范值
+        return scoreAfterNormalization;
+    }
+
+    @Override
+    public int getLineScore(final LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished) {
+        ...
+        scoreThisLine = ...
+        ...
+        return scoreThisLine;
+    }
+}
+```
+
