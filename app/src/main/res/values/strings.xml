@@ -116,5 +116,25 @@
     <string name="scoring_level">Scoring Level</string>
     <string name="compensation_offset">Compensation Offset</string>
     <string name="service_type">Service Type</string>
+    <string name="start_of_verse_indicator_switch">Start-of-Verse Indicator Switch</string>
+    <string name="color">Color</string>
+    <string name="radius">Radius</string>
+    <string name="padding_top">Padding Top</string>
+    <string name="normal_line_text_color">Normal Line Text Color</string>
+    <string name="normal_line_text_size_sp">Normal Line Text Size(sp)</string>
+    <string name="highlighted_color">Highlighted Color</string>
+    <string name="current_line_text_size_sp">Current Line Text Size(sp)</string>
+    <string name="current_line_color">Current Line Color</string>
+    <string name="spacing_between_lines">Spacing between lines</string>
+    <string name="dragging_switch">Dragging Switch</string>
+    <string name="when_no_lyrics">When no lyrics</string>
+    <string name="size_sp">Size(sp)</string>
+    <string name="scoring">Scoring</string>
+    <string name="height_of_ref_pitch_stick">Height of Ref Pitch stick</string>
+    <string name="color_of_ref_pitch_stick">Color of Ref Pitch Stick</string>
+    <string name="color_of_highlighted_ref_pitch_stick">Color of Highlighted Ref Pitch Stick</string>
+    <string name="particle_effect_switch">Particle Effect Switch</string>
+    <string name="customized_indicator_and_particle">Customized Indicator and Particle</string>
+    <string name="done">DONE</string>
 
 </resources>

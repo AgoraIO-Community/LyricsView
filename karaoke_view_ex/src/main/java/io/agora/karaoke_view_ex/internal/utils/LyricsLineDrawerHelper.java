@@ -89,7 +89,8 @@ public class LyricsLineDrawerHelper {
             Rect rectTotal = new Rect();
             textRectTotalWords[i] = rectTotal;
             String s = tone.word;
-            if (s == null) { // Sometimes, lyrics/sentence contains no word-tag
+            // Sometimes, lyrics/sentence contains no word-tag
+            if (s == null) {
                 s = "";
             }
             if (tone.lang == LyricsLineModel.Lang.English) {
@@ -104,8 +105,10 @@ public class LyricsLineDrawerHelper {
         text = sb.toString();
 
         int theRealWidthMeasured = (int) textPaintBG.measureText(text);
+
         if (width < theRealWidthMeasured) {
-            width = theRealWidthMeasured; // Reset width to the real width measured
+            // Reset width to the real width measured
+            width = theRealWidthMeasured;
         }
         if (textPaintFG != null) {
             mLayoutFG = new StaticLayout(text, textPaintFG, width, align, 1f, 0f, false);
@@ -170,9 +173,13 @@ public class LyricsLineDrawerHelper {
                     wordLen = textRectTotalWords[i].width() - textRectTotalWords[i - 1].width();
                 }
 
-                float percent = (time - tone.begin) / (float) (tone.end - tone.begin);
-
-                curLen = wordLen * (percent > 0 ? percent : 0);
+                if (tone.isFullLine) {
+                    //+2 fix the bug that the last word is not displayed for chinese lyric
+                    curLen = wordLen + 2;
+                } else {
+                    float percent = (time - tone.begin) / (float) (tone.end - tone.begin);
+                    curLen = wordLen * (percent > 0 ? percent : 0);
+                }
                 break;
             }
         }
@@ -192,7 +199,6 @@ public class LyricsLineDrawerHelper {
                 showLen -= curLineWidth;
             }
         }
-
         return drawRects;
     }
 }

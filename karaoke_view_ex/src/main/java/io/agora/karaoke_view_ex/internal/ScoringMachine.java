@@ -457,7 +457,7 @@ public class ScoringMachine {
     }
 
     public float getRefPitch(int progressInMs) {
-        if (mLyricsModel.hasPitch) {
+        if (null != mLyricsModel && mLyricsModel.hasPitch) {
             if (null != mLyricsModel.pitchDataList) {
                 for (PitchData data : mLyricsModel.pitchDataList) {
                     if (data.startTime <= progressInMs && data.startTime + data.duration >= progressInMs) {

@@ -299,6 +299,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 doStop();
             }
             mKaraokeView.setLyricData(null, mUseInternalScoring);
+            mKaraokeView.reset();
             ServiceManager.INSTANCE.destroy();
             ServiceManager.INSTANCE.setServiceType(Objects.requireNonNull(ServiceType.Companion.fromType(serviceType)));
             ServiceManager.INSTANCE.initService(this.getApplicationContext(), this);

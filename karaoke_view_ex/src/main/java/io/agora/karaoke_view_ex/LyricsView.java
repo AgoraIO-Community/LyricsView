@@ -28,7 +28,6 @@ import androidx.annotation.Nullable;
 
 import io.agora.karaoke_view_ex.internal.LyricMachine;
 import io.agora.karaoke_view_ex.internal.config.Config;
-import io.agora.karaoke_view_ex.internal.constants.LyricType;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.internal.utils.LyricsLineDrawerHelper;
@@ -36,7 +35,6 @@ import io.agora.karaoke_view_ex.model.LyricModel;
 
 /**
  * A view to display lyrics with karaoke effect
-
  */
 @SuppressLint("StaticFieldLeak")
 public class LyricsView extends View {
@@ -676,8 +674,9 @@ public class LyricsView extends View {
 
             canvas.drawBitmap(mBitmapBG, mRectSrc, mRectDst, null);
 
-            if (lyricsModel.type != LyricType.LRC && !mContentScrolling) {
-                drawHighLight(mReuseLyricsLineDrawerHelper, fraction); // Continually to draw the rest part of highlight when scrolling stops
+            if (!mContentScrolling) {
+                // Continually to draw the rest part of highlight when scrolling stops
+                drawHighLight(mReuseLyricsLineDrawerHelper, fraction);
             }
 
             canvas.drawBitmap(mBitmapFG, mRectSrc, mRectDst, null);

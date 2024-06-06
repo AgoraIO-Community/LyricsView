@@ -1,5 +1,7 @@
 package io.agora.karaoke_view_ex.utils;
 
+import android.text.TextUtils;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -56,5 +58,12 @@ public class Utils {
         } else {
             System.out.println("文件夹不存在！");
         }
+    }
+
+    public static String removeQuotes(String content) {
+        if (TextUtils.isEmpty(content)) {
+            return content;
+        }
+        return content.replaceAll("[\"']", "");
     }
 }

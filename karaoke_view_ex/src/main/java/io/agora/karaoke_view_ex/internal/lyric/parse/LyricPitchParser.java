@@ -155,25 +155,28 @@ public class LyricPitchParser {
 
         // Replace tones and set the pitch value
         // Each tone lasts for 100ms
-        for (int i = 0; i < model.lines.size() - 1; i++) {
+        for (int i = 0; i < model.lines.size(); i++) {
             LyricsLineModel line = model.lines.get(i);
-            long start = line.tones.get(0).begin;
-            long end = line.tones.get(0).end;
-            String words = line.tones.get(0).word;
-            LyricsLineModel.Lang lang = line.tones.get(0).lang;
-
-            // Change the end time of first tone
-            line.tones.get(0).end = start + (100 - 1);
-            line.tones.get(0).pitch = (int) PitchParser.fetchPitchWithRange(pitchesModel, model.preludeEndPosition, line.tones.get(0).begin, line.tones.get(0).end);
-
-            int numberOfTones = (int) (end - start) / 100;
-            // Figure out how many tones need to be added and do it
-            for (int j = 1; j < numberOfTones; j++) {
-                LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
-                tone.begin = start + 100 * j;
-                tone.end = tone.begin + (100 - 1);
-                tone.pitch = (int) PitchParser.fetchPitchWithRange(pitchesModel, model.preludeEndPosition, tone.begin, tone.end);
-                line.tones.add(tone);
+            List<LyricsLineModel.Tone> tones = line.tones;
+            if (null != tones && !tones.isEmpty()) {
+                // Figure out how many tones need to be added and do it
+                for (int j = 0; j < tones.size(); j++) {
+                    LyricsLineModel.Tone tone = tones.get(j);
+                    if (j < tones.size() - 1) {
+                        tone.end = tones.get(j + 1).begin;
+                    } else {
+                        if (i < model.lines.size() - 1) {
+                            tone.end = model.lines.get(i + 1).tones.get(0).begin;
+                        } else {
+                            // 最后一个音符
+                            tone.end = tone.begin + (100 - 1);
+                        }
+                    }
+                    tone.pitch = (int) PitchParser.fetchPitchWithRange(pitchesModel, model.preludeEndPosition, tone.begin, tone.end);
+                    if (tone.pitch > 0 && !model.hasPitch) {
+                        model.hasPitch = true;
+                    }
+                }
             }
         }
         return model;

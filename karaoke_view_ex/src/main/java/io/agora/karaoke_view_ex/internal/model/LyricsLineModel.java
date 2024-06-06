@@ -18,6 +18,7 @@ public class LyricsLineModel {
         public String word;
         public Lang lang = Lang.Chinese;
         public int pitch = 0;
+        public boolean isFullLine = false;
 
         public long getDuration() {
             return end - begin;
@@ -50,6 +51,7 @@ public class LyricsLineModel {
                     ", word='" + word + '\'' +
                     ", lang=" + lang +
                     ", pitch=" + pitch +
+                    ", isFullLine=" + isFullLine +
                     '}';
         }
     }

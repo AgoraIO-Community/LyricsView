@@ -107,15 +107,24 @@
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="@id/compensation_offset_title" />
 
-                    <androidx.appcompat.widget.AppCompatCheckBox
+                    <TextView
+                        android:id="@+id/set_no_lyrics_label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="8dp"
+                        android:lines="1"
+                        android:text="@string/set_no_lyric"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/compensation_offset_title" />
+
+                    <CheckBox
                         android:id="@+id/set_no_lyrics"
                         android:layout_width="wrap_content"
                         android:layout_height="20dp"
-                        android:layout_marginStart="16dp"
                         android:layout_marginTop="8dp"
                         android:checked="false"
-                        android:text="@string/set_no_lyric"
-                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/set_no_lyrics_label"
                         app:layout_constraintTop_toBottomOf="@id/compensation_offset_title" />
 
                     <TextView
@@ -180,7 +189,7 @@
                             android:text="@string/lyric_lrc" />
                     </RadioGroup>
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btn_clear_music_cache"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -226,7 +235,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Start-of-Verse Indicator Switch"
+                        android:text="@string/start_of_verse_indicator_switch"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/lyrics_text" />
@@ -246,7 +255,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Color"
+                        android:text="@string/color"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/show_lyrics_start_of_verse_indicator_title" />
@@ -268,7 +277,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Radius"
+                        android:text="@string/radius"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/start_of_verse_indicator_color_title" />
@@ -290,7 +299,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Padding Top"
+                        android:text="@string/padding_top"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/radius_of_indicator_title" />
@@ -315,7 +324,7 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="8dp"
                         android:lines="1"
-                        android:text="Normal Line Text Color"
+                        android:text="@string/normal_line_text_color"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/margin_top_of_indicator_title" />
@@ -337,7 +346,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Normal Line Text Size(sp)"
+                        android:text="@string/normal_line_text_size_sp"
                         app:layout_constraintHorizontal_bias="0.6"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/normal_line_color_title" />
@@ -359,7 +368,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Highlighted Color"
+                        android:text="@string/highlighted_color"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/size_of_normal_text_title" />
@@ -381,7 +390,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Current Line Text Size(sp)"
+                        android:text="@string/current_line_text_size_sp"
                         app:layout_constraintHorizontal_bias="0.6"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/line_highlighted_color_title" />
@@ -403,7 +412,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Current Line Color"
+                        android:text="@string/current_line_color"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/size_of_current_text_title" />
@@ -426,7 +435,7 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="8dp"
                         android:lines="1"
-                        android:text="Spacing between lines"
+                        android:text="@string/spacing_between_lines"
                         app:layout_constraintHorizontal_bias="0.6"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/current_line_color_title" />
@@ -449,7 +458,7 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="8dp"
                         android:lines="1"
-                        android:text="Dragging Switch"
+                        android:text="@string/dragging_switch"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/spacing_between_lines_title" />
@@ -471,7 +480,7 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="8dp"
                         android:lines="1"
-                        android:text="When no lyrics"
+                        android:text="@string/when_no_lyrics"
                         app:layout_constraintHorizontal_bias="0.6"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/enable_dragging_title" />
@@ -493,7 +502,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Color"
+                        android:text="@string/color"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/lyrics_not_available_title" />
@@ -515,7 +524,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Size(sp)"
+                        android:text="@string/size_sp"
                         app:layout_constraintHorizontal_bias="0.6"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/lyrics_not_available_color_title" />
@@ -555,7 +564,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
-                        android:text="Scoring"
+                        android:text="@string/scoring"
                         android:textStyle="bold|italic"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
@@ -567,7 +576,7 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="8dp"
                         android:lines="1"
-                        android:text="Height of Ref Pitch stick"
+                        android:text="@string/height_of_ref_pitch_stick"
                         app:layout_constraintHorizontal_bias="0.6"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/scoring_text" />
@@ -589,7 +598,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Color of Ref Pitch Stick"
+                        android:text="@string/color_of_ref_pitch_stick"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/ref_pitch_stick_height_title" />
@@ -611,7 +620,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Color of Highlighted Ref Pitch Stick"
+                        android:text="@string/color_of_highlighted_ref_pitch_stick"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/color_of_default_ref_pitch_stick_title" />
@@ -634,7 +643,7 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="8dp"
                         android:lines="1"
-                        android:text="Particle Effect Switch"
+                        android:text="@string/particle_effect_switch"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/color_of_highlighted_ref_pitch_stick_title" />
@@ -654,7 +663,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:lines="1"
-                        android:text="Customized Indicator and Particle"
+                        android:text="@string/customized_indicator_and_particle"
                         app:layout_constraintHorizontal_bias="0.18"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@id/enable_particle_effect_title" />
@@ -761,7 +770,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="6dp"
-        android:text="DONE"
+        android:text="@string/done"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

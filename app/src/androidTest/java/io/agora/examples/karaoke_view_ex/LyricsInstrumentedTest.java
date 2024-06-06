@@ -1255,4 +1255,24 @@ public class LyricsInstrumentedTest {
         assertEquals(0, scoringMachine.calculateScoreWithPitch(0, 15786), 0);
 
     }
+
+    @Test
+    public void testEnhancedLrcLyricFile() {
+        enableLyricViewExLog();
+        String fileNameOfSong = "kj5380f846be5811ed9efdb2f16c44e48f.lrc";
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        File lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        LyricModel model = LyricPitchParser.parseFile(lyrics, null);
+        Log.d(TAG, "testEnhancedLrcLyricFile: " + model);
+
+        int lineCount = model.lines.size();
+        assertEquals(8, lineCount);
+
+        StringBuilder firstLineContent = new StringBuilder();
+        for (LyricsLineModel.Tone tone : model.lines.get(0).tones) {
+            firstLineContent.append(tone.word);
+        }
+        assertEquals("他们总是说我有时不会怎么讲话", firstLineContent.toString());
+    }
 }

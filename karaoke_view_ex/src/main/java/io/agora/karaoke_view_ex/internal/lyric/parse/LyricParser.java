@@ -16,6 +16,7 @@ import io.agora.karaoke_view_ex.internal.constants.LyricType;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
+import io.agora.karaoke_view_ex.utils.Utils;
 
 /**
  * krc格式歌词解析
@@ -24,6 +25,7 @@ public class LyricParser {
 
     private static final Pattern LRC_PATTERN_LINE = Pattern.compile("((\\[\\d{2}:\\d{2}\\.\\d{2,3}\\])+)(.+)");
     private static final Pattern LRC_PATTERN_TIME = Pattern.compile("\\[(\\d{2}):(\\d{2})\\.(\\d{2,3})\\]");
+    private static final Pattern LRC_LYRIC_CONTENT_PATTERN = Pattern.compile("<(\\d{2}):(\\d{2})\\.(\\d{3})>(.*?)(?=<|$)");
 
     public static LyricModel doParseKrc(byte[] krcFileData) {
         String content = new String(krcFileData);
@@ -201,40 +203,75 @@ public class LyricParser {
             return null;
         }
 
-        line = line.trim();
-        // [00:17.65]让我掉下眼泪的
-        Matcher lineMatcher = LRC_PATTERN_LINE.matcher(line);
-        if (!lineMatcher.matches()) {
-            return null;
-        }
-
-        String times = lineMatcher.group(1);
-        if (times == null) {
-            return null;
-        }
-
-        String text = lineMatcher.group(3);
         List<LyricsLineModel> lines = new ArrayList<>();
 
-        // [00:17.65]
-        Matcher timeMatcher = LRC_PATTERN_TIME.matcher(times);
-        while (timeMatcher.find()) {
-            long min = Long.parseLong(Objects.requireNonNull(timeMatcher.group(1)));
-            long sec = Long.parseLong(Objects.requireNonNull(timeMatcher.group(2)));
-            String milInString = timeMatcher.group(3);
-            assert milInString != null;
-            long mil = Long.parseLong(milInString);
-            // 如果毫秒是两位数，需要乘以 10
-            if (milInString.length() == 2) {
-                mil = mil * 10;
+        try {
+            line = line.trim();
+            // [00:17.65]让我掉下眼泪的
+            Matcher lineMatcher = LRC_PATTERN_LINE.matcher(line);
+            if (!lineMatcher.matches()) {
+                return null;
             }
-            long beginTime = min * DateUtils.MINUTE_IN_MILLIS + sec * DateUtils.SECOND_IN_MILLIS + mil;
 
-            LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
-            tone.begin = beginTime;
-            tone.word = text;
-            tone.lang = LyricsLineModel.Lang.Chinese;
-            lines.add(new LyricsLineModel(tone));
+            String times = lineMatcher.group(1);
+            if (times == null) {
+                return null;
+            }
+
+            String text = lineMatcher.group(3);
+
+
+            if (TextUtils.isEmpty(text)) {
+                return lines;
+            }
+
+            if (LRC_LYRIC_CONTENT_PATTERN.matcher(text).matches()) {
+                Matcher matcher = LRC_LYRIC_CONTENT_PATTERN.matcher(text);
+                LyricsLineModel lineModel = new LyricsLineModel();
+                while (matcher.find()) {
+                    String content = Utils.removeQuotes(matcher.group(4));
+
+                    long min = Long.parseLong(Objects.requireNonNull(matcher.group(1)));
+                    long sec = Long.parseLong(Objects.requireNonNull(matcher.group(2)));
+                    long mil = Long.parseLong(Objects.requireNonNull(matcher.group(3)));
+
+                    long beginTime = min * DateUtils.MINUTE_IN_MILLIS + sec * DateUtils.SECOND_IN_MILLIS + mil;
+
+                    LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
+                    tone.begin = beginTime;
+                    tone.word = content;
+                    tone.lang = LyricsLineModel.Lang.Chinese;
+                    lineModel.tones.add(tone);
+                }
+                lines.add(lineModel);
+                return lines;
+            } else {
+                // [00:17.65]
+                Matcher timeMatcher = LRC_PATTERN_TIME.matcher(times);
+                while (timeMatcher.find()) {
+                    long min = Long.parseLong(Objects.requireNonNull(timeMatcher.group(1)));
+                    long sec = Long.parseLong(Objects.requireNonNull(timeMatcher.group(2)));
+                    String milInString = timeMatcher.group(3);
+                    long mil = 0;
+                    if (null != milInString) {
+                        mil = Long.parseLong(milInString);
+                    }
+                    // 如果毫秒是两位数，需要乘以 10
+                    if (!TextUtils.isEmpty(milInString) && milInString.length() == 2) {
+                        mil = mil * 10;
+                    }
+                    long beginTime = min * DateUtils.MINUTE_IN_MILLIS + sec * DateUtils.SECOND_IN_MILLIS + mil;
+
+                    LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
+                    tone.begin = beginTime;
+                    tone.word = text;
+                    tone.lang = LyricsLineModel.Lang.Chinese;
+                    tone.isFullLine = true;
+                    lines.add(new LyricsLineModel(tone));
+                }
+            }
+        } catch (Exception e) {
+            LogUtils.e("parseLrcLine error: " + e.getMessage());
         }
         return lines;
     }
