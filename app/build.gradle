@@ -61,7 +61,7 @@ android {
     android.applicationVariants.all {
         variant ->
             variant.outputs.all {
-                outputFileName = "KaraokeViewExample-android-v${defaultConfig.versionName}-${variant.buildType.name}.apk"
+                outputFileName = "${project.rootProject.name}-${versionName}-${variant.buildType.name}-${releaseTime()}.apk"
             }
     }
 
@@ -103,4 +103,8 @@ dependencies {
 //    def roomVersion = "2.5.2"
 //    implementation("androidx.room:room-runtime:${roomVersion.toString()}")
 //    implementation("androidx.room:room-ktx:${roomVersion.toString()}")
+}
+
+static def releaseTime() {
+    return new Date().format("yyyyMMdd_HHmmss")
 }

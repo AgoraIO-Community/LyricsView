@@ -6,7 +6,7 @@ Build KTV app effortlessly with KaraokeView
 
 声网 KTV 控件(KaraokeView)支持在歌曲播放的同时同步显示歌词，支持演唱打分以及相关效果显示。本文介绍如何在项目中集成并使用 KaraokeView。
 
-`注意：该版本稳定版 2.x 在 API 上并不兼容1.x版本`
+`注意：该版本稳定版 2.x 在 API 上并不兼容1.x版本,但2.1.x版本后兼容1.x版本的所有功能，建议升级到2.1.x版本`
 
 `功能描述`
 
@@ -27,7 +27,7 @@ Build KTV app effortlessly with KaraokeView
 ```
 dependencies {
     ...
-    implementation("io.github.winskyan:Agora-LyricsViewEx:2.0.0.130")
+    implementation("io.github.winskyan:Agora-LyricsViewEx:2.1.0-alpha.1")
 }
 ```
 
@@ -83,9 +83,12 @@ public class LiveActivity extends RtcBaseActivity {
         });
 
         // 3. Parse the lyrics and set up the lyrics model for KaraokeView
+        //pitch file is optional, if you don't have pitch file, just pass null
         mLyricsModel = KaraokeView.parseLyricData(lrc, pitch);
         if (mLyricsModel != null) {
             // Set the lyrics data to KaraokeView with whether to enable internal scoring
+            // if enable internal scoring, the onLineFinished callback will be triggered when a line of lyrics is finished
+            // if disable internal scoring, the onLineFinished callback will not be triggered
             mKaraokeView.setLyricData(mLyricsModel, true);
         }
 
