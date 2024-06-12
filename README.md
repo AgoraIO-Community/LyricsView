@@ -27,7 +27,7 @@ Build KTV app effortlessly with KaraokeView
 ```
 dependencies {
     ...
-    implementation("io.github.winskyan:Agora-LyricsViewEx:2.1.0-alpha.1")
+    implementation("io.github.winskyan:Agora-LyricsViewEx:2.1.0-alpha.2")
 }
 ```
 
