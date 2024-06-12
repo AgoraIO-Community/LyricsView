@@ -728,6 +728,14 @@ public class LyricsInstrumentedTest {
     }
 
     @Test
+    public void testCalculatedScoreForScoreCompensationOffset() {
+        assertEquals(73.64238f, AIAlgorithmScoreNative.calculatedScore(80, 100, 10, 0), 0.01f);
+        assertEquals(85.64239f, AIAlgorithmScoreNative.calculatedScore(80, 100, 10, 10), 0.01f);
+        assertEquals(100.0f, AIAlgorithmScoreNative.calculatedScore(80, 100, 10, 50), 0.01f);
+        assertEquals(100.0f, AIAlgorithmScoreNative.calculatedScore(80, 100, 10, 100), 0.01f);
+    }
+
+    @Test
     public void testMockScoring() {
         enableLyricViewExLog();
         String fileNameOfSong = "825003.xml";

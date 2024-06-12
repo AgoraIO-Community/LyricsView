@@ -291,6 +291,15 @@ public class KaraokeView {
         return 15;
     }
 
+    /**
+     * 不推荐使用此方法。建议使用 {@link #setScoringLevel(int)} 代替。
+     * <p>
+     * 此方法可能在未来版本中被移除或更改。
+     *
+     * @param offset 偏移量值。
+     * @deprecated 由于上述原因，此方法已被弃用。
+     */
+    @Deprecated
     public void setScoringCompensationOffset(int offset) {
         LogUtils.d("setScoringCompensationOffset offset:" + offset);
         if (null != mScoringMachine) {
@@ -298,6 +307,7 @@ public class KaraokeView {
         }
     }
 
+    @Deprecated
     public int getScoringCompensationOffset() {
         if (null != mScoringMachine) {
             return mScoringMachine.getScoringCompensationOffset();

@@ -77,10 +77,10 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
-        binding.compensationOffsetTune.setProgress(prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), 0)); // -100...100
+        binding.compensationOffsetTune.setProgress(prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), 0)); // 0...100
         binding.compensationOffsetTuneValue.setText(String.valueOf(prefs.getInt(getString(R.string.prefs_key_scoring_compensation_offset), 0)));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            binding.compensationOffsetTune.setMin(-100);
+            binding.compensationOffsetTune.setMin(0);
         }
         binding.compensationOffsetTune.setMax(100);
 

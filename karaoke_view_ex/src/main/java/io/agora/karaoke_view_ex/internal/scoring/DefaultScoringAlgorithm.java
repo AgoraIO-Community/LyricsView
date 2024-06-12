@@ -35,8 +35,6 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
     @Override
     public int getLineScore(final LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished) {
-
-
         if (Config.DEBUG) {
             debugScoringAlgo(pitchesForLine, indexOfLineJustFinished);
         }
@@ -64,7 +62,6 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
                     } else {
                         toneScoresMap.put(tones.get(toneIndex), 0f);
                     }
-
                     toneIndex++;
                     totalScoreForTone = 0f;
                     scoreCountForTone = 0;
