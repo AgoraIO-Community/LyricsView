@@ -219,14 +219,7 @@ public class KaraokeView {
      */
     public void setPitch(float speakerPitch, int progressInMs) {
         if (null != mScoringMachine) {
-            if (mScoringMachine.isUsingInternalScoring()) {
-                mScoringMachine.setPitch(speakerPitch, progressInMs);
-            } else {
-                double calculateScore = mScoringMachine.calculateScoreWithPitch(speakerPitch, progressInMs);
-                if (null != mScoringView) {
-                    mScoringView.updatePitchAndScore(speakerPitch, (float) calculateScore);
-                }
-            }
+            mScoringMachine.setPitch(speakerPitch, progressInMs);
         }
     }
 

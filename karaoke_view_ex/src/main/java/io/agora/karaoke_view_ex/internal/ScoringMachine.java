@@ -201,35 +201,49 @@ public class ScoringMachine {
 
         boolean[] newLine = new boolean[1];
         int[] indexOfMostRecentLine = new int[]{-1};
-        float currentRefPitch = findRefPitchByTime(progressInMs, newLine, indexOfMostRecentLine);
+        float currentRefPitch = -1f;
+        if (mUsingInternalScoring) {
+            currentRefPitch = findRefPitchByTime(progressInMs, newLine, indexOfMostRecentLine);
+            LogUtils.d("setPitch currentRefPitch:" + currentRefPitch + ",speakerPitch:" + speakerPitch + ",progressInMs:" + progressInMs + ",newLine:" + newLine[0] + ",indexOfMostRecentLine:" + indexOfMostRecentLine[0] + ",mContinuousZeroCount:" + mContinuousZeroCount);
+        }
 
         if (speakerPitch == 0) {
             if (++mContinuousZeroCount < ZERO_PITCH_COUNT_THRESHOLD) {
-                updateScoreForMostRecentLine(progressInMs, newLine[0], indexOfMostRecentLine[0]);
+                if (mUsingInternalScoring) {
+                    updateScoreForMostRecentLine(progressInMs, newLine[0], indexOfMostRecentLine[0]);
+                }
                 return;
             }
         } else {
             mContinuousZeroCount = 0;
         }
 
-        // No ref pitch, just ignore this time
-        if (currentRefPitch <= 0 || mContinuousZeroCount >= ZERO_PITCH_COUNT_THRESHOLD) {
-            mContinuousZeroCount = 0;
-            updateScoreForMostRecentLine(progressInMs, newLine[0], indexOfMostRecentLine[0]);
-            if (mListener != null) {
-                mListener.resetUi();
+        if (mUsingInternalScoring) {
+            // No ref pitch, just ignore this time
+            if (currentRefPitch <= 0 || mContinuousZeroCount >= ZERO_PITCH_COUNT_THRESHOLD) {
+                mContinuousZeroCount = 0;
+                updateScoreForMostRecentLine(progressInMs, newLine[0], indexOfMostRecentLine[0]);
+                if (mListener != null) {
+                    mListener.resetUi();
+                }
+                return;
             }
-            return;
-        }
 
-        updateScoreForMostRecentLine(progressInMs, newLine[0], indexOfMostRecentLine[0]);
 
-        float pitchAfterProcess = (float) AIAlgorithmScoreNative.handlePitch(currentRefPitch, speakerPitch, this.mMaximumRefPitch);
-        float scoreAfterNormalization = mScoringAlgorithm.getPitchScore(pitchAfterProcess, currentRefPitch);
-        mPitchesForLine.put((long) progressInMs, scoreAfterNormalization);
+            updateScoreForMostRecentLine(progressInMs, newLine[0], indexOfMostRecentLine[0]);
 
-        if (mListener != null) {
-            mListener.onPitchAndScoreUpdate(pitchAfterProcess, scoreAfterNormalization, progressInMs);
+            float pitchAfterProcess = (float) AIAlgorithmScoreNative.handlePitch(currentRefPitch, speakerPitch, this.mMaximumRefPitch);
+            float scoreAfterNormalization = mScoringAlgorithm.getPitchScore(pitchAfterProcess, currentRefPitch);
+            mPitchesForLine.put((long) progressInMs, scoreAfterNormalization);
+
+            if (mListener != null) {
+                mListener.onPitchAndScoreUpdate(pitchAfterProcess, scoreAfterNormalization, progressInMs);
+            }
+        } else {
+            double calculateScore = calculateScoreWithPitch(speakerPitch, progressInMs);
+            if (null != mListener) {
+                mListener.onPitchAndScoreUpdate(speakerPitch, (float) calculateScore, progressInMs);
+            }
         }
 
         if (mListener != null) {
@@ -357,7 +371,7 @@ public class ScoringMachine {
         }
     }
 
-    public double calculateScoreWithPitch(float speakerPitch, int progressInMs) {
+    private double calculateScoreWithPitch(float speakerPitch, int progressInMs) {
         mCurrentPitchProgress = progressInMs;
         float refPitch = getRefPitch(progressInMs);
         double scoreAfterNormalization = 0;
