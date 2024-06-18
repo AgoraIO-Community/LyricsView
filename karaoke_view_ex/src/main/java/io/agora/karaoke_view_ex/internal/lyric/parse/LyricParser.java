@@ -19,12 +19,10 @@ import io.agora.karaoke_view_ex.model.LyricModel;
 import io.agora.karaoke_view_ex.utils.Utils;
 
 /**
- * krc格式歌词解析
+ * 歌词解析
  */
 public class LyricParser {
-
-    private static final Pattern LRC_PATTERN_LINE = Pattern.compile("((\\[\\d{2}:\\d{2}\\.\\d{2,3}\\])+)(.+)");
-    private static final Pattern LRC_PATTERN_TIME = Pattern.compile("\\[(\\d{2}):(\\d{2})\\.(\\d{2,3})\\]");
+    private static final Pattern LRC_PATTERN_TIME = Pattern.compile("\\[(\\d{2}):(\\d{2})\\.(\\d{2,3})]");
     private static final Pattern LRC_LYRIC_CONTENT_PATTERN = Pattern.compile("<(\\d{2}):(\\d{2})\\.(\\d{3})>(.*?)(?=<|$)");
 
     public static LyricModel doParseKrc(byte[] krcFileData) {
@@ -36,7 +34,12 @@ public class LyricParser {
 
         List<LyricsLineModel> lineModels = new ArrayList<>();
 
+        boolean isFirstLine = true;
         for (String line : lines) {
+            if (isFirstLine) {
+                line = io.agora.karaoke_view_ex.internal.utils.Utils.removeStringBom(line);
+                isFirstLine = false;
+            }
             // 处理metadata部分：`[ti:星晴]`
             if (line.startsWith("[")) {
                 int index = line.indexOf(":");
@@ -144,8 +147,13 @@ public class LyricParser {
         List<LyricsLineModel> lines = new ArrayList<>();
         try {
             String fileContent = new String(fileData, Constants.UTF_8);
-            String[] lineArray = fileContent.split("\n");
+            String[] lineArray = fileContent.split("\\n|\\r\\n");
+            boolean isFirstLine = true;
             for (String line : lineArray) {
+                if (isFirstLine) {
+                    line = io.agora.karaoke_view_ex.internal.utils.Utils.removeStringBom(line);
+                    isFirstLine = false;
+                }
                 List<LyricsLineModel> list = parseLrcLine(line);
                 if (list != null && !list.isEmpty()) {
                     lines.addAll(list);
@@ -208,7 +216,7 @@ public class LyricParser {
         try {
             line = line.trim();
             // [00:17.65]让我掉下眼泪的
-            Matcher lineMatcher = LRC_PATTERN_LINE.matcher(line);
+            Matcher lineMatcher = LyricPitchParser.LRC_PATTERN_LINE.matcher(line);
             if (!lineMatcher.matches()) {
                 return null;
             }

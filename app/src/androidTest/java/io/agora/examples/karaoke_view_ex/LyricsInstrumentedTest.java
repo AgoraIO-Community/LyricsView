@@ -1147,7 +1147,7 @@ public class LyricsInstrumentedTest {
     }
 
     @Test
-    public void parseKRCFile() {
+    public void testParseKRCFile() {
         String fileNameOfSong = "4875936889260991133.krc";
 
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -1166,7 +1166,52 @@ public class LyricsInstrumentedTest {
     }
 
     @Test
-    public void parsePitchFile() {
+    public void testParseLyricDataFormat() {
+        enableLyricViewExLog();
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        String fileNameOfSong = "8141335308133421388.krc";
+        LyricModel model = parseLyricData(appContext, fileNameOfSong);
+        assertNotNull(model);
+        assertEquals(LyricType.KRC, model.type);
+
+        fileNameOfSong = "4875936889260991133.krc";
+        model = parseLyricData(appContext, fileNameOfSong);
+        assertNotNull(model);
+        assertEquals(LyricType.KRC, model.type);
+
+        fileNameOfSong = "660078.xml";
+        model = parseLyricData(appContext, fileNameOfSong);
+        assertNotNull(model);
+        assertEquals(LyricType.XML, model.type);
+
+        fileNameOfSong = "6246262727282260.lrc";
+        model = parseLyricData(appContext, fileNameOfSong);
+        assertNotNull(model);
+        assertEquals(LyricType.LRC, model.type);
+
+        fileNameOfSong = "kj5380f846be5811ed9efdb2f16c44e48f.lrc";
+        model = parseLyricData(appContext, fileNameOfSong);
+        assertNotNull(model);
+        assertEquals(LyricType.LRC, model.type);
+    }
+
+    private LyricModel parseLyricData(Context context, String fileName) {
+        try {
+            String lyricsContent = Utils.loadAsString(context, fileName);
+            if (TextUtils.isEmpty(lyricsContent)) {
+                LogUtils.e("parseLyricData: lyricsContent is empty");
+                return null;
+            }
+            return LyricPitchParser.parseLyricData(lyricsContent.getBytes("UTF-8"), null);
+        } catch (Exception e) {
+            LogUtils.e("parseLyricData: " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Test
+    public void testParsePitchFile() {
         String fileNameOfSong = "4875936889260991133.krc";
         String fileNameOfPitch = "4875936889260991133.pitch";
 
@@ -1185,7 +1230,7 @@ public class LyricsInstrumentedTest {
     }
 
     @Test
-    public void mergeKRCPitch() {
+    public void testParseKRCLyricAndPitch() {
         String fileNameOfSong = "4875936889260991133.krc";
         String fileNameOfPitch = "4875936889260991133.pitch";
 

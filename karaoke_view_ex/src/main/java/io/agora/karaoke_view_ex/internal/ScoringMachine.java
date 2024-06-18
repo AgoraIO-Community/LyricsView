@@ -371,7 +371,7 @@ public class ScoringMachine {
         }
     }
 
-    private double calculateScoreWithPitch(float speakerPitch, int progressInMs) {
+    public double calculateScoreWithPitch(float speakerPitch, int progressInMs) {
         mCurrentPitchProgress = progressInMs;
         float refPitch = getRefPitch(progressInMs);
         double scoreAfterNormalization = 0;

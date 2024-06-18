@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import java.io.File;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.regex.Pattern;
 
 import io.agora.karaoke_view_ex.constants.Constants;
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
@@ -22,6 +23,9 @@ import io.agora.karaoke_view_ex.model.LyricModel;
  * @date 2021/7/6
  */
 public class LyricPitchParser {
+    public static final Pattern LRC_PATTERN_LINE = Pattern.compile("((\\[\\d{2}:\\d{2}\\.\\d{2,3}])+)(.+)");
+    public static final Pattern KRC_PATTERN_LINE = Pattern.compile("\\[(\\w+):([^]]*)]");
+
     private static void checkFileParameters(File file) {
         if (file == null || !file.isFile() || !file.exists() || !file.canRead() || file.length() == 0) {
             StringBuilder builder = new StringBuilder("Not a valid file for parser: " + file);
@@ -55,17 +59,20 @@ public class LyricPitchParser {
     private static LyricType probeLyricsFileType(byte[] lyricData) {
         LyricType type = LyricType.LRC;
         try {
-            String fileContent = new String(lyricData);
-            String[] lines = fileContent.split("\n");
+            String fileContent = new String(lyricData, Constants.UTF_8);
+            String[] lines = fileContent.split("\\n|\\r\\n");
             if (lines.length > 0) {
-                String firstLine = lines[0];
+                String firstLine = lines[0].trim();
                 if (!TextUtils.isEmpty(firstLine)) {
+                    firstLine = Utils.removeStringBom(firstLine);
                     if (firstLine.contains(Constants.FILE_EXTENSION_XML) || firstLine.contains("<song>")) {
                         type = LyricType.XML;
-                    } else if (firstLine.matches(".*\\[\\d{2}:\\d{2}\\].*")) {
+                    } else if (LRC_PATTERN_LINE.matcher(firstLine).matches()) {
                         return LyricType.LRC;
-                    } else if (firstLine.matches("\\[id:\\$[0-9a-fA-F]+\\]")) {
+                    } else if (KRC_PATTERN_LINE.matcher(firstLine).matches()) {
                         type = LyricType.KRC;
+                    } else {
+                        LogUtils.i("probeLyricsFileType unknown lyric type");
                     }
                 }
             }

@@ -22,4 +22,13 @@ public class Utils {
         }
         return null;
     }
+
+    public static String removeStringBom(String input) {
+        // 检查字符串是否以BOM开始
+        if (input != null && !input.isEmpty() && input.charAt(0) == '\uFEFF') {
+            // 去除BOM，从第二个字符开始取
+            return input.substring(1);
+        }
+        return input;
+    }
 }
