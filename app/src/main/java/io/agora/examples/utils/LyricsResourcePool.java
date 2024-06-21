@@ -32,13 +32,12 @@ public class LyricsResourcePool {
 
     public static List<MusicResource> asMusicList() {
         ArrayList<MusicResource> list = new ArrayList<>();
-        list.add(new MusicResource(0, 6246262727282860L, "爱情转移", 1));
-        list.add(new MusicResource(1, 6654550221757560L, "说爱你", 4));
-        list.add(new MusicResource(2, 6246262727300580L, "江南", 1));
-        list.add(new MusicResource(3, 7162848696618210L, "love story", 4));
-        list.add(new MusicResource(4, 6625526618861450L, "卖汤圆", 4));
+
+        list.add(new MusicResource(0, 7162848775797850L, "爱情转移", 4));
+        list.add(new MusicResource(1, 7104926139658410L, "说爱你", 4));
+        list.add(new MusicResource(2, 7162848696618210L, "love story", 4));
         //海外曲库
-        list.add(new MusicResource(5, 6800601815479800L, "趁着你", 4));
+        list.add(new MusicResource(3, 6800601815479800L, "趁着你", 4));
 
         //test domain mccDomain = "api-test.agora.io";
 //        list.add(new MusicResource(0, 6625526604952630L, "日不落"));
