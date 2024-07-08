@@ -25,7 +25,7 @@ public class LyricParser {
     private static final Pattern LRC_PATTERN_TIME = Pattern.compile("\\[(\\d{2}):(\\d{2})\\.(\\d{2,3})]");
     private static final Pattern LRC_LYRIC_CONTENT_PATTERN = Pattern.compile("<(\\d{2}):(\\d{2})\\.(\\d{3})>(.*?)(?=<|$)");
 
-    public static LyricModel doParseKrc(byte[] krcFileData) {
+    public static LyricModel doParseKrc(byte[] krcFileData, int lyricOffset) {
         String content = new String(krcFileData);
 
         String[] lines = content.split("\\n|\\r\\n");
@@ -60,7 +60,7 @@ public class LyricParser {
                             }
 
                         }
-                        LyricsLineModel lineModel = parseKrcLine(line, 0);
+                        LyricsLineModel lineModel = parseKrcLine(line, lyricOffset);
                         if (lineModel != null) {
                             lineModels.add(lineModel);
                         } else {
@@ -87,55 +87,62 @@ public class LyricParser {
 
     // 解析行内容
     private static LyricsLineModel parseKrcLine(String line, long offset) {
-        int rangeStart = line.indexOf("[");
-        int rangeEnd = line.indexOf("]");
-        if (rangeStart == -1 || rangeEnd == -1) {
-            return null;
-        }
-
-        String timeStr = line.substring(rangeStart + 1, rangeEnd);
-        String[] timeComponents = timeStr.split(",");
-
-        // 处理行时间: `0,1600`
-        if (timeComponents.length != 2) {
-            return null;
-        }
-
-        long lineStartTime = offset + Long.parseLong(timeComponents[0].trim());
-        long lineDuration = Long.parseLong(timeComponents[1].trim());
-        String lineContent = line.substring(rangeEnd + 1).trim();
-
-        // 解析行内容
-        List<LyricsLineModel.Tone> tones = new ArrayList<>();
-        String[] toneComponents = lineContent.split("<");
-        for (String toneComponent : toneComponents) {
-            if (toneComponent.isEmpty()) {
-                continue;
+        try {
+            int rangeStart = line.indexOf("[");
+            int rangeEnd = line.indexOf("]");
+            if (rangeStart == -1 || rangeEnd == -1) {
+                return null;
             }
 
-            // 解析字内容： '0,177,0>星'
-            String[] toneParts = toneComponent.split(">");
-            if (toneParts.length == 2) {
-                String word = toneParts[1];
+            String timeStr = line.substring(rangeStart + 1, rangeEnd);
+            String[] timeComponents = timeStr.split(",");
 
-                String[] timeParts = toneParts[0].split(",");
-                if (timeParts.length == 3) {
-                    long startTime = lineStartTime + Long.parseLong(timeParts[0]);
-                    long duration = Long.parseLong(timeParts[1]);
-                    double pitch = Double.parseDouble(timeParts[2]);
-                    LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
-                    tone.begin = startTime;
-                    tone.end = startTime + duration;
-                    tone.word = word;
-                    tone.pitch = (int) pitch;
-                    tone.lang = LyricsLineModel.Lang.Chinese;
-                    tones.add(tone);
+            // 处理行时间: `0,1600`
+            if (timeComponents.length != 2) {
+                return null;
+            }
+
+            long startTimeOrigin = Long.parseLong(timeComponents[0].trim());
+            long lineStartTime = startTimeOrigin >= offset ? startTimeOrigin - offset : startTimeOrigin;
+
+            long lineDuration = Long.parseLong(timeComponents[1].trim());
+            String lineContent = line.substring(rangeEnd + 1).trim();
+
+            // 解析行内容
+            List<LyricsLineModel.Tone> tones = new ArrayList<>();
+            String[] toneComponents = lineContent.split("<");
+            for (String toneComponent : toneComponents) {
+                if (toneComponent.isEmpty()) {
+                    continue;
+                }
+
+                // 解析字内容： '0,177,0>星'
+                String[] toneParts = toneComponent.split(">");
+                if (toneParts.length == 2) {
+                    String word = toneParts[1];
+
+                    String[] timeParts = toneParts[0].split(",");
+                    if (timeParts.length == 3) {
+                        long startTime = lineStartTime + Long.parseLong(timeParts[0]);
+                        long duration = Long.parseLong(timeParts[1]);
+                        double pitch = Double.parseDouble(timeParts[2]);
+                        LyricsLineModel.Tone tone = new LyricsLineModel.Tone();
+                        tone.begin = startTime;
+                        tone.end = startTime + duration;
+                        tone.word = word;
+                        tone.pitch = (int) pitch;
+                        tone.lang = LyricsLineModel.Lang.Chinese;
+                        tones.add(tone);
+                    }
                 }
             }
+            LyricsLineModel lineModel = new LyricsLineModel(tones);
+            lineModel.duration = lineDuration;
+            return lineModel;
+        } catch (Exception e) {
+            LogUtils.e("parseKrcLine error: " + e.getMessage());
         }
-        LyricsLineModel lineModel = new LyricsLineModel(tones);
-        lineModel.duration = lineDuration;
-        return lineModel;
+        return null;
     }
 
 

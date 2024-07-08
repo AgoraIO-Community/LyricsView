@@ -225,8 +225,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void loadTheLyrics(String lrcUri, String pitchUri) {
-        Log.i(TAG, "loadTheLyrics " + lrcUri + " " + pitchUri);
+    private void loadTheLyrics(String lrcUri, String pitchUri, int lyricOffset) {
+        Log.i(TAG, "loadTheLyrics " + lrcUri + " " + pitchUri + " " + lyricOffset);
         mKaraokeView.reset();
         mLyricsModel = null;
 
@@ -251,7 +251,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             File pitch;
             lrc = new File(lrcUri);
             pitch = new File(pitchUri);
-            mLyricsModel = KaraokeView.parseLyricData(lrc, pitch);
+            mLyricsModel = KaraokeView.parseLyricData(lrc, pitch, true, lyricOffset);
             mUseInternalScoring = false;
             if (mSetNoLyric) {
                 mKaraokeView.setLyricData(null, false);
@@ -508,10 +508,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.settings.setEnabled(enable);
     }
 
-
     @Override
-    public void onMusicLyricRequest(long songCode, String lyricUrl, String pitchUrl) {
-        loadTheLyrics(lyricUrl, pitchUrl);
+    public void onMusicLyricRequest(long songCode, @Nullable String lyricUrl, @Nullable String pitchUrl, int lyricOffset) {
+        loadTheLyrics(lyricUrl, pitchUrl, lyricOffset);
     }
 
     @Override

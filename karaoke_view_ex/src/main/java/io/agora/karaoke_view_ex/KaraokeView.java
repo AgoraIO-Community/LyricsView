@@ -128,21 +128,28 @@ public class KaraokeView {
 
 
     public static LyricModel parseLyricData(File lyricFile, File pitchFile) {
-        return LyricPitchParser.parseFile(lyricFile, pitchFile);
+        return LyricPitchParser.parseFile(lyricFile, pitchFile, true, 0);
     }
 
     public static LyricModel parseLyricData(File lyricFile, File pitchFile, boolean includeCopyrightSentence) {
-        return LyricPitchParser.parseFile(lyricFile, pitchFile, includeCopyrightSentence);
+        return LyricPitchParser.parseFile(lyricFile, pitchFile, includeCopyrightSentence, 0);
+    }
+
+    public static LyricModel parseLyricData(File lyricFile, File pitchFile, boolean includeCopyrightSentence, int lyricOffset) {
+        return LyricPitchParser.parseFile(lyricFile, pitchFile, includeCopyrightSentence, lyricOffset);
     }
 
     public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData) {
-        return LyricPitchParser.parseLyricData(lyricData, pitchData);
+        return LyricPitchParser.parseLyricData(lyricData, pitchData, true, 0);
     }
 
     public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence) {
-        return LyricPitchParser.parseLyricData(lyricData, pitchData, includeCopyrightSentence);
+        return LyricPitchParser.parseLyricData(lyricData, pitchData, includeCopyrightSentence, 0);
     }
 
+    public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
+        return LyricPitchParser.parseLyricData(lyricData, pitchData, includeCopyrightSentence, lyricOffset);
+    }
 
     public void attachUi(LyricsView lyrics, ScoringView scoring) {
         LogUtils.d("attachUi lyrics:" + lyrics + ",scoring:" + scoring);

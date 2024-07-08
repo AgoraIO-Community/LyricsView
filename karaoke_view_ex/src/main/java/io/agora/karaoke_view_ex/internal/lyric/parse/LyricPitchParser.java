@@ -82,19 +82,16 @@ public class LyricPitchParser {
         return type;
     }
 
-    public static LyricModel parseFile(File lyricFile, File pitchFile) {
-        return parseFile(lyricFile, pitchFile, true);
-    }
 
-    public static LyricModel parseFile(File lyricFile, File pitchFile, boolean includeCopyrightSentence) {
+    public static LyricModel parseFile(File lyricFile, File pitchFile, boolean includeCopyrightSentence, int lyricOffset) {
         checkFileParameters(lyricFile);
         LyricType type = probeLyricsFileType(lyricFile);
         if (type == LyricType.KRC) {
-            return parseKrcLyricData(Utils.getFileBytes(lyricFile), Utils.getFileBytes(pitchFile), includeCopyrightSentence);
+            return parseKrcLyricData(Utils.getFileBytes(lyricFile), Utils.getFileBytes(pitchFile), includeCopyrightSentence, lyricOffset);
         } else if (type == LyricType.LRC) {
-            return parseLrcLyricData(Utils.getFileBytes(lyricFile), Utils.getFileBytes(pitchFile), includeCopyrightSentence);
+            return parseLrcLyricData(Utils.getFileBytes(lyricFile), Utils.getFileBytes(pitchFile), includeCopyrightSentence, lyricOffset);
         } else if (type == LyricType.XML) {
-            return parseXmlLyricData(Utils.getFileBytes(lyricFile), Utils.getFileBytes(pitchFile), includeCopyrightSentence);
+            return parseXmlLyricData(Utils.getFileBytes(lyricFile), Utils.getFileBytes(pitchFile), includeCopyrightSentence, lyricOffset);
         } else {
             LogUtils.e("Do not support the lyrics file type " + type);
         }
@@ -102,27 +99,22 @@ public class LyricPitchParser {
         return null;
     }
 
-
-    public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData) {
-        return parseLyricData(lyricData, pitchData, true);
-    }
-
-    public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence) {
+    public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         LyricType type = probeLyricsFileType(lyricData);
         if (type == LyricType.KRC) {
-            return parseKrcLyricData(lyricData, pitchData, includeCopyrightSentence);
+            return parseKrcLyricData(lyricData, pitchData, includeCopyrightSentence, lyricOffset);
         } else if (type == LyricType.LRC) {
-            return parseLrcLyricData(lyricData, pitchData, includeCopyrightSentence);
+            return parseLrcLyricData(lyricData, pitchData, includeCopyrightSentence, lyricOffset);
         } else if (type == LyricType.XML) {
-            return parseXmlLyricData(lyricData, pitchData, includeCopyrightSentence);
+            return parseXmlLyricData(lyricData, pitchData, includeCopyrightSentence, lyricOffset);
         } else {
             LogUtils.e("Do not support the lyrics file type " + type);
         }
         return null;
     }
 
-    public static LyricModel parseKrcLyricData(byte[] krcData, byte[] pitchData, boolean includeCopyrightSentence) {
-        LyricModel lyricsModel = LyricParser.doParseKrc(krcData);
+    public static LyricModel parseKrcLyricData(byte[] krcData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
+        LyricModel lyricsModel = LyricParser.doParseKrc(krcData, lyricOffset);
         List<PitchData> pitchDataList = PitchParser.doParseKrc(pitchData);
         lyricsModel.pitchDataList = pitchDataList;
         lyricsModel.hasPitch = pitchDataList != null && !pitchDataList.isEmpty();
@@ -131,7 +123,7 @@ public class LyricPitchParser {
         }
 
         // 移除版权信息类型的句子
-        if (includeCopyrightSentence && lyricsModel.lines != null && !lyricsModel.lines.isEmpty()) {
+        if (!includeCopyrightSentence && lyricsModel.lines != null && !lyricsModel.lines.isEmpty()) {
             ListIterator<LyricsLineModel> iterator = lyricsModel.lines.listIterator();
             while (iterator.hasNext()) {
                 LyricsLineModel element = iterator.next();
@@ -148,7 +140,7 @@ public class LyricPitchParser {
     }
 
 
-    private static LyricModel parseLrcLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence) {
+    private static LyricModel parseLrcLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         XmlPitchData pitchesModel = null;
         if (pitchData != null) {
             pitchesModel = PitchParser.doParseXml(pitchData);
@@ -189,7 +181,7 @@ public class LyricPitchParser {
         return model;
     }
 
-    private static LyricModel parseXmlLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence) {
+    private static LyricModel parseXmlLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         XmlPitchData pitchesModel = null;
         if (pitchData != null) {
             pitchesModel = PitchParser.doParseXml(pitchData);

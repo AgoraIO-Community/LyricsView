@@ -11,14 +11,7 @@ public class LyricsResourcePool {
         public final String songName;
         public final String songId;
         public final int songType;
-
-        MusicResource(int index, long songCode, String songName, int songType) {
-            this.index = index;
-            this.songCode = songCode;
-            this.songName = songName;
-            this.songId = "";
-            this.songType = songType;
-        }
+        public final String mediaType;
 
         MusicResource(int index, String songId, String songName) {
             this.index = index;
@@ -26,6 +19,43 @@ public class LyricsResourcePool {
             this.songName = songName;
             this.songCode = -1;
             this.songType = 0;
+            this.mediaType = "";
+        }
+
+        MusicResource(int index, String songId, String songName, String mediaType) {
+            this.index = index;
+            this.songId = songId;
+            this.songName = songName;
+            this.songCode = -1;
+            this.songType = 0;
+            this.mediaType = mediaType;
+        }
+
+        MusicResource(int index, long songCode, String songName, int songType) {
+            this.index = index;
+            this.songCode = songCode;
+            this.songName = songName;
+            this.songId = "";
+            this.songType = songType;
+            this.mediaType = "";
+        }
+
+        MusicResource(int index, long songCode, String songName, String mediaType) {
+            this.index = index;
+            this.songCode = songCode;
+            this.songName = songName;
+            this.songId = "";
+            this.songType = 0;
+            this.mediaType = mediaType;
+        }
+
+        MusicResource(int index, long songCode, String songName, int songType, String mediaType) {
+            this.index = index;
+            this.songCode = songCode;
+            this.songName = songName;
+            this.songId = "";
+            this.songType = songType;
+            this.mediaType = mediaType;
         }
     }
 
@@ -61,9 +91,10 @@ public class LyricsResourcePool {
     public static List<MusicResource> asMusicListEx() {
         ArrayList<MusicResource> list = new ArrayList<>();
         list.add(new MusicResource(0, "40289835", "十年"));
-        list.add(new MusicResource(0, "542869354", "Masih Mencintainya"));
-        list.add(new MusicResource(0, "89488966", "在你的身边"));
+        list.add(new MusicResource(0, "32183724", "你在不在"));
+        list.add(new MusicResource(0, "89488966", "在你的身边", "{\"format\":{\"highPart\":1}}"));
         list.add(new MusicResource(0, "310937426", "怀抱"));
+        list.add(new MusicResource(0, "542869354", "Masih Mencintainya"));
         list.add(new MusicResource(0, "625281172", "最后一页"));
         list.add(new MusicResource(0, "621162805", "梦回花事了"));
         list.add(new MusicResource(0, "288308118", "还是分开"));

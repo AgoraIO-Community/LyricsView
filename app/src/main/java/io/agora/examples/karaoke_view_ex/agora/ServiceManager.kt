@@ -156,7 +156,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.startScore(
                 LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songId,
-                ""
+                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].mediaType
             )
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.openMusic(LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode)
@@ -183,7 +183,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
             mMccExManager?.setPlayMode(MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL)
             mMccExManager?.preloadMusic(
                 LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songId,
-                ""
+                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].mediaType
             )
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.setPlayMode(
@@ -269,7 +269,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
     //////////////////////////// MccManager.MccCallback ////////////////////////////
     override fun onMusicLyricRequest(songCode: Long, lyricUrl: String?) {
-        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, null)
+        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, null, 0)
     }
 
     override fun onMusicPreloadResult(songCode: Long, percent: Int) {
@@ -303,14 +303,27 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         percent: Int,
         lyricPath: String,
         pitchPath: String,
-        offsetBegin: Int,
-        offsetEnd: Int,
+        songOffsetBegin: Int,
+        songOffsetEnd: Int,
+        lyricOffset: Int,
         state: MccExState,
         reason: MccExStateReason
     ) {
+        super.onPreLoadEvent(
+            requestId,
+            songCode,
+            percent,
+            lyricPath,
+            pitchPath,
+            songOffsetBegin,
+            songOffsetEnd,
+            lyricOffset,
+            state,
+            reason
+        )
         mServiceCallback?.onMusicPreloadResult(songCode, percent)
         if (percent == 100 && state == MccExState.PRELOAD_STATE_COMPLETED) {
-            mServiceCallback?.onMusicLyricRequest(songCode, lyricPath, pitchPath)
+            mServiceCallback?.onMusicLyricRequest(songCode, lyricPath, pitchPath, lyricOffset)
         }
     }
 
@@ -318,23 +331,33 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         requestId: String,
         songCode: Long,
         lyricPath: String,
-        offsetBegin: Int,
-        offsetEnd: Int,
+        songOffsetBegin: Int,
+        songOffsetEnd: Int,
+        lyricOffset: Int,
         reason: MccExStateReason
     ) {
-        super.onLyricResult(requestId, songCode, lyricPath, offsetBegin, offsetEnd, reason)
+        super.onLyricResult(
+            requestId,
+            songCode,
+            lyricPath,
+            songOffsetBegin,
+            songOffsetEnd,
+            lyricOffset,
+            reason
+        )
     }
 
     override fun onPitchResult(
         requestId: String,
         songCode: Long,
         pitchPath: String,
-        offsetBegin: Int,
-        offsetEnd: Int,
+        songOffsetBegin: Int,
+        songOffsetEnd: Int,
         reason: MccExStateReason
     ) {
-        super.onPitchResult(requestId, songCode, pitchPath, offsetBegin, offsetEnd, reason)
+        super.onPitchResult(requestId, songCode, pitchPath, songOffsetBegin, songOffsetEnd, reason)
     }
+
 
     override fun onPlayStateChange() {
         super.onPlayStateChange()
@@ -373,7 +396,12 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
 
     interface ServiceCallback {
-        fun onMusicLyricRequest(songCode: Long, lyricUrl: String?, pitchUrl: String?) {
+        fun onMusicLyricRequest(
+            songCode: Long,
+            lyricUrl: String?,
+            pitchUrl: String?,
+            lyricOffset: Int
+        ) {
         }
 
         fun onMusicPreloadResult(songCode: Long, percent: Int) {

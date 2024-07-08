@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit
 
 object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExScoreEventHandler {
 
-    private const val TAG = "LyricsView-MccExManager"
+    private const val TAG = "LyricsViewEx-MccExManager"
 
     private var mMccExService: IMusicContentCenterEx? = null
     private var mCallback: MccExCallback? = null
@@ -40,6 +40,8 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
     private var mUserId: String = ""
     private var mLyricFilePath = ""
     private var mPitchFilePath = ""
+    private var mLyricOffset = 0
+    private var mSongOffsetBegin = 0
 
     private const val MUSIC_POSITION_UPDATE_INTERVAL = 20
 
@@ -88,7 +90,6 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         }
 
         override fun onPositionChanged(positionMs: Long, timestampMs: Long) {
-            TODO("Not yet implemented")
         }
 
 
@@ -144,6 +145,8 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
     }
 
     fun destroy() {
+        reset()
+        stopDisplayLrc()
         mMusicPlayer?.unRegisterPlayerObserver(mMediaPlayerObserver)
         mMusicPlayer?.let { mMccExService?.destroyMusicPlayer(it) ?: "" }
         IMusicContentCenterEx.destroy()
@@ -171,16 +174,18 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         percent: Int,
         lyricPath: String,
         pitchPath: String,
-        offsetBegin: Int,
-        offsetEnd: Int,
+        songOffsetBegin: Int,
+        songOffsetEnd: Int,
+        lyricOffset: Int,
         state: MccExState,
         reason: MccExStateReason
     ) {
         Log.d(
             TAG,
-            "onPreLoadEvent: requestId = $requestId, songCode = $songCode, percent = $percent, lyricPath = $lyricPath, pitchPath = $pitchPath, offsetBegin = $offsetBegin, offsetEnd = $offsetEnd, state = $state, reason = $reason"
+            "onPreLoadEvent: requestId = $requestId, songCode = $songCode, percent = $percent, lyricPath = $lyricPath, pitchPath = $pitchPath, songOffsetBegin = $songOffsetBegin, songOffsetEnd = $songOffsetEnd, lyricOffset = $lyricOffset, state = $state, reason = $reason"
         )
         if (state == MccExState.PRELOAD_STATE_COMPLETED && percent == 100) {
+            mSongOffsetBegin = songOffsetBegin
             mMccExService?.startScore(songCode)
         }
         mCallback?.onPreLoadEvent(
@@ -189,8 +194,9 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
             percent,
             lyricPath,
             pitchPath,
-            offsetBegin,
-            offsetEnd,
+            songOffsetBegin,
+            songOffsetEnd,
+            lyricOffset,
             state,
             reason
         )
@@ -200,15 +206,18 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         requestId: String,
         songCode: Long,
         lyricPath: String,
-        offsetBegin: Int,
-        offsetEnd: Int,
+        songOffsetBegin: Int,
+        songOffsetEnd: Int,
+        lyricOffset: Int,
         reason: MccExStateReason
     ) {
         Log.d(
             TAG,
-            "onLyricResult: requestId = $requestId, songCode = $songCode, lyricPath = $lyricPath, offsetBegin = $offsetBegin, offsetEnd = $offsetEnd, reason = $reason"
+            "onLyricResult: requestId = $requestId, songCode = $songCode, lyricPath = $lyricPath, songOffsetBegin = $songOffsetBegin, songOffsetEnd = $songOffsetEnd, lyricOffset = $lyricOffset, reason = $reason"
         )
         mLyricFilePath = lyricPath
+        mLyricOffset = lyricOffset
+        mSongOffsetBegin = songOffsetBegin
         if (mLyricFilePath.isNotEmpty() && mPitchFilePath.isNotEmpty()) {
             mCallback?.onPreLoadEvent(
                 requestId,
@@ -216,8 +225,9 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
                 100,
                 mLyricFilePath,
                 mPitchFilePath,
-                offsetBegin,
-                offsetEnd,
+                songOffsetBegin,
+                songOffsetEnd,
+                lyricOffset,
                 MccExState.PRELOAD_STATE_COMPLETED,
                 reason
             )
@@ -228,15 +238,16 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         requestId: String,
         songCode: Long,
         pitchPath: String,
-        offsetBegin: Int,
-        offsetEnd: Int,
+        songOffsetBegin: Int,
+        songOffsetEnd: Int,
         reason: MccExStateReason
     ) {
         Log.d(
             TAG,
-            "onPitchResult: requestId = $requestId, songCode = $songCode, pitchPath = $pitchPath, offsetBegin = $offsetBegin, offsetEnd = $offsetEnd, reason = $reason"
+            "onPitchResult: requestId = $requestId, songCode = $songCode, pitchPath = $pitchPath, songOffsetBegin = $songOffsetBegin, songOffsetEnd = $songOffsetEnd, reason = $reason"
         )
         mPitchFilePath = pitchPath
+        mSongOffsetBegin = songOffsetBegin
         if (mLyricFilePath.isNotEmpty() && mPitchFilePath.isNotEmpty()) {
             mCallback?.onPreLoadEvent(
                 requestId,
@@ -244,8 +255,9 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
                 100,
                 mLyricFilePath,
                 mPitchFilePath,
-                offsetBegin,
-                offsetEnd,
+                songOffsetBegin,
+                songOffsetEnd,
+                mLyricOffset,
                 MccExState.PRELOAD_STATE_COMPLETED,
                 reason
             )
@@ -424,10 +436,12 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
     private fun startDisplayLrc() {
         maybeCreateNewScheduledService()
         mCurrentMusicPosition = -1
-        mScheduledExecutorService.scheduleAtFixedRate({
+        mScheduledExecutorService.scheduleWithFixedDelay({
             if (mStatus == Status.Started) {
                 if (-1L == mCurrentMusicPosition || mCurrentMusicPosition % 1000 < MUSIC_POSITION_UPDATE_INTERVAL) {
-                    mCurrentMusicPosition = mMusicPlayer?.getPlayPosition() ?: 0
+                    mCurrentMusicPosition =
+                        mMusicPlayer?.playPosition ?: 0
+                    mCurrentMusicPosition += mSongOffsetBegin.toLong()
                 } else {
                     mCurrentMusicPosition += MUSIC_POSITION_UPDATE_INTERVAL.toLong()
                 }
@@ -457,8 +471,9 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
             percent: Int,
             lyricPath: String,
             pitchPath: String,
-            offsetBegin: Int,
-            offsetEnd: Int,
+            songOffsetBegin: Int,
+            songOffsetEnd: Int,
+            lyricOffset: Int,
             state: MccExState,
             reason: MccExStateReason
         ) {
@@ -469,8 +484,9 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
             requestId: String,
             songCode: Long,
             lyricPath: String,
-            offsetBegin: Int,
-            offsetEnd: Int,
+            songOffsetBegin: Int,
+            songOffsetEnd: Int,
+            lyricOffset: Int,
             reason: MccExStateReason
         ) {
 
@@ -480,8 +496,8 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
             requestId: String,
             songCode: Long,
             pitchPath: String,
-            offsetBegin: Int,
-            offsetEnd: Int,
+            songOffsetBegin: Int,
+            songOffsetEnd: Int,
             reason: MccExStateReason
         ) {
         }

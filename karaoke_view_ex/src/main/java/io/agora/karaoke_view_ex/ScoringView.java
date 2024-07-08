@@ -514,7 +514,7 @@ public class ScoringView extends View {
             lines = new ArrayList<>(0);
         }
 
-        if (null == lines) {
+        if (null == lines || lines.isEmpty()) {
             return;
         }
 
@@ -523,12 +523,12 @@ public class ScoringView extends View {
         float stickHeightPerPitchLevel = (getHeight() - mPitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);
 
         long endTimeOfPreviousLine = 0; // Not used so far
-
+        
         for (int i = 0; i < lines.size(); i++) {
             LyricsPitchLineModel line = lines.get(i);
             List<LyricsPitchLineModel.Pitch> pitches = line.pitches;
             if (pitches == null || pitches.isEmpty()) {
-                return;
+                continue;
             }
 
             long startTime = line.getStartTime();
