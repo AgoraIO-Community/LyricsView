@@ -80,7 +80,7 @@ public class LyricsInstrumentedTest {
         assertTrue(oneAndOnlyOneLineXmlFileContent.contains(songArtist));
 
         File target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         Log.d(TAG, "Line count for this lyrics " + parsedLyrics.lines.size());
 
@@ -135,7 +135,7 @@ public class LyricsInstrumentedTest {
         assertTrue(oneAndOnlyOneLineXmlFileContent.contains(songTitle));
 
         File target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         assertEquals(songTitle, parsedLyrics.name);
         assertEquals(songArtist, parsedLyrics.singer);
@@ -167,7 +167,7 @@ public class LyricsInstrumentedTest {
         assertTrue(lyricsContentInString.contains(songTitle));
 
         target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        parsedLyrics = LyricPitchParser.parseFile(target, null);
+        parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         assertEquals(null, parsedLyrics);
 
@@ -181,7 +181,7 @@ public class LyricsInstrumentedTest {
         assertTrue(lyricsContentInString.contains(songTitle));
 
         target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        parsedLyrics = LyricPitchParser.parseFile(target, null);
+        parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         assertEquals(null, parsedLyrics);
 
@@ -195,7 +195,7 @@ public class LyricsInstrumentedTest {
         assertTrue(lyricsContentInString.contains(songTitle));
 
         target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        parsedLyrics = LyricPitchParser.parseFile(target, null);
+        parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         assertEquals(null, parsedLyrics);
 
@@ -209,7 +209,7 @@ public class LyricsInstrumentedTest {
         assertTrue(lyricsContentInString.contains(songTitle));
 
         target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        parsedLyrics = LyricPitchParser.parseFile(target, null);
+        parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         assertEquals(null, parsedLyrics);
     }
@@ -243,7 +243,7 @@ public class LyricsInstrumentedTest {
         assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
 
         File target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
 
@@ -324,7 +324,7 @@ public class LyricsInstrumentedTest {
         assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
 
         File target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
 
@@ -390,7 +390,7 @@ public class LyricsInstrumentedTest {
         assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
 
         File target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
 
@@ -464,7 +464,7 @@ public class LyricsInstrumentedTest {
         assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
 
         File target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
 
@@ -623,7 +623,7 @@ public class LyricsInstrumentedTest {
         assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
 
         File target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
 
@@ -672,7 +672,7 @@ public class LyricsInstrumentedTest {
 
         File lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
         File pitches = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfPitch);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(lyrics, pitches);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(lyrics, pitches, true, 0);
 
         int lineCount = parsedLyrics.lines.size();
         assertEquals(lineCount, expectedNumberOfLines);
@@ -747,7 +747,7 @@ public class LyricsInstrumentedTest {
         assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
 
         File target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
 
@@ -822,7 +822,7 @@ public class LyricsInstrumentedTest {
         assertTrue(sameTimestampForStartOfCurrentLineAndEndOfPreviousLineXmlFileContent.contains(songTitle));
 
         File target = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null);
+        LyricModel parsedLyrics = LyricPitchParser.parseFile(target, null, true, 0);
 
         Log.d(TAG, "Line count for this lyrics(" + songTitle + ") " + parsedLyrics.lines.size());
 
@@ -862,7 +862,7 @@ public class LyricsInstrumentedTest {
         LyricsLineModel firstLine = parsedLyrics.lines.get(0);
         long time = firstLine.getStartTime();
         int gap = 0;
-        while (time <= firstLine.getEndTime() + 20) {
+        while (time <= firstLine.getEndTime()) {
             if (gap == 40) {
                 gap = 0;
                 scoringMachine.setPitch(50F, (int) time);
@@ -870,10 +870,11 @@ public class LyricsInstrumentedTest {
             gap += 20;
             time += 20;
         }
+        scoringMachine.setPitch(50F, (int) time);
 
         Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");
 
-        assertEquals(mFinalCumulativeScore, 66);
+        assertEquals(66, mFinalCumulativeScore);
     }
 
 
@@ -1153,7 +1154,7 @@ public class LyricsInstrumentedTest {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         File lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel model = LyricPitchParser.parseFile(lyrics, null);
+        LyricModel model = LyricPitchParser.parseFile(lyrics, null, true, 0);
 
         assertFalse(model.lines.isEmpty());
         assertEquals(0, model.lines.get(0).getStartTime());
@@ -1203,7 +1204,7 @@ public class LyricsInstrumentedTest {
                 LogUtils.e("parseLyricData: lyricsContent is empty");
                 return null;
             }
-            return LyricPitchParser.parseLyricData(lyricsContent.getBytes("UTF-8"), null);
+            return LyricPitchParser.parseLyricData(lyricsContent.getBytes("UTF-8"), null, true, 0);
         } catch (Exception e) {
             LogUtils.e("parseLyricData: " + e.getMessage());
         }
@@ -1218,7 +1219,7 @@ public class LyricsInstrumentedTest {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         File lyricFile = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
         File pitches = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfPitch);
-        LyricModel model = LyricPitchParser.parseFile(lyricFile, pitches);
+        LyricModel model = LyricPitchParser.parseFile(lyricFile, pitches, true, 0);
 
         assertEquals(294, model.pitchDataList.size());
         assertEquals(241, model.pitchDataList.get(0).duration);
@@ -1238,7 +1239,8 @@ public class LyricsInstrumentedTest {
 
         File lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
         File pitches = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfPitch);
-        LyricModel model = LyricPitchParser.parseFile(lyrics, pitches);
+        LyricModel model = LyricPitchParser.parseFile(lyrics, pitches, false, 0);
+        assert model != null;
         assertEquals(11590, model.lines.get(0).getStartTime());
 
         assertFalse(model.lines.isEmpty());
@@ -1267,7 +1269,8 @@ public class LyricsInstrumentedTest {
 
         File lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
         File pitches = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfPitch);
-        LyricModel model = LyricPitchParser.parseFile(lyrics, pitches);
+        LyricModel model = LyricPitchParser.parseFile(lyrics, pitches, false, 0);
+        assert model != null;
         assertEquals(11590, model.lines.get(0).getStartTime());
 
         assertFalse(model.lines.isEmpty());
@@ -1316,7 +1319,7 @@ public class LyricsInstrumentedTest {
 
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         File lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
-        LyricModel model = LyricPitchParser.parseFile(lyrics, null);
+        LyricModel model = LyricPitchParser.parseFile(lyrics, null, true, 0);
         Log.d(TAG, "testEnhancedLrcLyricFile: " + model);
 
         int lineCount = model.lines.size();

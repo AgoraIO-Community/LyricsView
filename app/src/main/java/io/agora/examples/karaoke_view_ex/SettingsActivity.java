@@ -116,23 +116,26 @@ public class SettingsActivity extends AppCompatActivity {
             if (isChecked) {
                 editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType());
                 editor.apply();
+
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
+                editor.apply();
             }
-            binding.radioLyricXml.setEnabled(isChecked);
-            binding.radioLyricLrc.setEnabled(isChecked);
+            updateLyricType(prefs);
         });
 
         binding.radioMccEx.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.MCC_EX.getType());
                 editor.apply();
+
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.KRC.ordinal());
+                editor.apply();
             }
+
+            updateLyricType(prefs);
+
         });
 
-        binding.radioLyricXml.setEnabled(binding.radioMcc.isChecked());
-        binding.radioLyricLrc.setEnabled(binding.radioMcc.isChecked());
-
-        binding.radioLyricXml.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.XML.ordinal());
-        binding.radioLyricLrc.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.LRC.ordinal());
 
         binding.radioLyricXml.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
@@ -148,6 +151,15 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+        binding.radioLyricKrc.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.KRC.ordinal());
+                editor.apply();
+            }
+        });
+
+        updateLyricType(prefs);
+
         binding.btnClearMusicCache.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -155,6 +167,16 @@ public class SettingsActivity extends AppCompatActivity {
                 ToastUtils.toastLong(SettingsActivity.this, "Music cache cleared success");
             }
         });
+    }
+
+    private void updateLyricType(SharedPreferences prefs) {
+        binding.radioLyricXml.setEnabled(binding.radioMcc.isChecked());
+        binding.radioLyricLrc.setEnabled(binding.radioMcc.isChecked());
+        binding.radioLyricKrc.setEnabled(binding.radioMccEx.isChecked());
+
+        binding.radioLyricXml.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.XML.ordinal());
+        binding.radioLyricLrc.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.LRC.ordinal());
+        binding.radioLyricKrc.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.KRC.ordinal());
     }
 
     private void loadPreferencesLyricsUI(SharedPreferences prefs, SharedPreferences.Editor editor) {

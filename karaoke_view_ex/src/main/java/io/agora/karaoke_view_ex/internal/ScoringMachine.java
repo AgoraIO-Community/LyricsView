@@ -33,7 +33,8 @@ public class ScoringMachine {
     private IScoringAlgorithm mScoringAlgorithm;
     private boolean mUsingInternalScoring = false;
 
-    private int mDeltaOfUpdate = 40;
+    private static final int DEFAULT_DELTA_OF_UPDATE = 20;
+    private int mDeltaOfUpdate = DEFAULT_DELTA_OF_UPDATE;
 
 
     // Pitches for every line, we will reset every new line
@@ -47,7 +48,7 @@ public class ScoringMachine {
     // End time of this lyrics
     private long mEndTimeOfThisLyrics = 0;
     // Index of current line
-    private int mIndexOfCurrentLine = -1;
+    private int mIndexOfCurrentLine = 0;
 
     // Initial score for the lyrics(can change by app)
     private float mInitialScore;
@@ -179,7 +180,7 @@ public class ScoringMachine {
             mDeltaOfUpdate = (int) (progressInMs - this.mCurrentPitchProgress);
             if (mDeltaOfUpdate > 100 || mDeltaOfUpdate < 0) {
                 //LogUtils.d("setPitch this method called not smoothly: current mDeltaOfUpdate=" + mDeltaOfUpdate + " and reset to 20ms");
-                mDeltaOfUpdate = 40;
+                mDeltaOfUpdate = DEFAULT_DELTA_OF_UPDATE;
             }
         }
 
@@ -188,6 +189,10 @@ public class ScoringMachine {
             if (mListener != null) {
                 mListener.resetUi();
             }
+        }
+
+        if (progressInMs < mCurrentPitchProgress) {
+            whenDraggingHappen(progressInMs);
         }
 
         mCurrentPitchProgress = progressInMs;
@@ -265,6 +270,7 @@ public class ScoringMachine {
 
         float referencePitch = -1f;
         int numberOfLines = mLyricsModel.lines.size();
+        int timestampLineIndex = -1;
         for (int i = 0; i < numberOfLines; i++) {
             LyricsLineModel line = mLyricsModel.lines.get(i);
             if (timestamp >= line.getStartTime() && timestamp <= line.getEndTime()) {
@@ -276,7 +282,7 @@ public class ScoringMachine {
 
                         // Last tone in this line
                         if (j == numberOfTones - 1) {
-                            mIndexOfCurrentLine = i;
+                            timestampLineIndex = i;
                         }
                         break;
                     }
@@ -289,7 +295,7 @@ public class ScoringMachine {
             mPitchesForLine.put(timestamp, 0f);
         }
 
-        if (isNewLine(timestamp, numberOfLines)) {
+        if (isNewLine(timestamp, numberOfLines, timestampLineIndex)) {
             // Line switch
             // If timestamp is very close to start of next line, fire it at once or we will wait until later
             // A little bit of tricky here, check @Ref K329403
@@ -297,39 +303,43 @@ public class ScoringMachine {
             // then timestamp is starting chasing a new mEndTimeOfCurrentRefPitch
             returnIndexOfMostRecentLine[0] = mIndexOfCurrentLine;
             returnNewLine[0] = true;
-            mIndexOfCurrentLine = -1;
+        }
+
+        if (-1 != timestampLineIndex && timestampLineIndex != mIndexOfCurrentLine) {
+            mIndexOfCurrentLine = timestampLineIndex;
         }
 
         // -1, 0, valid pitches
         return referencePitch;
     }
 
-    private boolean isNewLine(long timestamp, int numberOfLines) {
+    private boolean isNewLine(long timestamp, int numberOfLines, int timestampLineIndex) {
+        LogUtils.d("isNewLine timestamp:" + timestamp + ",numberOfLines:" + numberOfLines + ",timestampLineIndex:" + timestampLineIndex);
         boolean newLine = false;
-        if (mIndexOfCurrentLine >= 0) {
+        if (mIndexOfCurrentLine >= 0 && mIndexOfCurrentLine + 1 <= numberOfLines) {
             if (timestamp > mLyricsModel.lines.get(mIndexOfCurrentLine).getEndTime()) {
-                newLine = true;
-            } else {
-                if (mIndexOfCurrentLine + 1 < numberOfLines) {
-                    if (Config.DEBUG) {
-                        LogUtils.d("updateScoreForMostRecentLine isNewLine mIndexOfCurrentLine:" + mIndexOfCurrentLine + ",numberOfLines:" + numberOfLines + ",timestamp:" + timestamp + ",current end:" + mLyricsModel.lines.get(mIndexOfCurrentLine).getEndTime() + ",next start:" + mLyricsModel.lines.get(mIndexOfCurrentLine + 1).getStartTime() + ",mDeltaOfUpdate:" + mDeltaOfUpdate);
+                //当前行歌词结束
+                if (-1 == timestampLineIndex) {
+                    //当前行歌词结尾，但是未到下一行开始
+                    if (!mScoreForEachLine.containsKey(mIndexOfCurrentLine)) {
+                        newLine = true;
                     }
-                    if (mLyricsModel.lines.get(mIndexOfCurrentLine).getEndTime() == mLyricsModel.lines.get(mIndexOfCurrentLine + 1).getStartTime()) {
-                        if ((timestamp + mDeltaOfUpdate) > mLyricsModel.lines.get(mIndexOfCurrentLine + 1).getStartTime()) {
-                            newLine = true;
-                        }
-                    } else if (mLyricsModel.lines.get(mIndexOfCurrentLine).getEndTime() < mLyricsModel.lines.get(mIndexOfCurrentLine + 1).getStartTime()) {
-                        if ((timestamp + mDeltaOfUpdate) >= mLyricsModel.lines.get(mIndexOfCurrentLine + 1).getStartTime()) {
-                            newLine = true;
-                        }
-                    } else {
-                        //nothing to do
-//                        if ((timestamp + mDeltaOfUpdate) > mLyricsModel.lines.get(mIndexOfCurrentLine).getEndTime()) {
-//                            newLine = true;
-//                        }
+                } else if (mIndexOfCurrentLine != timestampLineIndex) {
+                    //换了一行了
+                    if (!mScoreForEachLine.containsKey(mIndexOfCurrentLine)) {
+                        newLine = true;
                     }
                 }
             }
+        } else if (mIndexOfCurrentLine + 2 == numberOfLines) {
+            //last line
+            if (timestamp >= mLyricsModel.lines.get(mIndexOfCurrentLine).getEndTime()) {
+                if (!mScoreForEachLine.containsKey(mIndexOfCurrentLine)) {
+                    newLine = true;
+                }
+            }
+        } else {
+            LogUtils.i("isNewLine mIndexOfCurrentLine:" + mIndexOfCurrentLine + ",numberOfLines:" + numberOfLines);
         }
         return newLine;
     }
@@ -359,7 +369,7 @@ public class ScoringMachine {
             mCumulativeScore += scoreThisTime;
 
             LogUtils.d("updateScoreForMostRecentLine timestamp:" + timestamp + " index:" + indexOfMostRecentLine + " startTime:" + lineJustFinished.getStartTime() +
-                    ",endTime:" + lineJustFinished.getEndTime() + ",lyricsContentLine:" + lyricsContentLine + ",scoreThisTime:" + scoreThisTime + ",mCumulativeScore:" + mCumulativeScore);
+                    ",endTime:" + lineJustFinished.getEndTime() + ",scoreThisTime:" + scoreThisTime + ",mCumulativeScore:" + mCumulativeScore + ",lyricsContentLine:" + lyricsContentLine);
 
 
             if (mListener != null) {
@@ -386,8 +396,8 @@ public class ScoringMachine {
 
         for (int index = 0; index < mLyricsModel.lines.size(); index++) {
             LyricsLineModel line = mLyricsModel.lines.get(index);
-            if (progress <= line.getEndTime()) {
-                mScoreForEachLine.put(index, 0); // Erase the score item >= progress
+            if (progress <= line.getStartTime()) {
+                mScoreForEachLine.remove(index); // Erase the score item >= progress
             }
         }
 
@@ -426,7 +436,7 @@ public class ScoringMachine {
     private void minorReset() {
         mCurrentPitchProgress = 0;
         mCurrentLyricProgress = 0;
-        mIndexOfCurrentLine = -1;
+        mIndexOfCurrentLine = 0;
 
         mPitchesForLine.clear();
     }

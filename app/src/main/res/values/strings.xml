@@ -111,6 +111,7 @@
     <string name="lyric_type">Lyric Type</string>
     <string name="lyric_xml">XML</string>
     <string name="lyric_lrc">LRC</string>
+    <string name="lyric_krc">KRC</string>
     <string name="hit_score_threshold">Hit Score Threshold</string>
     <string name="karaoke">Karaoke</string>
     <string name="scoring_level">Scoring Level</string>

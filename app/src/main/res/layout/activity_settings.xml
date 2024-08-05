@@ -190,6 +190,12 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/lyric_lrc" />
+
+                        <RadioButton
+                            android:id="@+id/radio_lyric_krc"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/lyric_krc" />
                     </RadioGroup>
 
                     <androidx.appcompat.widget.AppCompatButton
