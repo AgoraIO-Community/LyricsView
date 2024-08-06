@@ -523,7 +523,7 @@ public class ScoringView extends View {
         float stickHeightPerPitchLevel = (getHeight() - mPitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);
 
         long endTimeOfPreviousLine = 0; // Not used so far
-        
+
         for (int i = 0; i < lines.size(); i++) {
             LyricsPitchLineModel line = lines.get(i);
             List<LyricsPitchLineModel.Pitch> pitches = line.pitches;
@@ -855,6 +855,7 @@ public class ScoringView extends View {
         mInHighlightStatus = false;
         mPreHighlightStatus = false;
         mPitchHighlightedTime = -1;
+        mScoringMachine = null;
     }
 
     @Override
