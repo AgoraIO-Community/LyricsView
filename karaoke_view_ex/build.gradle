@@ -1,0 +1,77 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+apply from: "${project.rootProject.projectDir}/publishing.gradle"
+android {
+    compileSdk 34
+    namespace 'io.agora.karaoke_view_ex'
+
+    defaultConfig {
+        minSdkVersion 17
+        targetSdkVersion 34
+        versionCode 10
+        versionName sdkVersion.toString()
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('./keystore/testkey.jks')
+            storePassword '123456'
+            keyAlias 'key0'
+            keyPassword '123456'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+
+    libraryVariants.configureEach { variant ->
+        variant.outputs.configureEach {
+            outputFileName = "karaoke_view_v" +
+                    defaultConfig.versionName + ".aar"
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path './src/main/cpp/CMakeLists.txt'
+        }
+    }
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.5.0'
+    implementation 'com.github.guohai:Leonids:9f5a9190f6'
+    api 'io.github.winskyan:Agora-LoggingService:1.0.9'
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
+

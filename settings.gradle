@@ -1,3 +1,3 @@
-rootProject.name = "KaraokeViewExample"
+rootProject.name = "LyricsViewEx"
 include ':app'
-include ':karaoke_view'
+include ':karaoke_view_ex'

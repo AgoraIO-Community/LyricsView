@@ -1,15 +1,16 @@
 plugins {
     id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
 }
 
 Properties properties = new Properties()
 InputStream inputStream = project.rootProject.file('local.properties').newDataInputStream()
 properties.load(inputStream)
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "io.agora.examples.karaoke_view"
+        applicationId "io.agora.examples.karaoke_view_ex"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 8
@@ -19,7 +20,9 @@ android {
 
         buildConfigField("String", "APP_ID", "\"${properties.getProperty("APP_ID", "")}\"")
         buildConfigField("String", "APP_CERTIFICATE", "\"${properties.getProperty("APP_CERTIFICATE", "")}\"")
-
+        buildConfigField("String", "YSD_APP_ID", "\"${properties.getProperty("YSD_APP_ID", "")}\"")
+        buildConfigField("String", "YSD_APP_KEY", "\"${properties.getProperty("YSD_APP_KEY", "")}\"")
+        buildConfigField("String", "YSD_TOKEN_HOST", "\"${properties.getProperty("YSD_TOKEN_HOST", "")}\"")
         ndk {
             abiFilters 'arm64-v8a'
         }
@@ -48,7 +51,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    namespace 'io.agora.examples.karaoke_view'
+    namespace 'io.agora.examples.karaoke_view_ex'
 
     buildFeatures {
         viewBinding true
@@ -58,17 +61,24 @@ android {
     android.applicationVariants.all {
         variant ->
             variant.outputs.all {
-                outputFileName = "KaraokeViewExample-android-v${defaultConfig.versionName}-${variant.buildType.name}.apk"
+                outputFileName = "${project.rootProject.name}-${versionName}-${variant.buildType.name}-${releaseTime()}.apk"
             }
     }
 
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        buildConfig true
+    }
 }
 
 dependencies {
+    api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     if (isSdkMode.toBoolean()) {
-        implementation "com.github.AgoraIO-Community:LyricsView:${sdkVersion.toString()}"
+        implementation "io.github.winskyan:Agora-LyricsViewEx:${sdkVersion.toString()}"
     } else {
-        implementation project(':karaoke_view')
+        implementation project(':karaoke_view_ex')
     }
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -79,14 +89,22 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
-    if (isLocalRtcSDK.toBoolean()) {
-        implementation files('libs/agora-rtc-sdk.jar')
-    } else {
-        implementation 'io.agora.rtc:agora-special-full:4.1.1.24'
-    }
+    implementation 'io.agora.rtc:agora-special-full:4.1.1.24'
+
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
-    implementation 'com.squareup.okhttp3:okhttp:4.9.2'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'io.agora:authentication:2.0.0'
     implementation 'commons-codec:commons-codec:1.16.0'
     implementation 'pub.devrel:easypermissions:3.0.0'
+
+    implementation("io.github.winskyan:Agora-MccExService:2.2.0.132-alpha.6") {
+        exclude(group: "io.agora.rtc", module: "agora-special-full")
+    }
+//    def roomVersion = "2.5.2"
+//    implementation("androidx.room:room-runtime:${roomVersion.toString()}")
+//    implementation("androidx.room:room-ktx:${roomVersion.toString()}")
+}
+
+static def releaseTime() {
+    return new Date().format("yyyyMMdd_HHmmss")
 }

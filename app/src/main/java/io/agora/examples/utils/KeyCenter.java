@@ -2,7 +2,7 @@ package io.agora.examples.utils;
 
 import java.util.Random;
 
-import io.agora.examples.karaoke_view.BuildConfig;
+import io.agora.examples.karaoke_view_ex.BuildConfig;
 import io.agora.media.RtcTokenBuilder;
 import io.agora.rtm.RtmTokenBuilder;
 import io.agora.rtm.RtmTokenBuilder2;
