@@ -1331,4 +1331,29 @@ public class LyricsInstrumentedTest {
         }
         assertEquals("他们总是说我有时不会怎么讲话", firstLineContent.toString());
     }
+
+    @Test
+    public void testLyricFileParse() {
+        enableLyricViewExLog();
+        String fileNameOfSong = "non-normal-timestamp-format.lrc";
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        File lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        LyricModel model = LyricPitchParser.parseFile(lyrics, null, true, 0);
+        Log.d(TAG, "testLyricFileParse: " + model);
+        assertNotNull(model);
+
+
+        fileNameOfSong = "6246262727282260.lrc";
+        lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        model = LyricPitchParser.parseFile(lyrics, null, true, 0);
+        Log.d(TAG, "testLyricFileParse: " + model);
+        assertNotNull(model);
+
+        fileNameOfSong = "872957.xml";
+        lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        model = LyricPitchParser.parseFile(lyrics, null, true, 0);
+        Log.d(TAG, "testLyricFileParse: " + model);
+        assertNotNull(model);
+    }
 }
