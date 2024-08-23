@@ -203,6 +203,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (null == error && null != fileData) {
                     Log.d(TAG, "onLyricsFileDownloadCompleted fileData:" + fileData.length);
                     mLyricsModel = KaraokeView.parseLyricData(fileData, null);
+                    //mLyricsModel = KaraokeView.parseLyricData(new File("/storage/emulated/0/Android/data/io.agora.examples.karaoke_view_ex/cache/e6fa1ebb_.lrc"), null);
+                    //mLyricsModel = KaraokeView.parseLyricData(new File("/storage/emulated/0/Android/data/io.agora.examples.karaoke_view_ex/cache/745012"), null);
+
                     mUseInternalScoring = true;
                     if (mLyricsModel != null && !mSetNoLyric) {
                         mKaraokeView.setLyricData(mLyricsModel, true);

@@ -1355,5 +1355,89 @@ public class LyricsInstrumentedTest {
         model = LyricPitchParser.parseFile(lyrics, null, true, 0);
         Log.d(TAG, "testLyricFileParse: " + model);
         assertNotNull(model);
+
+
+        fileNameOfSong = "e6fa1ebb_.lrc";
+        lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        model = LyricPitchParser.parseFile(lyrics, null, true, 0);
+        Log.d(TAG, "testLyricFileParse: " + model);
+        assertNotNull(model);
+
+        fileNameOfSong = "xml_no_type.xml";
+        lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        model = LyricPitchParser.parseFile(lyrics, null, true, 0);
+        Log.d(TAG, "testLyricFileParse: " + model);
+        assertNotNull(model);
+
+        fileNameOfSong = "745012";
+        lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        model = LyricPitchParser.parseFile(lyrics, null, true, 0);
+        Log.d(TAG, "testLyricFileParse: " + model);
+        assertNotNull(model);
+    }
+
+    @Test
+    public void testLyricScoreWithPitch() {
+        enableLyricViewExLog();
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        testScoreWithSimulatedPitch(appContext, "660250.xml", "qilixiang_bad1_50ms_pitch.txt");
+    }
+
+    private void testScoreWithSimulatedPitch(Context context, String lyricFileName, String simulatedPitchFileName) {
+        File lyricsFile = Utils.copyAssetsToCreateNewFile(context, lyricFileName);
+        File simulatedPitchDataFile = Utils.copyAssetsToCreateNewFile(context, simulatedPitchFileName);
+        LyricModel model = LyricPitchParser.parseFile(lyricsFile, null, true, 0);
+        assert model != null;
+
+        ScoringMachine scoringMachine = new ScoringMachine(new ScoringMachine.OnScoringListener() {
+            @Override
+            public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int index, int numberOfLines) {
+                //Log.d(TAG, "onLineFinished line:" + line + " score:" + score + " cumulativeScore:" + cumulativeScore + " index:" + index + " numberOfLines:" + numberOfLines);
+                StringBuilder sb = new StringBuilder();
+                for (LyricsLineModel.Tone tone : line.tones) {
+                    sb.append(tone.word);
+                }
+
+                Log.d(TAG, "onLineFinished score[" + index + "]:" + score + " cumulativeScore:" + cumulativeScore + " " + sb);
+            }
+
+            @Override
+            public void resetUi() {
+            }
+
+            @Override
+            public void onPitchAndScoreUpdate(float pitch, double scoreAfterNormalization, long progress) {
+            }
+
+            @Override
+            public void requestRefreshUi() {
+            }
+        });
+
+        scoringMachine.prepare(model, true);
+
+        double[] pitchData = io.agora.karaoke_view_ex.utils.Utils.readFileToDoubleArray(simulatedPitchDataFile);
+        if (null != pitchData) {
+            int pitchIndex = 0;
+            for (int i = 0; i < model.duration; i++) {
+                if (i % 20 == 0 && i > 0) {
+                    scoringMachine.setLyricProgress(i);
+                }
+                if (i % 50 == 0 && i > 0) {
+                    if (pitchIndex < pitchData.length) {
+                        scoringMachine.setPitch((float) pitchData[pitchIndex], i);
+                        pitchIndex++;
+                    } else {
+                        scoringMachine.setPitch(0, i);
+                    }
+                }
+
+                try {
+                    Thread.sleep(1);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
