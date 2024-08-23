@@ -2,9 +2,14 @@ package io.agora.karaoke_view_ex.utils;
 
 import android.text.TextUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+
+import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 
 public class Utils {
     public static byte[] readFileToByteArray(String path) {
@@ -35,6 +40,32 @@ public class Utils {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static double[] readFileToDoubleArray(File file) {
+        if (file == null || !file.exists()) {
+            return null;
+        }
+        ArrayList<Double> doubleList = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                double value = Double.parseDouble(line.trim());
+                doubleList.add(value);
+            }
+        } catch (IOException e) {
+            LogUtils.e("Error reading file: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.err.println("Error parsing number: " + e.getMessage());
+        }
+
+        double[] doubleArray = new double[doubleList.size()];
+        for (int i = 0; i < doubleList.size(); i++) {
+            doubleArray[i] = doubleList.get(i);
+        }
+
+        return doubleArray;
     }
 
     public static void deleteFolder(String folderPath) {

@@ -43,6 +43,7 @@ public class LyricPitchParser {
     private static LyricType probeLyricsFileType(File lyricFile) {
         LyricType type = LyricType.LRC;
         String fileName = lyricFile.getName();
+        LogUtils.i("probeLyricsFileType fileName: " + fileName);
         if (TextUtils.isEmpty(fileName)) {
             return type;
         }
@@ -52,6 +53,8 @@ public class LyricPitchParser {
             type = LyricType.LRC;
         } else if (fileName.endsWith(Constants.FILE_EXTENSION_KRC)) {
             type = LyricType.KRC;
+        } else {
+            type = probeLyricsFileType(Utils.getFileBytes(lyricFile));
         }
         return type;
     }
