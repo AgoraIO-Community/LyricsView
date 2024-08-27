@@ -176,6 +176,10 @@ public class ScoringMachine {
         if (Config.DEBUG) {
             LogUtils.d("setPitch speakerPitch:" + speakerPitch + ",progressInMs:" + progressInMs);
         }
+        if (mUsingInternalScoring) {
+            //ignore set pitch progress
+            progressInMs = (int) mCurrentLyricProgress;
+        }
         if (this.mCurrentPitchProgress >= 0 && progressInMs > 0) {
             mDeltaOfUpdate = (int) (progressInMs - this.mCurrentPitchProgress);
             if (mDeltaOfUpdate > 100 || mDeltaOfUpdate < 0) {
@@ -291,9 +295,9 @@ public class ScoringMachine {
             }
         }
 
-        if (referencePitch != -1) {
-            mPitchesForLine.put(timestamp, 0f);
-        }
+//        if (referencePitch != -1) {
+//            mPitchesForLine.put(timestamp, -1f);
+//        }
 
         if (isNewLine(timestamp, numberOfLines, timestampLineIndex)) {
             // Line switch

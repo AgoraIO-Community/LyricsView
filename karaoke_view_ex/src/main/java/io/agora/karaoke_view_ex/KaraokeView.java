@@ -238,6 +238,7 @@ public class KaraokeView {
      * @param progress 歌曲进度 (ms)
      */
     public void setProgress(long progress) {
+        LogUtils.d("setProgress progress:" + progress);
         mLyricMachine.setProgress(progress);
         mScoringMachine.setLyricProgress(progress);
     }
