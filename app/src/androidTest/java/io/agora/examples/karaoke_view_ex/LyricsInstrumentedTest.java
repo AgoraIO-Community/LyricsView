@@ -1393,10 +1393,33 @@ public class LyricsInstrumentedTest {
     public void testLyricScoreWithPitch() {
         enableLyricViewExLog();
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        testScoreWithSimulatedPitch(appContext, "660250.xml", "qilixiang_bad1_50ms_pitch.txt");
+        testScoreWithSimulatedPitch(appContext, "660250.xml", "qilixiang_bad1_50ms_pitch.txt",
+                new int[]{82, 89, 68, 76, 62, 60, 85, 71, 69, 88, 68, 71, 80, 50, 78, 72, 83, 79, 71, 74, 90, 71, 67, 72, 78, 89}, 1943, 50);
+
+        testScoreWithSimulatedPitch(appContext, "660250.xml", "qilixiang_good1_50ms_pitch.txt",
+                new int[]{96, 98, 86, 74, 76, 96, 95, 87, 80, 96, 88, 79, 95, 87, 89, 92, 97, 92, 91, 17, 15}, 1726, 50);
+
+        testScoreWithSimulatedPitch(appContext, "660250.xml", "qilixiang_good2_50ms_pitch.txt",
+                new int[]{93, 97, 92, 78, 90, 80, 96}, 626, 50);
+
+        testScoreWithSimulatedPitch(appContext, "660250.xml", "qilixiang_good3_50ms_pitch.txt",
+                new int[]{94, 97, 92, 84, 75, 81, 90, 86, 76, 93, 87, 83, 94, 91, 89, 85, 96, 88, 96, 88, 87, 71, 88, 94, 82, 96}, 2283, 50);
+
+        testScoreWithSimulatedPitch(appContext, "660250.xml", "qilixiang_good4_50ms_pitch.txt",
+                new int[]{94, 94, 86, 73, 76, 83, 93, 67, 62, 88, 81, 69, 91, 65, 90, 90, 97, 90, 94, 25, 62, 74, 94, 89, 86, 97}, 2110, 50);
+
+        testScoreWithSimulatedPitch(appContext, "900318.xml", "houlai_bad1_50ms_pitch.txt",
+                new int[]{34, 48, 40, 29, 60, 35, 60, 61, 49, 43, 80, 67, 91, 86, 82, 45, 82, 98, 93, 50, 23, 72, 55, 84, 94, 98, 99, 57, 75, 99, 70, 57, 71, 79, 62, 40, 60, 54, 64, 34, 43, 32, 61, 65, 34, 54, 26, 58}, 2953, 73);
+
+        testScoreWithSimulatedPitch(appContext, "900318.xml", "houlai_good1_50ms_pitch.txt",
+                new int[]{96, 98, 94, 98, 96, 96, 99, 100, 97, 100, 97, 99, 98, 99, 97, 96, 97, 99, 90, 94, 98, 97, 94, 90, 88, 98, 99, 88, 84, 99, 84, 86, 62, 76, 80, 87, 92}, 4454, 73);
+
+        testScoreWithSimulatedPitch(appContext, "900318.xml", "houlai_good2_50ms_pitch.txt",
+                new int[]{97, 99, 97, 100, 97, 94, 99, 100, 97, 100, 99, 99, 99, 99, 99, 98, 98, 98, 96, 99, 97, 98, 99, 94, 98, 98, 99, 88, 85, 99, 99, 88, 59, 78, 88, 94, 98, 96, 90, 92, 97, 97, 100, 97, 93, 99, 85, 66}, 4535, 73);
+
     }
 
-    private void testScoreWithSimulatedPitch(Context context, String lyricFileName, String simulatedPitchFileName) {
+    private void testScoreWithSimulatedPitch(Context context, String lyricFileName, String simulatedPitchFileName, int[] expectedScores, int expectedFinalCumulativeScore, int expectedNumberOfScoringLines) {
         File lyricsFile = Utils.copyAssetsToCreateNewFile(context, lyricFileName);
         File simulatedPitchDataFile = Utils.copyAssetsToCreateNewFile(context, simulatedPitchFileName);
         LyricModel model = LyricPitchParser.parseFile(lyricsFile, null, true, 0);
@@ -1404,20 +1427,19 @@ public class LyricsInstrumentedTest {
 
         mFinalCumulativeScore = 0;
         mNumberOfScoringLines = 0;
-        final int[] expectedScores = new int[]{82, 89, 68, 76, 62, 60, 85, 71, 69, 88, 68, 71, 80, 50, 78, 72, 83, 79, 71, 74, 90, 71, 67, 72, 78, 89};
         ScoringMachine scoringMachine = new ScoringMachine(new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int index, int numberOfLines) {
-                mNumberOfScoringLines++;
                 StringBuilder sb = new StringBuilder();
                 for (LyricsLineModel.Tone tone : line.tones) {
                     sb.append(tone.word);
                 }
+                Log.d(TAG, "onLineFinished score[" + index + "]:" + score + " cumulativeScore:" + cumulativeScore + " " + sb);
+                mNumberOfScoringLines++;
                 if (index < expectedScores.length) {
                     assertEquals(expectedScores[index], score);
                 }
                 mFinalCumulativeScore += score;
-                Log.d(TAG, "onLineFinished score[" + index + "]:" + score + " cumulativeScore:" + cumulativeScore + " " + sb);
             }
 
             @Override
@@ -1438,7 +1460,7 @@ public class LyricsInstrumentedTest {
         double[] pitchData = io.agora.karaoke_view_ex.utils.Utils.readFileToDoubleArray(simulatedPitchDataFile);
         if (null != pitchData) {
             int pitchIndex = 0;
-            for (int i = 0; i < model.duration; i++) {
+            for (int i = 0; i < model.duration + 100; i++) {
                 if (i % 20 == 0 && i > 0) {
                     scoringMachine.setLyricProgress(i);
                 }
@@ -1458,8 +1480,8 @@ public class LyricsInstrumentedTest {
                 }
             }
 
-            assertEquals(49, mNumberOfScoringLines);
-            assertEquals(1943, mFinalCumulativeScore);
+            assertEquals(expectedNumberOfScoringLines, mNumberOfScoringLines);
+            assertEquals(expectedFinalCumulativeScore, mFinalCumulativeScore);
         }
     }
 }

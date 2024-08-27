@@ -71,7 +71,7 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
             iterator.remove();
 
-            if (scoreForOnePitch != null) {
+            if (scoreForOnePitch != null && scoreForOnePitch != -1f) {
                 totalScoreForTone += scoreForOnePitch;
                 scoreCountForTone++;
             }

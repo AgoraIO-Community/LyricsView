@@ -295,9 +295,9 @@ public class ScoringMachine {
             }
         }
 
-//        if (referencePitch != -1) {
-//            mPitchesForLine.put(timestamp, -1f);
-//        }
+        if (referencePitch != -1) {
+            mPitchesForLine.put(timestamp, -1f);
+        }
 
         if (isNewLine(timestamp, numberOfLines, timestampLineIndex)) {
             // Line switch
