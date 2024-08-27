@@ -431,6 +431,7 @@ public class LyricsInstrumentedTest {
         for (LyricsLineModel line : parsedLyrics.lines) {
             mLatestIndexOfScoringLines++;
             for (LyricsLineModel.Tone tone : line.tones) {
+                scoringMachine.setLyricProgress(tone.begin + tone.getDuration() / 2);
                 scoringMachine.setPitch((float) (tone.pitch - 1), (int) (tone.begin + tone.getDuration() / 2));
             }
 
@@ -445,8 +446,8 @@ public class LyricsInstrumentedTest {
         assertEquals(lineCount, expectedNumberOfLines);
 
         // Check if `onLineFinished` working as expected
-        assertEquals(mNumberOfScoringLines, 5);
-        assertEquals(mLatestIndexOfScoringLines, 6);
+        assertEquals(5, mNumberOfScoringLines);
+        assertEquals(6, mLatestIndexOfScoringLines, 6);
     }
 
     private float mPitchHit = 0;
@@ -501,30 +502,37 @@ public class LyricsInstrumentedTest {
         scoringMachine.prepare(parsedLyrics, true);
 
         mPitchHit = -1;
+        scoringMachine.setLyricProgress(0);
         scoringMachine.setPitch(0, 0);
         assertEquals(mPitchHit, -1, 0d);
 
         mPitchHit = -1;
+        scoringMachine.setLyricProgress(28813);
         scoringMachine.setPitch(0, 28813);
         assertEquals(mPitchHit, -1, 0d);
 
         mPitchHit = -1;
+        scoringMachine.setLyricProgress(28814);
         scoringMachine.setPitch(172, 28814);
         assertEquals(mPitchHit, 172, 0d);
 
         mPitchHit = -1;
+        scoringMachine.setLyricProgress(29675);
         scoringMachine.setPitch(172, 29675);
         assertEquals(mPitchHit, 172, 0d);
 
         mPitchHit = -1;
+        scoringMachine.setLyricProgress(185160);
         scoringMachine.setPitch(130, 185160);
         assertEquals(mPitchHit, 130, 0d);
 
         mPitchHit = -1;
+        scoringMachine.setLyricProgress(185161);
         scoringMachine.setPitch(213, 185161);
         assertEquals(mPitchHit, 213, 0d);
 
         mPitchHit = -1;
+        scoringMachine.setLyricProgress(187238);
         scoringMachine.setPitch(100, 187238);
         double processedPitch = AIAlgorithmScoreNative.handlePitch(213, 100, scoringMachine.getMaximumRefPitch());
         assertEquals(200.0, processedPitch, 0);
@@ -561,10 +569,12 @@ public class LyricsInstrumentedTest {
                 if (mCurrentPosition >= 0 && mCurrentPosition < DURATION_OF_SONG) {
                     float pitch = 0;
                     pitch = (float) Math.random() * 200;
+                    scoringMachine.setLyricProgress(mCurrentPosition);
                     scoringMachine.setPitch(pitch, (int) mCurrentPosition);
                     Log.d(PLAYER_TAG, "mCurrentPosition: " + mCurrentPosition + ", pitch: " + pitch);
                 } else if (mCurrentPosition >= DURATION_OF_SONG && mCurrentPosition < (DURATION_OF_SONG + 1000)) {
                     long lastPosition = mCurrentPosition;
+                    scoringMachine.setLyricProgress(mCurrentPosition);
                     scoringMachine.setPitch((float) 0, (int) mCurrentPosition);
                     Log.d(PLAYER_TAG, "put the indicator back in space");
                     // Put the indicator back in space
@@ -792,6 +802,7 @@ public class LyricsInstrumentedTest {
         for (LyricsLineModel line : parsedLyrics.lines) {
             mLatestIndexOfScoringLines++;
             for (LyricsLineModel.Tone tone : line.tones) {
+                scoringMachine.setLyricProgress(tone.begin + tone.getDuration() / 2);
                 scoringMachine.setPitch((float) (tone.pitch - 1), (int) (tone.begin + tone.getDuration() / 2));
             }
 
@@ -865,11 +876,13 @@ public class LyricsInstrumentedTest {
         while (time <= firstLine.getEndTime()) {
             if (gap == 40) {
                 gap = 0;
+                scoringMachine.setLyricProgress(time);
                 scoringMachine.setPitch(50F, (int) time);
             }
             gap += 20;
             time += 20;
         }
+        scoringMachine.setLyricProgress(time);
         scoringMachine.setPitch(50F, (int) time);
 
         Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");
@@ -1389,15 +1402,21 @@ public class LyricsInstrumentedTest {
         LyricModel model = LyricPitchParser.parseFile(lyricsFile, null, true, 0);
         assert model != null;
 
+        mFinalCumulativeScore = 0;
+        mNumberOfScoringLines = 0;
+        final int[] expectedScores = new int[]{82, 89, 68, 76, 62, 60, 85, 71, 69, 88, 68, 71, 80, 50, 78, 72, 83, 79, 71, 74, 90, 71, 67, 72, 78, 89};
         ScoringMachine scoringMachine = new ScoringMachine(new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int index, int numberOfLines) {
-                //Log.d(TAG, "onLineFinished line:" + line + " score:" + score + " cumulativeScore:" + cumulativeScore + " index:" + index + " numberOfLines:" + numberOfLines);
+                mNumberOfScoringLines++;
                 StringBuilder sb = new StringBuilder();
                 for (LyricsLineModel.Tone tone : line.tones) {
                     sb.append(tone.word);
                 }
-
+                if (index < expectedScores.length) {
+                    assertEquals(expectedScores[index], score);
+                }
+                mFinalCumulativeScore += score;
                 Log.d(TAG, "onLineFinished score[" + index + "]:" + score + " cumulativeScore:" + cumulativeScore + " " + sb);
             }
 
@@ -1438,6 +1457,9 @@ public class LyricsInstrumentedTest {
                     e.printStackTrace();
                 }
             }
+
+            assertEquals(49, mNumberOfScoringLines);
+            assertEquals(1943, mFinalCumulativeScore);
         }
     }
 }
