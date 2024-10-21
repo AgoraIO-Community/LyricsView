@@ -6,7 +6,8 @@ import org.junit.Test;
 
 import java.io.File;
 
-import io.agora.karaoke_view.internal.lyric.parse.LyricPitchParser;
+import io.agora.karaoke_view_ex.internal.lyric.parse.LyricPitchParser;
+
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -28,7 +29,7 @@ public class ExampleUnitTest {
         Exception exception = null;
         File lyrics = new File("");
         try {
-            LyricPitchParser.parseFile(lyrics, null);
+            LyricPitchParser.parseFile(lyrics, null, true, 0);
         } catch (Exception e) {
             exception = e;
         }
@@ -38,5 +39,4 @@ public class ExampleUnitTest {
         assertTrue(exception instanceof IllegalArgumentException);
         Logx("invalidFileChecking: expected IllegalArgumentException above");
     }
-
 }
