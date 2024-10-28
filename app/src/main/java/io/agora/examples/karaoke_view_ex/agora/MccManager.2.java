@@ -6,8 +6,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import org.json.JSONObject;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import io.agora.examples.karaoke_view_ex.BuildConfig;
 import io.agora.examples.utils.KeyCenter;
 import io.agora.karaoke_view_ex.constants.Constants;
-import io.agora.mccex.utils.Utils;
+import io.agora.mccex.constants.MusicPlayMode;
 import io.agora.mediaplayer.IMediaPlayerObserver;
 import io.agora.mediaplayer.data.CacheStatistics;
 import io.agora.mediaplayer.data.PlayerPlaybackStats;
@@ -24,14 +22,10 @@ import io.agora.mediaplayer.data.SrcInfo;
 import io.agora.musiccontentcenter.IAgoraMusicContentCenter;
 import io.agora.musiccontentcenter.IAgoraMusicPlayer;
 import io.agora.musiccontentcenter.IMusicContentCenterEventHandler;
-import io.agora.musiccontentcenter.IScoreEventHandler;
-import io.agora.musiccontentcenter.LineScoreData;
-import io.agora.musiccontentcenter.MccConstants;
 import io.agora.musiccontentcenter.Music;
 import io.agora.musiccontentcenter.MusicCacheInfo;
 import io.agora.musiccontentcenter.MusicChartInfo;
 import io.agora.musiccontentcenter.MusicContentCenterConfiguration;
-import io.agora.musiccontentcenter.RawScoreData;
 import io.agora.rtc2.RtcEngine;
 
 public class MccManager {
@@ -45,15 +39,8 @@ public class MccManager {
     private long mCurrentMusicPosition;
     private final static int MUSIC_POSITION_UPDATE_INTERVAL = 20;
 
-    private String mToken = "";
-    private String mUserId = "";
-
     private static volatile Status mStatus = Status.IDLE;
-    private MccConstants.LyricSourceType mLyricType = MccConstants.LyricSourceType.LYRIC_SOURCE_XML;
-    private MccConstants.MusicPlayMode mMusicPlayMode = MccConstants.MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL;
-
-    private int mLyricOffset = 0;
-    private int mSongOffsetBegin = 0;
+    private int mLyricType = 0;
 
     enum Status {
         IDLE(0), Opened(1), Started(2), Paused(3), Stopped(4);
@@ -71,11 +58,11 @@ public class MccManager {
 
     private final IMusicContentCenterEventHandler mMccEventHandler = new IMusicContentCenterEventHandler() {
         @Override
-        public void onPreLoadEvent(String requestId, long internalSongCode, int percent, String payload, int state, int reason) {
-            Log.d(TAG, "mcc onPreLoadEvent requestId:" + requestId + " songCode:" + internalSongCode + " percent:" + percent + " payload:" + payload + " state:" + state + " reason:" + reason);
-            mCallback.onMusicPreloadResult(internalSongCode, percent);
-            if (state == 0 && percent == 100) {
-                handleLyricResult(internalSongCode, payload);
+        public void onPreLoadEvent(String requestId, long songCode, int percent, String lyricUrl, int status, int errorCode) {
+            Log.d(TAG, "onPreLoadEvent requestId:" + requestId + " songCode:" + songCode + " percent:" + percent + " lyricUrl:" + lyricUrl + " status:" + status + " errorCode:" + errorCode);
+            mCallback.onMusicPreloadResult(songCode, percent);
+            if (status == 0 && percent == 100) {
+                mMcc.getLyric(songCode, mLyricType);
             }
         }
 
@@ -90,70 +77,14 @@ public class MccManager {
         }
 
         @Override
-        public void onLyricResult(String requestId, long internalSongCode, String payload, int reason) {
-            Log.d(TAG, "mcc onLyricResult()  requestId :" + requestId + " songCode:" + internalSongCode + " payload:" + payload + " reason:" + reason);
-            handleLyricResult(internalSongCode, payload);
-
+        public void onLyricResult(String requestId, long songCode, String lyricUrl, int errorCode) {
+            Log.d(TAG, "onLyricResult()  requestId :" + requestId + " songCode:" + songCode + " lyricUrl:" + lyricUrl + " errorCode:" + errorCode);
+            mCallback.onMusicLyricRequest(songCode, lyricUrl);
         }
 
         @Override
         public void onSongSimpleInfoResult(String requestId, long songCode, String simpleInfo, int errorCode) {
-            Log.d(TAG, "onSongSimpleInfoResult() called with: requestId = [" + requestId + "], songCode = [" + songCode + "], simpleInfo = [" + simpleInfo + "], errorCode = [" + errorCode + "]");
-        }
 
-        @Override
-        public void onStartScoreResult(long internalSongCode, int state, int reason) {
-            Log.d(TAG, "mcc onStartScoreResult() called with: internalSongCode = [" + internalSongCode + "], state = [" + state + "], reason = [" + reason + "]");
-
-            if (state == MccConstants.MusicContentCenterState.MUSIC_CONTENT_CENTER_STATE_START_SCORE_COMPLETED.value()) {
-                mMcc.setScoreLevel(MccConstants.ScoreLevel.SCORE_LEVEL_EASY);
-            }
-            openMusic(internalSongCode);
-        }
-    };
-
-    private void handleLyricResult(long internalSongCode, String payload) {
-        /*
-         * {"lyricPath":"/data/user/0/io.agora.examples.karaoke_view_ex/cache/mccex/111805482632310595.krc","pitchPath":"/data/user/0/io.agora.examples.karaoke_view_ex/cache/mccex/111805482632310595.pitch","songOffsetBegin":0,"songOffsetEnd":191000,"lyricOffset":2}
-         * */
-        try {
-            JSONObject jsonObject = new JSONObject(payload);
-            String lyricPath = "";
-            String pitchPath = "";
-            if (jsonObject.has("lyricPath")) {
-                lyricPath = jsonObject.getString("lyricPath");
-            }
-            if (jsonObject.has("pitchPath")) {
-                pitchPath = jsonObject.getString("pitchPath");
-            }
-            if (jsonObject.has("songOffsetBegin")) {
-                mSongOffsetBegin = jsonObject.getInt("songOffsetBegin");
-            }
-            if (jsonObject.has("lyricOffset")) {
-                mLyricOffset = jsonObject.getInt("lyricOffset");
-            }
-
-            mCallback.onMusicLyricRequest(internalSongCode, lyricPath, pitchPath, mLyricOffset);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private final IScoreEventHandler mMccScoreEventHandler = new IScoreEventHandler() {
-        @Override
-        public void onPitch(long internalSongCode, RawScoreData rawScoreData) {
-            Log.d(TAG, "mcc onPitch() called with: internalSongCode = [" + internalSongCode + "], rawScoreData = [" + rawScoreData + "]");
-            if (null != rawScoreData) {
-                mCallback.onMusicPitch(internalSongCode, rawScoreData.speakerPitch, rawScoreData.pitchScore, rawScoreData.progressInMs);
-            }
-        }
-
-        @Override
-        public void onLineScore(long internalSongCode, LineScoreData lineScoreData) {
-            Log.d(TAG, "mcc onLineScore() called with: internalSongCode = [" + internalSongCode + "], lineScoreData = [" + lineScoreData + "]");
-            if (null != lineScoreData) {
-                mCallback.onMusicLineScore(internalSongCode, lineScoreData.pitchScore, lineScoreData.cumulativePitchScore, lineScoreData.currentLineIndex, lineScoreData.totalLines);
-            }
         }
     };
 
@@ -241,11 +172,6 @@ public class MccManager {
         initData();
     }
 
-    public void setTokenAndUserId(String token, String userId) {
-        mToken = token;
-        mUserId = userId;
-    }
-
     private void initData() {
         mScheduledExecutorService = Executors.newScheduledThreadPool(5);
     }
@@ -255,28 +181,12 @@ public class MccManager {
             mMcc = IAgoraMusicContentCenter.create(rtcEngine);
 
             mConfig = new MusicContentCenterConfiguration();
+            mConfig.appId = BuildConfig.APP_ID;
+            mConfig.mccUid = KeyCenter.getUserUid();
+            mConfig.token = KeyCenter.getRtmToken(KeyCenter.getUserUid());
+            //mConfig.mccDomain = "api-test.agora.io";
             mConfig.eventHandler = mMccEventHandler;
-            mConfig.scoreEventHandler = mMccScoreEventHandler;
-            mConfig.audioFrameObserver = null;
             mMcc.initialize(mConfig);
-
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("appId", BuildConfig.APP_ID);
-            jsonObject.put("token", KeyCenter.getRtmToken2(KeyCenter.getUserUid()));
-            jsonObject.put("userId", KeyCenter.getUserUid());
-            //jsonObject.put("domain", "api-test.agora.io");
-            Log.d(TAG, "mcc init: " + jsonObject.toString());
-            mMcc.addVendor(MccConstants.MusicContentCenterVendorId.MUSIC_CONTENT_CENTER_VENDOR_DEFAULT, jsonObject.toString());
-
-            jsonObject = new JSONObject();
-            jsonObject.put("appId", BuildConfig.VENDOR_2_APP_ID);
-            jsonObject.put("appKey", BuildConfig.VENDOR_2_APP_KEY);
-            jsonObject.put("token", mToken);
-            jsonObject.put("userId", mUserId);
-            jsonObject.put("deviceId", Utils.getUuid());
-            jsonObject.put("urlTokenExpireTime", 15 * 60);
-            jsonObject.put("chargeMode", 2);
-            mMcc.addVendor(MccConstants.MusicContentCenterVendorId.MUSIC_CONTENT_CENTER_VENDOR_2, jsonObject.toString());
 
             mAgoraMusicPlayer = mMcc.createMusicPlayer();
 
@@ -289,9 +199,9 @@ public class MccManager {
 
     public void destroy() {
         mAgoraMusicPlayer.unRegisterPlayerObserver(mMediaPlayerObserver);
-        mMcc.unregisterEventHandler(mMccEventHandler);
-        mMcc.destroyMusicPlayer(mAgoraMusicPlayer);
+        mMcc.unregisterEventHandler();
         IAgoraMusicContentCenter.destroy();
+        mAgoraMusicPlayer.destroy();
         mAgoraMusicPlayer = null;
         mMcc = null;
         mConfig.eventHandler = null;
@@ -337,10 +247,8 @@ public class MccManager {
         reset();
     }
 
-    public void openMusic(long internalSongCode) {
-        mAgoraMusicPlayer.setPlayMode(mMusicPlayMode);
-        RtcManager.INSTANCE.setPlayingSongCode(internalSongCode);
-        int ret = mAgoraMusicPlayer.open(internalSongCode, 0);
+    public void openMusic(long songCode) {
+        int ret = mAgoraMusicPlayer.open(songCode, 0);
         //int ret = mAgoraMusicPlayer.open("http://agora.fronted.love/yyl.mov",0);
         Log.i(TAG, "open() called ret= " + ret);
     }
@@ -352,8 +260,6 @@ public class MccManager {
         }
         mStatus = Status.IDLE;
         mAgoraMusicPlayer.stop();
-        mMcc.stopScore();
-        RtcManager.INSTANCE.setPlayingSongCode(0L);
     }
 
     public void pause() {
@@ -378,34 +284,18 @@ public class MccManager {
         mAgoraMusicPlayer.seek(time);
     }
 
-    public void preloadMusic(final String songCode, final MccConstants.LyricSourceType lyricType, MccConstants.MusicContentCenterVendorId vendorId, String songOptionJson) {
-        Log.d(TAG, "mcc preloadMusic call with music songCode:" + songCode + " lyricType:" + lyricType + " vendorId:" + vendorId + " songOptionJson:" + songOptionJson);
+    public void preloadMusic(final long songCode, final int lyricType) {
+        Log.i(TAG, "preloadMusic call with music songCode:" + songCode + " lyricType:" + lyricType);
         mLyricType = lyricType;
         try {
-            long internalSongCode = mMcc.getInternalSongCode(vendorId, songCode, songOptionJson);
-            Log.d(TAG, "mcc preloadMusic internalSongCode=" + internalSongCode);
-            if (0 == mMcc.isPreloaded(internalSongCode)) {
-                Log.i(TAG, "mcc is preloaded songCode=" + internalSongCode);
-                mMcc.getLyric(internalSongCode, mLyricType);
+            if (0 == mMcc.isPreloaded(songCode)) {
+                Log.i(TAG, "mcc is preloaded songCode=" + songCode);
+                //0 xml  1 lrc
+                mMcc.getLyric(songCode, mLyricType);
             } else {
-                String requestId = mMcc.preload(internalSongCode);
-                Log.d(TAG, "mcc preload song code requestId=" + requestId);
+                String requestId = mMcc.preload(songCode);
+                Log.i(TAG, "preload song code requestId=" + requestId);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void startScore(MccConstants.MusicContentCenterVendorId vendorId, String songCode, String jsonOption) {
-        Log.d(TAG, "mcc startScore() called with: vendorId = [" + vendorId + "], songCode = [" + songCode + "], jsonOption = [" + jsonOption + "]");
-        try {
-            long internalSongCode = mMcc.getInternalSongCode(vendorId, songCode, jsonOption);
-            if (internalSongCode == 0) {
-                Log.e(TAG, "getInternalSongCode failed songCode=" + songCode);
-                return;
-            }
-            int ret = mMcc.startScore(internalSongCode);
-            Log.d(TAG, "mcc startScore() called with " + internalSongCode + " ret = " + ret);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -421,7 +311,6 @@ public class MccManager {
                 if (mStatus == Status.Started) {
                     if (-1 == mCurrentMusicPosition || mCurrentMusicPosition % 1000 < MUSIC_POSITION_UPDATE_INTERVAL) {
                         mCurrentMusicPosition = mAgoraMusicPlayer.getPlayPosition();
-                        mCurrentMusicPosition += mSongOffsetBegin;
                     } else {
                         mCurrentMusicPosition += MUSIC_POSITION_UPDATE_INTERVAL;
                     }
@@ -453,10 +342,23 @@ public class MccManager {
         }
     }
 
-    public void setPlayMode(MccConstants.MusicPlayMode playMode, int musicType) {
-        int ret = mAgoraMusicPlayer.setPlayMode(playMode);
-        if (ret == 0) {
-            mMusicPlayMode = playMode;
+    public void setPlayMode(MusicPlayMode playMode, int musicType) {
+//        mAgoraMusicPlayer.setPlayMode(playMode);
+        int ret = -1;
+        if (MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL == playMode) {
+            if (musicType == 1) {
+                ret = mAgoraMusicPlayer.setAudioDualMonoMode(io.agora.mediaplayer.Constants.AudioDualMonoMode.AUDIO_DUAL_MONO_R.ordinal());
+            } else if (musicType == 4 || musicType == 6) {
+                ret = mAgoraMusicPlayer.selectAudioTrack(0);
+            }
+        } else if (MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY == playMode) {
+            if (musicType == 1) {
+                //左伴右唱
+                ret = mAgoraMusicPlayer.setAudioDualMonoMode(io.agora.mediaplayer.Constants.AudioDualMonoMode.AUDIO_DUAL_MONO_L.ordinal());
+            } else if (musicType == 4 || musicType == 6) {
+                //多音轨
+                ret = mAgoraMusicPlayer.selectAudioTrack(1);
+            }
         }
         Log.i(TAG, "setPlayMode() called with: playMode = " + playMode + " ret=" + ret);
     }
@@ -473,7 +375,7 @@ public class MccManager {
     }
 
     public interface MccCallback {
-        default void onMusicLyricRequest(long songCode, String lyricUrl, String pitchUrl, int lyricOffset) {
+        default void onMusicLyricRequest(long songCode, String lyricUrl) {
 
         }
 
@@ -485,11 +387,8 @@ public class MccManager {
 
         }
 
-        default void onMusicPitch(long internalSongCode, double voicePitch, double pitchScore, long progressInMs) {
+        default void onMusicPitch(double voicePitch, long progressInMs) {
 
-        }
-
-        default void onMusicLineScore(long internalSongCode, float linePitchScore, float cumulativeTotalLinePitchScores, int performedLineIndex, int performedTotalLines) {
         }
 
         default void onMusicPlaying() {

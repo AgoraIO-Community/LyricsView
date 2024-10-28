@@ -18,6 +18,7 @@ import io.agora.mccex.constants.MccExStateReason
 import io.agora.mccex.constants.MusicPlayMode
 import io.agora.mccex.model.LineScoreData
 import io.agora.mccex.model.RawScoreData
+import io.agora.musiccontentcenter.MccConstants
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Response
@@ -35,7 +36,8 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     private var mCurrentSongCodeIndex = 0
     private var mIsOriginal = true
     private var mServiceCallback: ServiceCallback? = null
-    private var mLyricType: Int = 0
+    private var mLyricType: MccConstants.LyricSourceType =
+        MccConstants.LyricSourceType.LYRIC_SOURCE_XML
 
     fun setServiceType(serviceType: ServiceType) {
         mServiceType = serviceType
@@ -46,7 +48,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     }
 
     fun setLyricType(lyricType: Int) {
-        mLyricType = lyricType
+        mLyricType = MccConstants.LyricSourceType.fromValue(lyricType)
     }
 
     fun initService(context: Context, serviceCallback: ServiceCallback) {
@@ -64,12 +66,12 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
         val prefs: SharedPreferences =
             context.getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE)
-        val tokenTime = prefs.getLong(Constants.SP_KEY_YSD_TOKEN_TIME, 0L)
+        val tokenTime = prefs.getLong(Constants.SP_KEY_VENDOR_2_TOKEN_TIME, 0L)
         if (tokenTime == 0L || System.currentTimeMillis() - tokenTime > Constants.TOKEN_EXPIRE_TIME) {
 
             mExecutor.execute(Runnable {
                 sendHttpsRequest(
-                    BuildConfig.YSD_TOKEN_HOST + KeyCenter.getUserUid(),
+                    BuildConfig.VENDOR_2_TOKEN_HOST + KeyCenter.getUserUid(),
                     HashMap<Any?, Any?>(0),
                     "",
                     false,
@@ -80,7 +82,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
                         override fun onResponse(call: Call, response: Response) {
                             val responseData = response.body!!.string()
-                            Log.d(TAG, "initMccEx onResponse: $responseData")
+                            Log.d(TAG, "init vendor2 onResponse: $responseData")
                             try {
                                 val responseJson = JSONObject(responseData)
                                 val dataJson = responseJson.getJSONObject("data")
@@ -88,10 +90,10 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
                                 val userId = dataJson.getString("yinsuda_uid")
 
                                 val editor = prefs.edit()
-                                editor.putString(Constants.SP_KEY_YSD_TOKEN, token)
-                                editor.putString(Constants.SP_KEY_YSD_USER_ID, userId)
+                                editor.putString(Constants.SP_KEY_VENDOR_2_TOKEN, token)
+                                editor.putString(Constants.SP_KEY_VENDOR_2_USER_ID, userId)
                                 editor.putLong(
-                                    Constants.SP_KEY_YSD_TOKEN_TIME,
+                                    Constants.SP_KEY_VENDOR_2_TOKEN_TIME,
                                     System.currentTimeMillis()
                                 )
                                 editor.apply()
@@ -104,18 +106,18 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
                                     this@ServiceManager
                                 )
                             } catch (e: Exception) {
-                                Log.e(TAG, "initMccEx onResponse: " + e.message)
+                                Log.e(TAG, "vendor2 onResponse: " + e.message)
                                 ToastUtils.toastLong(
                                     context,
-                                    "initMccEx onResponse: " + e.message
+                                    "vendor2 onResponse: " + e.message
                                 )
                             }
                         }
                     })
             })
         } else {
-            val token = prefs.getString(Constants.SP_KEY_YSD_TOKEN, "")
-            val userId = prefs.getString(Constants.SP_KEY_YSD_USER_ID, "")
+            val token = prefs.getString(Constants.SP_KEY_VENDOR_2_TOKEN, "")
+            val userId = prefs.getString(Constants.SP_KEY_VENDOR_2_USER_ID, "")
             mMccExManager!!.setTokenAndUserId(token!!, userId!!)
             mMccExManager!!.initMccExService(
                 getRtcEngine(), RtcManager,
@@ -127,7 +129,60 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
     private fun initMcc(context: Context) {
         mMccManager = MccManager(context, this)
-        mMccManager?.init(getRtcEngine())
+
+        val prefs: SharedPreferences =
+            context.getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE)
+        val tokenTime = prefs.getLong(Constants.SP_KEY_VENDOR_2_TOKEN_TIME, 0L)
+        if (tokenTime == 0L || System.currentTimeMillis() - tokenTime > Constants.TOKEN_EXPIRE_TIME) {
+
+            mExecutor.execute(Runnable {
+                sendHttpsRequest(
+                    BuildConfig.VENDOR_2_TOKEN_HOST + KeyCenter.getUserUid(),
+                    HashMap<Any?, Any?>(0),
+                    "",
+                    false,
+                    object : Callback {
+                        override fun onFailure(call: Call, e: IOException) {
+                            Log.d(TAG, "vendor2 onFailure: " + e.message)
+                        }
+
+                        override fun onResponse(call: Call, response: Response) {
+                            val responseData = response.body!!.string()
+                            Log.d(TAG, "vendor2 onResponse: $responseData")
+                            try {
+                                val responseJson = JSONObject(responseData)
+                                val dataJson = responseJson.getJSONObject("data")
+                                val token = dataJson.getString("token")
+                                val userId = dataJson.getString("yinsuda_uid")
+
+                                val editor = prefs.edit()
+                                editor.putString(Constants.SP_KEY_VENDOR_2_TOKEN, token)
+                                editor.putString(Constants.SP_KEY_VENDOR_2_USER_ID, userId)
+                                editor.putLong(
+                                    Constants.SP_KEY_VENDOR_2_TOKEN_TIME,
+                                    System.currentTimeMillis()
+                                )
+                                editor.apply()
+
+
+                                mMccManager?.setTokenAndUserId(token, userId)
+                                mMccManager?.init(getRtcEngine())
+                            } catch (e: Exception) {
+                                Log.e(TAG, "vendor2 onResponse: " + e.message)
+                                ToastUtils.toastLong(
+                                    context,
+                                    "vendor2 onResponse: " + e.message
+                                )
+                            }
+                        }
+                    })
+            })
+        } else {
+            val token = prefs.getString(Constants.SP_KEY_VENDOR_2_TOKEN, "")
+            val userId = prefs.getString(Constants.SP_KEY_VENDOR_2_USER_ID, "")
+            mMccManager?.setTokenAndUserId(token!!, userId!!)
+            mMccManager?.init(getRtcEngine())
+        }
     }
 
     fun seek(position: Long) {
@@ -155,11 +210,17 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         Log.i(TAG, "playMusic")
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.startScore(
-                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songId,
-                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].mediaType
+                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songCode,
+                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songOptionJson
             )
         } else if (ServiceType.MCC == mServiceType) {
-            mMccManager?.openMusic(LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode)
+            mMccManager?.startScore(
+                MccConstants.MusicContentCenterVendorId.fromValue(
+                    LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].vendorId
+                ),
+                LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode,
+                LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songOptionJson
+            )
         }
     }
 
@@ -182,17 +243,27 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.setPlayMode(MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL)
             mMccExManager?.preloadMusic(
-                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songId,
-                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].mediaType
+                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songCode,
+                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songOptionJson
             )
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.setPlayMode(
-                MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
+                MccConstants.MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
                 LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
             )
+            if (MccConstants.MusicContentCenterVendorId.fromValue(
+                    LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].vendorId
+                ) == MccConstants.MusicContentCenterVendorId.MUSIC_CONTENT_CENTER_VENDOR_2
+            ) {
+                mLyricType = MccConstants.LyricSourceType.LYRIC_SOURCE_KRC
+            }
             mMccManager?.preloadMusic(
                 LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode,
-                mLyricType
+                mLyricType,
+                MccConstants.MusicContentCenterVendorId.fromValue(
+                    LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].vendorId
+                ),
+                LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songOptionJson
             )
         }
     }
@@ -218,13 +289,13 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
             if (mIsOriginal) {
                 mIsOriginal = false
                 mMccManager?.setPlayMode(
-                    MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY,
+                    MccConstants.MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY,
                     LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
                 )
             } else {
                 mIsOriginal = true
                 mMccManager?.setPlayMode(
-                    MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
+                    MccConstants.MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
                     LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
                 )
             }
@@ -268,8 +339,13 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
 
     //////////////////////////// MccManager.MccCallback ////////////////////////////
-    override fun onMusicLyricRequest(songCode: Long, lyricUrl: String?) {
-        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, null, 0)
+    override fun onMusicLyricRequest(
+        songCode: Long,
+        lyricUrl: String?,
+        pitchUrl: String?,
+        lyricOffset: Int
+    ) {
+        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, pitchUrl, lyricOffset)
     }
 
     override fun onMusicPreloadResult(songCode: Long, percent: Int) {
@@ -280,8 +356,29 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         mServiceCallback?.onMusicPositionChange(position)
     }
 
-    override fun onMusicPitch(voicePitch: Double, progressInMs: Long) {
+    override fun onMusicPitch(
+        internalSongCode: Long,
+        voicePitch: Double,
+        pitchScore: Double,
+        progressInMs: Long
+    ) {
         mServiceCallback?.onMusicPitch(voicePitch, progressInMs)
+    }
+
+    override fun onMusicLineScore(
+        internalSongCode: Long,
+        linePitchScore: Float,
+        cumulativeTotalLinePitchScores: Float,
+        performedLineIndex: Int,
+        performedTotalLines: Int
+    ) {
+        super.onMusicLineScore(
+            internalSongCode,
+            linePitchScore,
+            cumulativeTotalLinePitchScores,
+            performedLineIndex,
+            performedTotalLines
+        )
     }
 
     override fun onMusicPlaying() {
@@ -291,6 +388,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     override fun onMusicStop() {
         mServiceCallback?.onMusicStop()
     }
+
 
     //////////////////////////// MccExManager.MccCallback ////////////////////////////
     override fun onInitializeResult(state: MccExState, reason: MccExStateReason) {

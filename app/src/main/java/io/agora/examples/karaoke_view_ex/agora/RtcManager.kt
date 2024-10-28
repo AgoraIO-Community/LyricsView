@@ -217,7 +217,7 @@ object RtcManager : IAudioFrameObserver {
 
     override fun onPlaybackAudioFrameBeforeMixing(
         channelId: String?,
-        userId: Int,
+        uid: Int,
         type: Int,
         samplesPerChannel: Int,
         bytesPerSample: Int,
@@ -225,49 +225,65 @@ object RtcManager : IAudioFrameObserver {
         samplesPerSec: Int,
         buffer: ByteBuffer?,
         renderTimeMs: Long,
-        avsync_type: Int
+        avsync_type: Int,
+        rtpTimestamp: Int
     ): Boolean {
         return true
     }
 
-    override fun onPublishAudioFrame(
-        channelId: String?,
-        type: Int,
-        samplesPerChannel: Int,
-        bytesPerSample: Int,
-        channels: Int,
-        samplesPerSec: Int,
-        buffer: ByteBuffer?,
-        renderTimeMs: Long,
-        avsync_type: Int
-    ): Boolean {
-        return true
-    }
+    //4.1
+//    override fun onPlaybackAudioFrameBeforeMixing(
+//        channelId: String?,
+//        userId: Int,
+//        type: Int,
+//        samplesPerChannel: Int,
+//        bytesPerSample: Int,
+//        channels: Int,
+//        samplesPerSec: Int,
+//        buffer: ByteBuffer?,
+//        renderTimeMs: Long,
+//        avsync_type: Int
+//    ): Boolean {
+//        return true
+//    }
+//
+//    override fun onPublishAudioFrame(
+//        channelId: String?,
+//        type: Int,
+//        samplesPerChannel: Int,
+//        bytesPerSample: Int,
+//        channels: Int,
+//        samplesPerSec: Int,
+//        buffer: ByteBuffer?,
+//        renderTimeMs: Long,
+//        avsync_type: Int
+//    ): Boolean {
+//        return true
+//    }
 
 
     override fun getObservedAudioFramePosition(): Int {
-        TODO("Not yet implemented")
+        return 0
     }
 
     override fun getRecordAudioParams(): AudioParams {
-        TODO("Not yet implemented")
+        return AudioParams(48000, 1, 0, 16)
     }
 
     override fun getPlaybackAudioParams(): AudioParams {
-        TODO("Not yet implemented")
+        return AudioParams(48000, 1, 0, 16)
     }
 
     override fun getMixedAudioParams(): AudioParams {
-        TODO("Not yet implemented")
+        return AudioParams(48000, 1, 0, 16)
     }
 
     override fun getEarMonitoringAudioParams(): AudioParams {
-        TODO("Not yet implemented")
+        return AudioParams(48000, 1, 0, 16)
     }
 
-    override fun getPublishAudioParams(): AudioParams {
-        TODO("Not yet implemented")
-    }
+//    override fun getPublishAudioParams(): AudioParams {
+//    }
 
     fun mute(enable: Boolean) {
         val ret = mRtcEngine?.enableLocalAudio(!enable)

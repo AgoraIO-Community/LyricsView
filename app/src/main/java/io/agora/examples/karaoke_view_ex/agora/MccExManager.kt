@@ -21,6 +21,8 @@ import io.agora.mccex.model.YsdVendorConfigure
 import io.agora.mccex.utils.Utils
 import io.agora.mediaplayer.Constants
 import io.agora.mediaplayer.IMediaPlayerObserver
+import io.agora.mediaplayer.data.CacheStatistics
+import io.agora.mediaplayer.data.PlayerPlaybackStats
 import io.agora.mediaplayer.data.PlayerUpdatedInfo
 import io.agora.mediaplayer.data.SrcInfo
 import io.agora.rtc2.IAudioFrameObserver
@@ -68,9 +70,9 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
     private val mMediaPlayerObserver: IMediaPlayerObserver = object : IMediaPlayerObserver {
         override fun onPlayerStateChanged(
             state: Constants.MediaPlayerState,
-            error: Constants.MediaPlayerError
+            reason: Constants.MediaPlayerReason
         ) {
-            Log.d(TAG, "onPlayerStateChanged: $state $error")
+            Log.d(TAG, "onPlayerStateChanged: $state $reason")
 
             if (Constants.MediaPlayerState.PLAYER_STATE_OPEN_COMPLETED == state) {
                 if (mStatus == Status.IDLE) {
@@ -86,7 +88,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
             } else if (Constants.MediaPlayerState.PLAYER_STATE_PLAYBACK_ALL_LOOPS_COMPLETED == state) {
                 onMusicCompleted()
             } else if (Constants.MediaPlayerState.PLAYER_STATE_FAILED == state) {
-                onMusicOpenError(error.ordinal)
+                onMusicOpenError(Constants.MediaPlayerReason.getValue(reason))
             }
         }
 
@@ -107,6 +109,12 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         override fun onAgoraCDNTokenWillExpire() {}
         override fun onPlayerSrcInfoChanged(from: SrcInfo, to: SrcInfo) {}
         override fun onPlayerInfoUpdated(info: PlayerUpdatedInfo) {}
+        override fun onPlayerCacheStats(stats: CacheStatistics?) {
+        }
+
+        override fun onPlayerPlaybackStats(stats: PlayerPlaybackStats?) {
+        }
+
         override fun onAudioVolumeIndication(volume: Int) {}
     }
 
@@ -128,8 +136,8 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         val configuration = MusicContentCenterExConfiguration()
         configuration.context = context
         configuration.vendorConfigure = YsdVendorConfigure(
-            BuildConfig.YSD_APP_ID,
-            BuildConfig.YSD_APP_KEY,
+            BuildConfig.VENDOR_2_APP_ID,
+            BuildConfig.VENDOR_2_APP_KEY,
             mToken,
             mUserId,
             Utils.getUuid(),

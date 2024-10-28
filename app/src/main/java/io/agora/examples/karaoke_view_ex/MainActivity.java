@@ -308,7 +308,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ServiceManager.INSTANCE.initService(this.getApplicationContext(), this);
         }
 
-        int lyricType = prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
+        int lyricType = prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.value());
         ServiceManager.INSTANCE.setLyricType(lyricType);
 
         boolean indicatorOn = prefs.getBoolean(getString(R.string.prefs_key_start_of_verse_indicator_switch), true);

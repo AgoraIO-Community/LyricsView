@@ -117,7 +117,7 @@ public class SettingsActivity extends AppCompatActivity {
                 editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType());
                 editor.apply();
 
-                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.value());
                 editor.apply();
             }
             updateLyricType(prefs);
@@ -128,7 +128,7 @@ public class SettingsActivity extends AppCompatActivity {
                 editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.MCC_EX.getType());
                 editor.apply();
 
-                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.KRC.ordinal());
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.KRC.value());
                 editor.apply();
             }
 
@@ -139,21 +139,21 @@ public class SettingsActivity extends AppCompatActivity {
 
         binding.radioLyricXml.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.value());
                 editor.apply();
             }
         });
 
         binding.radioLyricLrc.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.LRC.ordinal());
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.LRC.value());
                 editor.apply();
             }
         });
 
         binding.radioLyricKrc.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.KRC.ordinal());
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.KRC.value());
                 editor.apply();
             }
         });
@@ -174,9 +174,9 @@ public class SettingsActivity extends AppCompatActivity {
         binding.radioLyricLrc.setEnabled(binding.radioMcc.isChecked());
         binding.radioLyricKrc.setEnabled(binding.radioMccEx.isChecked());
 
-        binding.radioLyricXml.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.XML.ordinal());
-        binding.radioLyricLrc.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.LRC.ordinal());
-        binding.radioLyricKrc.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.KRC.ordinal());
+        binding.radioLyricXml.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.value()) == LyricType.XML.value());
+        binding.radioLyricLrc.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.value()) == LyricType.LRC.value());
+        binding.radioLyricKrc.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.value()) == LyricType.KRC.value());
     }
 
     private void loadPreferencesLyricsUI(SharedPreferences prefs, SharedPreferences.Editor editor) {
