@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
+import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 
 
@@ -86,6 +87,7 @@ public class LyricsCutter {
     }
 
     public static LyricModel cut(LyricModel model, int startTime, int endTime) {
+        LogUtils.d("cut LyricModel startTime: " + startTime + " endTime: " + endTime + " model: " + model);
         if (model == null || model.lines == null || model.lines.isEmpty()) {
             return model;
         }
@@ -95,6 +97,7 @@ public class LyricsCutter {
         }
         int highStartTime = pair.first;
         int lowEndTime = pair.second;
+        LogUtils.d("cut LyricModel highStartTime: " + highStartTime + " lowEndTime: " + lowEndTime);
         List<LyricsLineModel> lines = new ArrayList<>();
         boolean flag = false;
 
