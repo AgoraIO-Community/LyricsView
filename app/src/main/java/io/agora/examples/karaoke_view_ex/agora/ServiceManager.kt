@@ -345,7 +345,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         pitchUrl: String?,
         lyricOffset: Int
     ) {
-        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, pitchUrl, lyricOffset)
+        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, pitchUrl, lyricOffset, 0, 0)
     }
 
     override fun onMusicPreloadResult(songCode: Long, percent: Int) {
@@ -421,7 +421,14 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         )
         mServiceCallback?.onMusicPreloadResult(songCode, percent)
         if (percent == 100 && state == MccExState.PRELOAD_STATE_COMPLETED) {
-            mServiceCallback?.onMusicLyricRequest(songCode, lyricPath, pitchPath, lyricOffset)
+            mServiceCallback?.onMusicLyricRequest(
+                songCode,
+                lyricPath,
+                pitchPath,
+                songOffsetBegin,
+                songOffsetEnd,
+                lyricOffset
+            )
         }
     }
 
@@ -498,6 +505,8 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
             songCode: Long,
             lyricUrl: String?,
             pitchUrl: String?,
+            songOffsetBegin: Int,
+            songOffsetEnd: Int,
             lyricOffset: Int
         ) {
         }
