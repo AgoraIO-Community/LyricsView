@@ -261,7 +261,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mKaraokeView.setLyricData(null, false);
             } else {
                 if (BuildConfig.ENABLE_LYRIC_CUTTER && songOffsetBegin != 0) {
-                    mLyricsModel = LyricsCutter.cut(mLyricsModel, songOffsetBegin, songOffsetEnd);
+                    mLyricsModel = LyricsCutter.cut(mLyricsModel, songOffsetBegin - lyricOffset, songOffsetEnd - lyricOffset);
                 }
                 mKaraokeView.setLyricData(mLyricsModel, false);
             }
