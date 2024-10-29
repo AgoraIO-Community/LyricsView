@@ -187,6 +187,9 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         )
         if (state == MccExState.PRELOAD_STATE_COMPLETED && percent == 100) {
             mSongOffsetBegin = songOffsetBegin
+            mLyricFilePath = lyricPath
+            mPitchFilePath = pitchPath
+            mLyricOffset = lyricOffset
             mMccExService?.startScore(songCode)
         }
         mCallback?.onPreLoadEvent(
