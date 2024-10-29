@@ -39,6 +39,7 @@ import io.agora.karaoke_view_ex.downloader.LyricsFileDownloaderCallback;
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.model.LyricModel;
+import io.agora.karaoke_view_ex.utils.LyricsCutter;
 import io.agora.rtc2.IRtcEngineEventHandler;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -228,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void loadTheLyrics(String lrcUri, String pitchUri, int lyricOffset) {
+    private void loadTheLyrics(String lrcUri, String pitchUri, int songOffsetBegin, int songOffsetEnd, int lyricOffset) {
         Log.i(TAG, "loadTheLyrics " + lrcUri + " " + pitchUri + " " + lyricOffset);
         mKaraokeView.reset();
         mLyricsModel = null;
@@ -259,6 +260,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (mSetNoLyric) {
                 mKaraokeView.setLyricData(null, false);
             } else {
+                if (BuildConfig.ENABLE_LYRIC_CUTTER && songOffsetBegin != 0) {
+                    mLyricsModel = LyricsCutter.cut(mLyricsModel, songOffsetBegin, songOffsetEnd);
+                }
                 mKaraokeView.setLyricData(mLyricsModel, false);
             }
             ServiceManager.INSTANCE.openMusic();
@@ -512,8 +516,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onMusicLyricRequest(long songCode, @Nullable String lyricUrl, @Nullable String pitchUrl, int lyricOffset) {
-        loadTheLyrics(lyricUrl, pitchUrl, lyricOffset);
+    public void onMusicLyricRequest(long songCode, @Nullable String lyricUrl, @Nullable String pitchUrl, int songOffsetBegin, int songOffsetEnd, int lyricOffset) {
+        loadTheLyrics(lyricUrl, pitchUrl, songOffsetBegin, songOffsetEnd, lyricOffset);
     }
 
     @Override
