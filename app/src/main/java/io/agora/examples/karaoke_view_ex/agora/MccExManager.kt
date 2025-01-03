@@ -446,8 +446,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
                 if (-1L == mCurrentMusicPosition || mCurrentMusicPosition % 1000 < MUSIC_POSITION_UPDATE_INTERVAL) {
                     mCurrentMusicPosition =
                         mMusicPlayer?.playPosition ?: 0
-                    mCurrentMusicPosition =
-                        mCurrentMusicPosition + mSongOffsetBegin.toLong() - mLyricOffset
+                    mCurrentMusicPosition += mSongOffsetBegin.toLong()
                 } else {
                     mCurrentMusicPosition += MUSIC_POSITION_UPDATE_INTERVAL.toLong()
                 }
