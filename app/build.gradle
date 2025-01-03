@@ -98,7 +98,7 @@ dependencies {
     implementation 'commons-codec:commons-codec:1.16.0'
     implementation 'pub.devrel:easypermissions:3.0.0'
 
-    implementation("io.github.winskyan:Agora-MccExService:2.2.0.132-alpha.10") {
+    implementation("io.github.winskyan:Agora-MccExService:2.2.0.132-alpha.9") {
         exclude(group: "io.agora.rtc", module: "agora-special-full")
     }
 //    def roomVersion = "2.5.2"
