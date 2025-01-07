@@ -71,7 +71,7 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
 
             iterator.remove();
 
-            if (scoreForOnePitch != null) {
+            if (scoreForOnePitch != null && scoreForOnePitch != -1f) {
                 totalScoreForTone += scoreForOnePitch;
                 scoreCountForTone++;
             }
@@ -86,6 +86,9 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
         }
 
         if (!toneScoresMap.isEmpty()) {
+            if (Config.DEBUG) {
+                LogManager.instance().debug(TAG, "getLineScore: toneScoresMap=" + toneScoresMap);
+            }
             float totalScoreForThisLine = 0;
             for (Float score : toneScoresMap.values()) {
                 totalScoreForThisLine += score;

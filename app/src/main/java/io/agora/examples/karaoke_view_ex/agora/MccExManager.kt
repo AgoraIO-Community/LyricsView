@@ -1,5 +1,6 @@
 package io.agora.examples.karaoke_view_ex.agora
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import io.agora.examples.karaoke_view_ex.BuildConfig
@@ -186,6 +187,9 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         )
         if (state == MccExState.PRELOAD_STATE_COMPLETED && percent == 100) {
             mSongOffsetBegin = songOffsetBegin
+            mLyricFilePath = lyricPath
+            mPitchFilePath = pitchPath
+            mLyricOffset = lyricOffset
             mMccExService?.startScore(songCode)
         }
         mCallback?.onPreLoadEvent(
@@ -433,10 +437,11 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         return mMusicPlayMode == MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL
     }
 
+    @SuppressLint("DiscouragedApi")
     private fun startDisplayLrc() {
         maybeCreateNewScheduledService()
         mCurrentMusicPosition = -1
-        mScheduledExecutorService.scheduleWithFixedDelay({
+        mScheduledExecutorService.scheduleAtFixedRate({
             if (mStatus == Status.Started) {
                 if (-1L == mCurrentMusicPosition || mCurrentMusicPosition % 1000 < MUSIC_POSITION_UPDATE_INTERVAL) {
                     mCurrentMusicPosition =

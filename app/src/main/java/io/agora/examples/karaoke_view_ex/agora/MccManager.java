@@ -1,5 +1,6 @@
 package io.agora.examples.karaoke_view_ex.agora;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Log;
 
@@ -288,10 +289,11 @@ public class MccManager {
         }
     }
 
+    @SuppressLint("DiscouragedApi")
     private void startDisplayLrc() {
         maybeCreateNewScheduledService();
         mCurrentMusicPosition = -1;
-        mScheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
+        mScheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 if (mStatus == Status.Started) {

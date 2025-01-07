@@ -5,8 +5,12 @@ import java.io.FileInputStream;
 
 public class Utils {
     public static byte[] getFileBytes(File file) {
-        if (file == null || !file.exists()) {
-            LogUtils.e("file is null or not exists");
+        if (file == null) {
+            return null;
+        }
+
+        if (!file.exists()) {
+            LogUtils.e("file(" + file.getAbsolutePath() + ") is null or not exists");
             return null;
         }
         try (FileInputStream fis = new FileInputStream(file)) {

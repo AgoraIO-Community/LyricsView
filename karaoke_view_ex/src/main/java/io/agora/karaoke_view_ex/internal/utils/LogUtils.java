@@ -30,7 +30,7 @@ public class LogUtils {
             }
 
             if (saveLogFile) {
-                LOGGERS.add(new FileLogger(logPath, Constants.LOG_FILE_NAME, 1024 * 1024, 2, new ArrayList<String>(1) {{
+                LOGGERS.add(new FileLogger(logPath, Constants.LOG_FILE_NAME, 1024 * 1024, 4, new ArrayList<String>(1) {{
                     add(Constants.TAG);
                 }}));
             }
