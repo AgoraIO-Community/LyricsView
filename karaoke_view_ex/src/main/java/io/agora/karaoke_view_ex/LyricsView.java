@@ -52,6 +52,7 @@ public class LyricsView extends View {
     private int mPreviousLineTextColor;
     private int mUpcomingLineTextColor;
     private float mTextSize;
+    private boolean mEnableLineWrap = false;
 
     private int mCurrentLineTextColor;
     private float mCurrentLineTextSize;
@@ -69,7 +70,7 @@ public class LyricsView extends View {
     private final TextPaint mPreludeEndPositionIndicator = new TextPaint(Paint.ANTI_ALIAS_FLAG);
 
     /**
-     * 歌词显示位置，靠左/居中/靠右
+     * Lyrics display position, left/center/right aligned
      */
     private LyricsLineDrawerHelper.Gravity mTextGravity;
 
@@ -101,6 +102,9 @@ public class LyricsView extends View {
     private volatile boolean mDraggingInProgress = false;
     private GestureDetector mGestureDetector;
     private float mOffset;
+
+    private float mWidthRatio = 1.0f;
+
     private final GestureDetector.SimpleOnGestureListener mSimpleOnGestureListener = new GestureDetector.SimpleOnGestureListener() {
 
         @Override
@@ -146,6 +150,7 @@ public class LyricsView extends View {
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.LyricsView);
         mTextSize = ta.getDimension(R.styleable.LyricsView_textSize,
                 getResources().getDimension(R.dimen.normal_text_size));
+        mEnableLineWrap = ta.getBoolean(R.styleable.LyricsView_enableLineWrap, false);
         mCurrentLineTextSize = ta.getDimension(R.styleable.LyricsView_currentLineTextSize,
                 getResources().getDimension(R.dimen.current_text_size));
         if (mCurrentLineTextSize == 0) {
@@ -211,7 +216,7 @@ public class LyricsView extends View {
     }
 
     /**
-     * 绑定歌词拖动事件回调，用于接收拖动事件中状态或者事件回调。具体事件参考 {@link OnLyricsSeekListener}
+     * Bind lyrics drag event callback to receive state or event callbacks during dragging. See {@link OnLyricsSeekListener} for specific events
      *
      * @param onSeekActionListener
      */
@@ -253,7 +258,7 @@ public class LyricsView extends View {
     }
 
     /**
-     * 设置是否允许上下滑动
+     * Set whether to allow vertical scrolling
      *
      * @param enable
      */
@@ -262,9 +267,9 @@ public class LyricsView extends View {
     }
 
     /**
-     * 设置音乐总长度，单位毫秒
+     * Set the total music length in milliseconds
      *
-     * @param duration 时间，单位毫秒
+     * @param duration time in milliseconds
      */
     @Deprecated
     public synchronized void setDuration(long duration) {
@@ -364,7 +369,7 @@ public class LyricsView extends View {
     }
 
     /**
-     * 设置歌词为空时屏幕中央显示的文字，如 “暂无歌词”
+     * Set the text displayed in the center of the screen when lyrics are empty, such as "No lyrics"
      */
     public void setLabelShownWhenNoLyrics(String label) {
         mNoLyricsLabel = label;
@@ -459,6 +464,9 @@ public class LyricsView extends View {
         if (changed) {
             int w = right - left - getPaddingStart() - getPaddingEnd();
             int h = bottom - top - getPaddingTop() - getPaddingBottom();
+
+            calculateWidthRatio(right - left, getScreenWidth());
+
             if (h > 0) {
                 if (mBitmapFG == null) {
                     createBitmapFG(w, h);
@@ -569,11 +577,11 @@ public class LyricsView extends View {
 
                 LyricsLineModel lyricsTargetLineModel = lyricsModel.lines.get(i);
                 lyricsLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintFG, mPaintBG, getViewportWidth(),
-                        mTextGravity);
+                        mTextGravity, mEnableLineWrap, mWidthRatio);
 
                 yReal = y + mOffset;
                 if (i == 0 && yReal > (centerY - getPaddingTop() - (lyricsLineDrawerHelper.getHeight() / 2F))) {
-                    // 顶部限制
+                    // Top limit
                     mOffset = centerY - getPaddingTop() - (lyricsLineDrawerHelper.getHeight() / 2F);
                     yReal = y + mOffset;
                 }
@@ -636,7 +644,7 @@ public class LyricsView extends View {
             if ((mForceUpdateUI & UpdateUIType.UpdateUIType_NORMAL) == UpdateUIType.UpdateUIType_NORMAL) {
                 doConfigCanvasAndTexts(fraction);
                 mReuseLyricsLineDrawerHelper = new LyricsLineDrawerHelper(currentLine, mPaintFG, mPaintBG, getViewportWidth(),
-                        mTextGravity);
+                        mTextGravity, mEnableLineWrap, mWidthRatio);
 
                 LyricsLineDrawerHelper finalRefLyricsLineDrawerHelper = mReuseLyricsLineDrawerHelper;
                 if ((mForceUpdateUI & UpdateUIType.UpdateUIType_WITH_ANIMATION) == UpdateUIType.UpdateUIType_WITH_ANIMATION) {
@@ -785,7 +793,7 @@ public class LyricsView extends View {
 
         for (int i = mIndexOfCurrentLine - 1; i >= 0; i--) {
             lyricsTargetLineModel = lyricsModel.lines.get(i);
-            lyricsTargetLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintBG, getViewportWidth(), mTextGravity);
+            lyricsTargetLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintFG, mPaintBG, getViewportWidth(), mTextGravity, mEnableLineWrap, mWidthRatio);
 
             mOffset = mOffset - lyricsTargetLineDrawerHelper.getHeight() - mLineSpacing;
 
@@ -830,7 +838,12 @@ public class LyricsView extends View {
 
         mCanvasBG.save();
 
-        checkIfXTranslationShouldApply(currentLineDrawHelper);
+        // Only apply horizontal scrolling when line wrap is disabled
+        if (!mEnableLineWrap) {
+            checkIfXTranslationShouldApply(currentLineDrawHelper);
+        } else {
+            mCurrentLineTranslateX = 0; // No need for horizontal scrolling when line wrap is enabled
+        }
         mCanvasBG.translate(mCurrentLineTranslateX, yOfTargetLine);
         currentLineDrawHelper.draw(mCanvasBG);
         mCanvasBG.restore();
@@ -861,7 +874,7 @@ public class LyricsView extends View {
 
         for (int i = mIndexOfCurrentLine + 1; i < lyricsModel.lines.size(); i++) {
             lyricsTargetLineModel = lyricsModel.lines.get(i);
-            lyricsTargetLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintBG, getViewportWidth(), mTextGravity);
+            lyricsTargetLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintFG, mPaintBG, getViewportWidth(), mTextGravity, mEnableLineWrap, mWidthRatio);
 
             if (yOfTargetLine + lyricsTargetLineDrawerHelper.getHeight() > getViewportHeight())
                 break;
@@ -912,7 +925,7 @@ public class LyricsView extends View {
     }
 
     /**
-     * 重置内部状态，清空已经加载的歌词
+     * Reset internal state, clear loaded lyrics
      */
     public void reset() {
         resetInternal();
@@ -961,7 +974,7 @@ public class LyricsView extends View {
     }
 
     /**
-     * 二分法查找当前时间应该显示的行数（最后一个 <= time 的行数）
+     * Binary search to find the line number that should be displayed at the current time (the last line <= time)
      */
     private int quickSearchLineByTimestamp(long time) {
         LyricMachine machine = this.mLyricMachine;
@@ -999,8 +1012,77 @@ public class LyricsView extends View {
         return Math.max((getHeight() - getPaddingTop() - getPaddingBottom()), 0);
     }
 
-    private boolean isLyricsLineOverlong(LyricsLineDrawerHelper lyricsLineDrawerHelper) {
-        return lyricsLineDrawerHelper != null && lyricsLineDrawerHelper.getWidth() > getViewportWidth();
+    private boolean isLyricsLineOverlong(LyricsLineDrawerHelper currentLineDrawHelper) {
+        if (currentLineDrawHelper == null) {
+            return false;
+        }
+
+        // If line wrap is enabled and lyrics line count is greater than 1, it means it's already displayed with line wrapping, no need for horizontal scrolling
+        if (mEnableLineWrap && currentLineDrawHelper.getLineCount() > 1) {
+            return false;
+        }
+
+        // Only need horizontal scrolling when single line and width exceeds view width
+        return currentLineDrawHelper.getWidth() > getViewportWidth();
+    }
+
+    /**
+     * Set whether to enable automatic lyrics line wrapping
+     *
+     * @param enable true to enable automatic line wrapping, false to use horizontal scrolling
+     */
+    public void enableLineWrap(boolean enable) {
+        if (this.mEnableLineWrap != enable) {
+            this.mEnableLineWrap = enable;
+            mForceUpdateUI = UpdateUIType.UpdateUIType_NORMAL;
+            performInvalidateIfNecessary();
+        }
+    }
+
+    /**
+     * Get whether automatic lyrics line wrapping is currently enabled
+     *
+     * @return true if automatic line wrapping is enabled, false if using horizontal scrolling
+     */
+    public boolean isLineWrapEnabled() {
+        return mEnableLineWrap;
+    }
+
+    /**
+     * Get device screen width
+     *
+     * @return Screen width (in pixels)
+     */
+    private int getScreenWidth() {
+        android.view.WindowManager wm = (android.view.WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+        android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            getContext().getDisplay().getRealMetrics(metrics);
+        } else {
+            wm.getDefaultDisplay().getRealMetrics(metrics);
+        }
+        return metrics.widthPixels;
+    }
+
+    private void calculateWidthRatio(int viewWidth, int screenWidth) {
+        if (viewWidth <= 0 || screenWidth <= 0) {
+            return;
+        }
+
+        if (mEnableLineWrap) {
+            mWidthRatio = 1.0f;
+            return;
+        }
+        float baseRatio = (float) viewWidth / screenWidth;
+
+        float ratio = 0.53f + 0.47f * baseRatio;
+
+        if (this.mWidthRatio != ratio) {
+            this.mWidthRatio = ratio;
+            LogUtils.d("calculateWidthRatio viewWidth: " + viewWidth + "screenWidth:" + screenWidth + ", ratio: " + ratio);
+            mForceUpdateUI = UpdateUIType.UpdateUIType_NORMAL;
+            performInvalidateIfNecessary();
+        }
     }
 
     @MainThread

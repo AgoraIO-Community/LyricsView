@@ -385,6 +385,13 @@ public class SettingsActivity extends AppCompatActivity {
             editor.apply();
         });
 
+        boolean lineWrapOn = prefs.getBoolean(getString(R.string.prefs_key_lyrics_line_wrap_switch), false);
+        binding.lineWrapSwitch.setChecked(lineWrapOn);
+        binding.lineWrapSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            editor.putBoolean(getString(R.string.prefs_key_lyrics_line_wrap_switch), isChecked);
+            editor.apply();
+        });
+
         String[] availableTipsWhenNoLyricsAvailable = getResources().getStringArray(R.array.text_when_no_lyrics_available);
         String textWhenNoLyricsAvailable = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text), "");
         for (int idx = 0; idx < availableTipsWhenNoLyricsAvailable.length; idx++) {

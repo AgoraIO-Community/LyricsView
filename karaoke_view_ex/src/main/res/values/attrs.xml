@@ -21,6 +21,7 @@
             <enum name="left" value="1" />
             <enum name="right" value="2" />
         </attr>
+        <attr name="enableLineWrap" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="ScoringView">
