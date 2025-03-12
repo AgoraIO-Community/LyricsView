@@ -19,31 +19,74 @@ import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 
+/**
+ * XML format lyrics parser
+ * Used to parse lyrics from XML files or byte arrays
+ */
 class LyricsParserXml {
     private static final String TAG = Constants.TAG + "-LyricsParserXml";
 
+    /**
+     * Song data structure containing general information and MIDI data
+     */
     public static class Song {
+        /**
+         * General song information
+         */
         public SongGeneral general;
+        /**
+         * MIDI lyrics data
+         */
         public SongMidi midi;
     }
 
+    /**
+     * General song information
+     */
     public static class SongGeneral {
+        /**
+         * Song name
+         */
         public String name;
+        /**
+         * Singer name
+         */
         public String singer;
+        /**
+         * Song type
+         */
         public int type;
-        public String mode_type;
+        /**
+         * Mode type
+         */
+        public String modeType;
     }
 
+    /**
+     * MIDI lyrics data
+     */
     public static class SongMidi {
+        /**
+         * List of paragraphs in the song
+         */
         public List<Paragraph> paragraphs;
     }
 
+    /**
+     * Paragraph containing multiple lines of lyrics
+     */
     public static class Paragraph {
+        /**
+         * List of lyric lines in the paragraph
+         */
         public List<LyricsLineModel> lines;
     }
 
     /**
-     * 从文件解析歌词
+     * Parse lyrics from an XML file
+     *
+     * @param xmlFile The XML file containing lyrics data
+     * @return LyricModel object containing parsed lyrics, or null if parsing fails
      */
     public static LyricModel parseXml(File xmlFile) {
         if (xmlFile == null || !xmlFile.exists()) {
@@ -65,7 +108,10 @@ class LyricsParserXml {
     }
 
     /**
-     * 从文件内容解析歌词
+     * Parse lyrics from XML file content as byte array
+     *
+     * @param xmlFileData Byte array containing XML file data
+     * @return LyricModel object containing parsed lyrics, or null if parsing fails
      */
     public static LyricModel parseXml(byte[] xmlFileData) {
         if (xmlFileData == null || xmlFileData.length == 0) {
@@ -87,6 +133,12 @@ class LyricsParserXml {
         return null;
     }
 
+    /**
+     * Parse lyrics from an XML parser
+     *
+     * @param parser XmlPullParser with XML content
+     * @return LyricModel object containing parsed lyrics, or null if parsing fails
+     */
     private static LyricModel parseLrcByXmlParse(XmlPullParser parser) {
         try {
             Song song = readXml(parser);
@@ -124,7 +176,14 @@ class LyricsParserXml {
         return null;
     }
 
-
+    /**
+     * Read XML content and parse into Song object
+     *
+     * @param parser XmlPullParser with XML content
+     * @return Song object containing parsed data
+     * @throws XmlPullParserException If XML parsing fails
+     * @throws IOException            If reading fails
+     */
     private static Song readXml(XmlPullParser parser) throws XmlPullParserException, IOException {
         Song song = new Song();
 //        parser.require(XmlPullParser.START_TAG, null, "song");
@@ -147,6 +206,14 @@ class LyricsParserXml {
         return song;
     }
 
+    /**
+     * Read general song information
+     *
+     * @param parser  XmlPullParser with XML content
+     * @param general SongGeneral object to populate
+     * @throws XmlPullParserException If XML parsing fails
+     * @throws IOException            If reading fails
+     */
     private static void readGeneral(XmlPullParser parser, SongGeneral general) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, null, "general");
 
@@ -162,13 +229,21 @@ class LyricsParserXml {
 //            } else if (name.equals("type")) {
 //                general.type = Integer.parseInt(readText(parser));
             } else if (name.equals("mode_type")) {
-                general.mode_type = readText(parser);
+                general.modeType = readText(parser);
             } else {
                 skip(parser);
             }
         }
     }
 
+    /**
+     * Read MIDI lyrics data
+     *
+     * @param parser XmlPullParser with XML content
+     * @param midi   SongMidi object to populate
+     * @throws XmlPullParserException If XML parsing fails
+     * @throws IOException            If reading fails
+     */
     private static void readMidiLrc(XmlPullParser parser, SongMidi midi) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, null, "midi_lrc");
 
@@ -189,6 +264,14 @@ class LyricsParserXml {
         }
     }
 
+    /**
+     * Read paragraph data
+     *
+     * @param parser    XmlPullParser with XML content
+     * @param paragraph Paragraph object to populate
+     * @throws XmlPullParserException If XML parsing fails
+     * @throws IOException            If reading fails
+     */
     private static void readParagraph(XmlPullParser parser, Paragraph paragraph) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, null, "paragraph");
 
@@ -212,6 +295,14 @@ class LyricsParserXml {
         }
     }
 
+    /**
+     * Read lyrics lines data
+     *
+     * @param parser XmlPullParser with XML content
+     * @param list   List to populate with LyricsLineModel objects
+     * @throws XmlPullParserException If XML parsing fails
+     * @throws IOException            If reading fails
+     */
     private static void readLines(XmlPullParser parser, List<LyricsLineModel> list) throws XmlPullParserException, IOException {
         LyricsLineModel line = new LyricsLineModel(new ArrayList<>());
         list.add(line);
@@ -245,11 +336,26 @@ class LyricsParserXml {
         }
     }
 
+    /**
+     * Check if the song is in English based on language attribute
+     *
+     * @param parser XmlPullParser with XML content
+     * @return true if the song is in English, false otherwise
+     */
     private static boolean isEnglishSong(XmlPullParser parser) {
         String lang = parser.getAttributeValue(null, "lang");
         return lang != null && !"1".equals(lang);
     }
 
+    /**
+     * Read tone data
+     *
+     * @param parser XmlPullParser with XML content
+     * @param tone   Tone object to populate
+     * @return true if the tone is in English, false otherwise
+     * @throws XmlPullParserException If XML parsing fails
+     * @throws IOException            If reading fails
+     */
     private static boolean readTone(XmlPullParser parser, LyricsLineModel.Tone tone) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, null, "tone");
 
@@ -299,6 +405,15 @@ class LyricsParserXml {
         return isEnglish;
     }
 
+    /**
+     * Read monolog data
+     *
+     * @param parser  XmlPullParser with XML content
+     * @param monolog Monolog object to populate
+     * @return true if the monolog is in English, false otherwise
+     * @throws XmlPullParserException If XML parsing fails
+     * @throws IOException            If reading fails
+     */
     private static boolean readMonolog(XmlPullParser parser, LyricsLineModel.Monolog monolog) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, null, "monolog");
 
@@ -331,6 +446,12 @@ class LyricsParserXml {
         return isEnglish;
     }
 
+    /**
+     * Check if a word is in Chinese or not
+     *
+     * @param word The word to check
+     * @return true if the word is not in Chinese, false otherwise
+     */
     private static boolean checkLang(String word) {
         int n;
         for (int i = 0; i < word.length(); i++) {
@@ -342,6 +463,14 @@ class LyricsParserXml {
         return false;
     }
 
+    /**
+     * Read text content from XML
+     *
+     * @param parser XmlPullParser with XML content
+     * @return The text content
+     * @throws IOException            If reading fails
+     * @throws XmlPullParserException If XML parsing fails
+     */
     private static String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
         String result = "";
         if (parser.next() == XmlPullParser.TEXT) {
@@ -351,6 +480,13 @@ class LyricsParserXml {
         return result;
     }
 
+    /**
+     * Skip the current XML tag and its children
+     *
+     * @param parser XmlPullParser with XML content
+     * @throws XmlPullParserException If XML parsing fails
+     * @throws IOException            If reading fails
+     */
     private static void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
         if (parser.getEventType() != XmlPullParser.START_TAG) {
             throw new IllegalStateException();

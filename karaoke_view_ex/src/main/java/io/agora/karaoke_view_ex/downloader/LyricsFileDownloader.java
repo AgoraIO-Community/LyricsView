@@ -32,18 +32,63 @@ import io.agora.karaoke_view_ex.internal.net.HttpUrlRequest;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.utils.Utils;
 
+/**
+ * Manages the downloading and caching of lyrics files.
+ * Handles file downloads, unzipping, and cache management with configurable limits.
+ */
 public class LyricsFileDownloader {
     private static final String TAG = Constants.TAG + "-LyricsFileDownloader";
+
+    /**
+     * Singleton instance of the downloader
+     */
     private volatile static LyricsFileDownloader instance = null;
+
+    /**
+     * Application context
+     */
     private final Context mContext;
+
+    /**
+     * Thread pool for handling download tasks
+     */
     private final ExecutorService mExecutorCacheService;
+
+    /**
+     * Callback for download events
+     */
     private LyricsFileDownloaderCallback mLyricsFileDownloaderCallback;
+
+    /**
+     * Maximum number of files to keep in cache
+     */
     private int mMaxFileNum;
+
+    /**
+     * Maximum age of cached files in seconds
+     */
     private long mMaxFileAge;
+
+    /**
+     * Current request ID counter
+     */
     private int mRequestId;
+
+    /**
+     * Map of active downloads
+     */
     private final Map<String, DownloadLyricModel> mLyricsDownloaderMap;
+
+    /**
+     * Maximum number of concurrent downloads
+     */
     private static final int MAX_DOWNLOADER_NUM = 3;
 
+    /**
+     * Private constructor for singleton pattern
+     *
+     * @param context Application context
+     */
     private LyricsFileDownloader(Context context) {
         mContext = context;
         mExecutorCacheService = new ThreadPoolExecutor(MAX_DOWNLOADER_NUM, MAX_DOWNLOADER_NUM,
@@ -55,6 +100,12 @@ public class LyricsFileDownloader {
         mLyricsDownloaderMap = new ConcurrentHashMap<>(MAX_DOWNLOADER_NUM);
     }
 
+    /**
+     * Get singleton instance of LyricsFileDownloader
+     *
+     * @param context Application context
+     * @return LyricsFileDownloader instance
+     */
     public static LyricsFileDownloader getInstance(Context context) {
         if (instance == null) {
             synchronized (LyricsFileDownloader.class) {
@@ -67,15 +118,17 @@ public class LyricsFileDownloader {
     }
 
     /**
-     * set callback for download
+     * Set callback for download events
      *
-     * @param callback callback
+     * @param callback Callback implementation
      */
     public void setLyricsFileDownloaderCallback(LyricsFileDownloaderCallback callback) {
         mLyricsFileDownloaderCallback = callback;
     }
 
     /**
+     * Set maximum number of files to keep in cache
+     *
      * @param maxFileNum Maximum number of files
      */
     public void setMaxFileNum(int maxFileNum) {
@@ -88,7 +141,9 @@ public class LyricsFileDownloader {
     }
 
     /**
-     * @param maxFileAge Unit: seconds
+     * Set maximum age for cached files
+     *
+     * @param maxFileAge Maximum file age in seconds
      */
     public void setMaxFileAge(long maxFileAge) {
         LogUtils.d("setMaxFileAge maxFileAge:" + maxFileAge);
@@ -100,10 +155,10 @@ public class LyricsFileDownloader {
     }
 
     /**
-     * start a download
+     * Start downloading a lyrics file
      *
-     * @param url download url
-     * @return requestId
+     * @param url URL of the lyrics file to download
+     * @return Request ID for the download task
      */
     public int download(final String url) {
         if (null == mContext) {
@@ -234,6 +289,12 @@ public class LyricsFileDownloader {
         }
     }
 
+    /**
+     * Handle a downloaded file, including unzipping if necessary
+     *
+     * @param requestId Request ID of the download
+     * @param file      Downloaded file
+     */
     private synchronized void handleDownloadedFile(int requestId, File file) {
         LogUtils.d("handleDownloadedFile requestId:" + requestId + ",file:" + file.getPath());
         checkFileAge(new File(mContext.getExternalCacheDir(), Constants.LYRICS_FILE_DOWNLOAD_DIR));
@@ -317,11 +378,17 @@ public class LyricsFileDownloader {
             }
         } else {
             LogUtils.e("extractFromZipFileIfPossible file is not exists");
-
             notifyLyricsFileDownloadCompleted(requestId, null, DownloadError.HTTP_DOWNLOAD_ERROR);
         }
     }
 
+    /**
+     * Process a lyrics file and notify completion
+     *
+     * @param requestId        Request ID of the download
+     * @param lyricFile        The lyrics file to process
+     * @param deleteLyricsFile Whether to delete the file after processing
+     */
     private void handleLyricsFile(int requestId, File lyricFile, boolean deleteLyricsFile) {
         notifyLyricsFileDownloadCompleted(requestId, lyricFile, null);
 
@@ -334,6 +401,9 @@ public class LyricsFileDownloader {
         LogUtils.d("handleLyricsFile success");
     }
 
+    /**
+     * Check and enforce maximum file number limit
+     */
     private synchronized void checkMaxFileNum() {
         File folder = new File(mContext.getExternalCacheDir(), Constants.LYRICS_FILE_DOWNLOAD_DIR);
         File[] files = folder.listFiles();
@@ -373,6 +443,12 @@ public class LyricsFileDownloader {
         }
     }
 
+    /**
+     * Attempt to delete a file if it's not being downloaded
+     *
+     * @param file File to potentially delete
+     * @return Whether the file was deleted
+     */
     private boolean maybeDeleteFile(File file) {
         if (null == file || !file.exists()) {
             return true;
@@ -392,6 +468,11 @@ public class LyricsFileDownloader {
         return canDelete;
     }
 
+    /**
+     * Check and delete files older than maximum age
+     *
+     * @param folder Folder to check
+     */
     private synchronized void checkFileAge(File folder) {
         File[] files = folder.listFiles();
         if (null == files) {
@@ -407,10 +488,25 @@ public class LyricsFileDownloader {
         }
     }
 
+    /**
+     * Check if file is a supported lyrics format
+     *
+     * @param fileName Name of file to check
+     * @return Whether the file format is supported
+     */
     private boolean isSupportLyricsFile(String fileName) {
-        return fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_XML) || fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_LRC) || fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_KRC);
+        return fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_XML) ||
+                fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_LRC) ||
+                fileName.toLowerCase().endsWith("." + Constants.FILE_EXTENSION_KRC);
     }
 
+    /**
+     * Notify callback of download completion
+     *
+     * @param requestId Request ID of the download
+     * @param lyricFile The downloaded lyrics file
+     * @param error     Error that occurred, if any
+     */
     private synchronized void notifyLyricsFileDownloadCompleted(int requestId, File lyricFile, DownloadError error) {
         checkMaxFileNum();
         if (null != mLyricsFileDownloaderCallback) {
@@ -427,9 +523,9 @@ public class LyricsFileDownloader {
     }
 
     /**
-     * cancel a downloading task
+     * Cancel an ongoing download
      *
-     * @param requestId requestId for download
+     * @param requestId Request ID of the download to cancel
      */
     public void cancelDownload(int requestId) {
         if (null == mContext) {
@@ -456,7 +552,7 @@ public class LyricsFileDownloader {
     }
 
     /**
-     * clean all files in local
+     * Clean all downloaded files from cache
      */
     public void cleanAll() {
         if (null == mContext) {

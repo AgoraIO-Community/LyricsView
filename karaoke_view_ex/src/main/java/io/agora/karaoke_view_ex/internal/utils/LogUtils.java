@@ -13,9 +13,24 @@ import io.agora.logging.FileLogger;
 import io.agora.logging.LogManager;
 import io.agora.logging.Logger;
 
+/**
+ * Utility class for logging in the karaoke view module.
+ * Provides methods for logging at different levels and managing log output destinations.
+ */
 public class LogUtils {
+    /**
+     * List of registered loggers
+     */
     private static final List<Logger> LOGGERS = new ArrayList<>(3);
 
+    /**
+     * Initializes and configures the logging system
+     *
+     * @param context     The application context
+     * @param enableLog   Whether to enable console logging
+     * @param saveLogFile Whether to save logs to a file
+     * @param logFilePath Custom path for log files, or null to use default
+     */
     public static void enableLog(Context context, boolean enableLog, boolean saveLogFile, String logFilePath) {
         try {
             String logPath = logFilePath;
@@ -42,17 +57,29 @@ public class LogUtils {
         }
     }
 
+    /**
+     * Adds a custom logger to the logging system
+     *
+     * @param logger The logger to add
+     */
     public static void addLogger(Logger logger) {
         LogManager.instance().addLogger(logger);
         LOGGERS.add(logger);
     }
 
+    /**
+     * Removes a logger from the logging system
+     *
+     * @param logger The logger to remove
+     */
     public static void removeLogger(Logger logger) {
         LogManager.instance().removeLogger(logger);
         LOGGERS.remove(logger);
     }
 
-
+    /**
+     * Destroys all loggers and cleans up resources
+     */
     public static void destroy() {
         for (Logger logger : LOGGERS) {
             LogManager.instance().removeLogger(logger);
@@ -60,15 +87,29 @@ public class LogUtils {
         LOGGERS.clear();
     }
 
-
+    /**
+     * Logs a debug message
+     *
+     * @param msg The message to log
+     */
     public static void d(String msg) {
         LogManager.instance().debug(Constants.TAG, msg);
     }
 
+    /**
+     * Logs an info message
+     *
+     * @param msg The message to log
+     */
     public static void i(String msg) {
         LogManager.instance().info(Constants.TAG, msg);
     }
 
+    /**
+     * Logs an error message
+     *
+     * @param msg The message to log
+     */
     public static void e(String msg) {
         LogManager.instance().error(Constants.TAG, msg);
     }

@@ -17,15 +17,30 @@ import io.agora.karaoke_view_ex.internal.utils.Utils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 
 /**
- * 加载歌词
+ * Lyrics and pitch data loader and parser.
+ * This class provides methods to load and parse lyrics files along with their
+ * corresponding pitch data for karaoke applications.
  *
  * @author chenhengfei(Aslanchen)
  * @date 2021/7/6
  */
 public class LyricPitchParser {
+    /**
+     * Regular expression pattern for matching LRC format lines
+     */
     public static final Pattern LRC_PATTERN_LINE = Pattern.compile("((\\[\\d{2}:\\d{2}\\.\\d{2,3}])+)(.+)");
+
+    /**
+     * Regular expression pattern for matching KRC format lines
+     */
     public static final Pattern KRC_PATTERN_LINE = Pattern.compile("\\[(\\w+):([^]]*)]");
 
+    /**
+     * Validates file parameters for parsing
+     *
+     * @param file The file to validate
+     * @throws IllegalArgumentException if the file is invalid
+     */
     private static void checkFileParameters(File file) {
         if (file == null || !file.isFile() || !file.exists() || !file.canRead() || file.length() == 0) {
             StringBuilder builder = new StringBuilder("Not a valid file for parser: " + file);
@@ -40,6 +55,12 @@ public class LyricPitchParser {
         }
     }
 
+    /**
+     * Determines the lyrics file type based on file extension or content
+     *
+     * @param lyricFile The lyrics file to analyze
+     * @return The detected LyricType
+     */
     private static LyricType probeLyricsFileType(File lyricFile) {
         LyricType type = LyricType.LRC;
         String fileName = lyricFile.getName();
@@ -59,6 +80,12 @@ public class LyricPitchParser {
         return type;
     }
 
+    /**
+     * Determines the lyrics file type based on file content
+     *
+     * @param lyricData The byte array containing lyrics file data
+     * @return The detected LyricType
+     */
     private static LyricType probeLyricsFileType(byte[] lyricData) {
         LyricType type = LyricType.LRC;
         try {
@@ -85,7 +112,15 @@ public class LyricPitchParser {
         return type;
     }
 
-
+    /**
+     * Parses lyrics and pitch data from files
+     *
+     * @param lyricFile                The lyrics file
+     * @param pitchFile                The pitch data file
+     * @param includeCopyrightSentence Whether to include copyright sentences in the output
+     * @param lyricOffset              Time offset to apply to lyrics (in milliseconds)
+     * @return A LyricModel containing the parsed lyrics and pitch data
+     */
     public static LyricModel parseFile(File lyricFile, File pitchFile, boolean includeCopyrightSentence, int lyricOffset) {
         checkFileParameters(lyricFile);
         LyricType type = probeLyricsFileType(lyricFile);
@@ -102,6 +137,15 @@ public class LyricPitchParser {
         return null;
     }
 
+    /**
+     * Parses lyrics and pitch data from byte arrays
+     *
+     * @param lyricData                The byte array containing lyrics data
+     * @param pitchData                The byte array containing pitch data
+     * @param includeCopyrightSentence Whether to include copyright sentences in the output
+     * @param lyricOffset              Time offset to apply to lyrics (in milliseconds)
+     * @return A LyricModel containing the parsed lyrics and pitch data
+     */
     public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         LyricType type = probeLyricsFileType(lyricData);
         if (type == LyricType.KRC) {
@@ -116,6 +160,15 @@ public class LyricPitchParser {
         return null;
     }
 
+    /**
+     * Parses KRC format lyrics and pitch data
+     *
+     * @param krcData                  The byte array containing KRC lyrics data
+     * @param pitchData                The byte array containing pitch data
+     * @param includeCopyrightSentence Whether to include copyright sentences in the output
+     * @param lyricOffset              Time offset to apply to lyrics (in milliseconds)
+     * @return A LyricModel containing the parsed lyrics and pitch data
+     */
     public static LyricModel parseKrcLyricData(byte[] krcData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         LyricModel lyricsModel = LyricParser.doParseKrc(krcData, lyricOffset);
         List<PitchData> pitchDataList = PitchParser.doParseKrc(pitchData);
@@ -125,7 +178,7 @@ public class LyricPitchParser {
             lyricsModel.preludeEndPosition = pitchDataList.get(0).startTime;
         }
 
-        // 移除版权信息类型的句子
+        // Remove copyright information sentences
         if (!includeCopyrightSentence && lyricsModel.lines != null && !lyricsModel.lines.isEmpty()) {
             ListIterator<LyricsLineModel> iterator = lyricsModel.lines.listIterator();
             while (iterator.hasNext()) {
@@ -142,7 +195,15 @@ public class LyricPitchParser {
         return lyricsModel;
     }
 
-
+    /**
+     * Parses LRC format lyrics and pitch data
+     *
+     * @param lyricData                The byte array containing LRC lyrics data
+     * @param pitchData                The byte array containing pitch data
+     * @param includeCopyrightSentence Whether to include copyright sentences in the output
+     * @param lyricOffset              Time offset to apply to lyrics (in milliseconds)
+     * @return A LyricModel containing the parsed lyrics and pitch data
+     */
     private static LyricModel parseLrcLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         XmlPitchData pitchesModel = null;
         if (pitchData != null) {
@@ -170,7 +231,7 @@ public class LyricPitchParser {
                         if (i < model.lines.size() - 1) {
                             tone.end = model.lines.get(i + 1).tones.get(0).begin;
                         } else {
-                            // 最后一个音符
+                            // Last note
                             tone.end = tone.begin + (100 - 1);
                         }
                     }
@@ -184,6 +245,15 @@ public class LyricPitchParser {
         return model;
     }
 
+    /**
+     * Parses XML format lyrics and pitch data
+     *
+     * @param lyricData                The byte array containing XML lyrics data
+     * @param pitchData                The byte array containing pitch data
+     * @param includeCopyrightSentence Whether to include copyright sentences in the output
+     * @param lyricOffset              Time offset to apply to lyrics (in milliseconds)
+     * @return A LyricModel containing the parsed lyrics and pitch data
+     */
     private static LyricModel parseXmlLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         XmlPitchData pitchesModel = null;
         if (pitchData != null) {

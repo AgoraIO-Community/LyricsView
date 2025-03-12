@@ -15,7 +15,8 @@ import io.agora.karaoke_view_ex.constants.Constants;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 
 /**
- * Process each line of lyrics
+ * Helper class for processing and drawing lyrics lines.
+ * Handles text layout, positioning, and drawing of lyrics with different styles.
  *
  * @author chenhengfei(Aslanchen)
  * @date 2021/7/6
@@ -23,30 +24,80 @@ import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 public class LyricsLineDrawerHelper {
     private static final String TAG = Constants.TAG + "-LyricsLineDrawerHelper";
 
-    private StaticLayout mLayoutBG; // Background text
-    private StaticLayout mLayoutFG; // Foreground highlighted text
+    /**
+     * Layout for background (non-highlighted) lyrics text
+     */
+    private StaticLayout mLayoutBg;
 
-    private Rect[] drawRects; // Control progress
+    /**
+     * Layout for foreground (highlighted) lyrics text
+     */
+    private StaticLayout mLayoutFg;
 
-    private Rect[] textRectTotalWords; // Each segment of lyrics
-    private Rect[] textRectDisplayLines; // Each line of displayed lyrics
+    /**
+     * Array of rectangles for controlling drawing progress
+     */
+    private Rect[] mDrawRects;
 
-    private LyricsLineModel mLine; // Data source
-    private boolean mEnableLineWrap; // Whether to enable line wrapping
+    /**
+     * Array of rectangles for each word segment in lyrics
+     */
+    private Rect[] mTextRectTotalWords;
 
-    // 比例因子，用于调整歌词进度与视图宽度的关系
-    // Scale factor used to adjust the relationship between lyrics progress and view width
+    /**
+     * Array of rectangles for each displayed line of lyrics
+     */
+    private Rect[] mTextRectDisplayLines;
+
+    /**
+     * Current lyrics line data model
+     */
+    private final LyricsLineModel mLine;
+
+    /**
+     * Whether line wrapping is enabled for long lyrics
+     */
+    private final boolean mEnableLineWrap;
+
+    /**
+     * Scale factor for adjusting lyrics width ratio
+     */
     private float mWidthRatio = 1.0f;
 
+    /**
+     * Enumeration for text alignment options
+     */
     public enum Gravity {
-        CENTER(0), LEFT(1), RIGHT(2);
+        /**
+         * Center alignment - lyrics text will be centered horizontally
+         */
+        CENTER(0),
 
+        /**
+         * Left alignment - lyrics text will be aligned to the left edge
+         */
+        LEFT(1),
+
+        /**
+         * Right alignment - lyrics text will be aligned to the right edge
+         */
+        RIGHT(2);
+
+        /**
+         * Internal value representing the gravity type
+         */
         int value = 0;
 
         Gravity(int value) {
             this.value = value;
         }
 
+        /**
+         * Parse integer value to Gravity enum
+         *
+         * @param value Integer value representing gravity
+         * @return Corresponding Gravity enum value
+         */
         public static Gravity parse(int value) {
             if (value == 0) {
                 return CENTER;
@@ -60,14 +111,34 @@ public class LyricsLineDrawerHelper {
         }
     }
 
-    public LyricsLineDrawerHelper(LyricsLineModel line, @Nullable TextPaint textPaintFG, @NonNull TextPaint textPaintBG, int width, Gravity gravity, boolean enableLineWrap, float widthRatio) {
+    /**
+     * Constructor for LyricsLineDrawerHelper
+     *
+     * @param line           Current lyrics line model
+     * @param textPaintFg    Paint for foreground (highlighted) text
+     * @param textPaintBg    Paint for background text
+     * @param width          Available width for drawing
+     * @param gravity        Text alignment
+     * @param enableLineWrap Whether to enable line wrapping
+     * @param widthRatio     Scale factor for width adjustment
+     */
+    public LyricsLineDrawerHelper(LyricsLineModel line, @Nullable TextPaint textPaintFg, @NonNull TextPaint textPaintBg,
+                                  int width, Gravity gravity, boolean enableLineWrap, float widthRatio) {
         this.mLine = line;
         this.mEnableLineWrap = enableLineWrap;
         this.mWidthRatio = widthRatio > 0 ? widthRatio : 1.0f;
-        this.init(textPaintFG, textPaintBG, width, gravity);
+        this.init(textPaintFg, textPaintBg, width, gravity);
     }
 
-    private void init(@Nullable TextPaint textPaintFG, @NonNull TextPaint textPaintBG, int width, Gravity gravity) {
+    /**
+     * Initialize layouts and text measurements
+     *
+     * @param textPaintFg Paint for foreground text
+     * @param textPaintBg Paint for background text
+     * @param width       Available width
+     * @param gravity     Text alignment
+     */
+    private void init(@Nullable TextPaint textPaintFg, @NonNull TextPaint textPaintBg, int width, Gravity gravity) {
         Layout.Alignment align;
         switch (gravity) {
             case LEFT:
@@ -86,12 +157,12 @@ public class LyricsLineDrawerHelper {
 
         StringBuilder sb = new StringBuilder();
         List<LyricsLineModel.Tone> tones = mLine.tones;
-        textRectTotalWords = new Rect[tones.size()];
+        mTextRectTotalWords = new Rect[tones.size()];
         String text;
         for (int i = 0; i < tones.size(); i++) {
             LyricsLineModel.Tone tone = tones.get(i);
             Rect rectTotal = new Rect();
-            textRectTotalWords[i] = rectTotal;
+            mTextRectTotalWords[i] = rectTotal;
             String s = tone.word;
             // Sometimes, lyrics/sentence contains no word-tag
             if (s == null) {
@@ -103,7 +174,7 @@ public class LyricsLineDrawerHelper {
             sb.append(s);
 
             text = sb.toString();
-            textPaintBG.getTextBounds(text, 0, text.length(), rectTotal);
+            textPaintBg.getTextBounds(text, 0, text.length(), rectTotal);
         }
 
         text = sb.toString();
@@ -112,56 +183,82 @@ public class LyricsLineDrawerHelper {
         // When mEnableLineWrap is false, use a large enough width to ensure no wrapping
         int layoutWidth = mEnableLineWrap ? width : Integer.MAX_VALUE / 2;
 
-        if (textPaintFG != null) {
-            mLayoutFG = new StaticLayout(text, textPaintFG, layoutWidth, align, 1f, 0f, false);
+        if (textPaintFg != null) {
+            mLayoutFg = new StaticLayout(text, textPaintFg, layoutWidth, align, 1f, 0f, false);
         }
-        mLayoutBG = new StaticLayout(text, textPaintBG, layoutWidth, align, 1f, 0f, false);
+        mLayoutBg = new StaticLayout(text, textPaintBg, layoutWidth, align, 1f, 0f, false);
 
         // If line wrapping is not allowed, but the text width exceeds the widget width, adjust the layout width
         if (!mEnableLineWrap) {
-            int textWidth = (int) textPaintBG.measureText(text);
+            int textWidth = (int) textPaintBg.measureText(text);
             // Use the actual measured text width to ensure it won't be forced to wrap due to insufficient width
             layoutWidth = Math.max(width, textWidth);
 
-            if (textPaintFG != null) {
-                mLayoutFG = new StaticLayout(text, textPaintFG, layoutWidth, align, 1f, 0f, false);
+            if (textPaintFg != null) {
+                mLayoutFg = new StaticLayout(text, textPaintFg, layoutWidth, align, 1f, 0f, false);
             }
-            mLayoutBG = new StaticLayout(text, textPaintBG, layoutWidth, align, 1f, 0f, false);
+            mLayoutBg = new StaticLayout(text, textPaintBg, layoutWidth, align, 1f, 0f, false);
         }
 
-        int totalLine = mLayoutBG.getLineCount();
-        textRectDisplayLines = new Rect[totalLine];
-        drawRects = new Rect[totalLine];
+        int totalLine = mLayoutBg.getLineCount();
+        mTextRectDisplayLines = new Rect[totalLine];
+        mDrawRects = new Rect[totalLine];
         for (int i = 0; i < totalLine; i++) {
             Rect mRect = new Rect();
-            mLayoutBG.getLineBounds(i, mRect);
-            mRect.left = (int) mLayoutBG.getLineLeft(i);
-            mRect.right = (int) mLayoutBG.getLineRight(i);
+            mLayoutBg.getLineBounds(i, mRect);
+            mRect.left = (int) mLayoutBg.getLineLeft(i);
+            mRect.right = (int) mLayoutBg.getLineRight(i);
 
-            textRectDisplayLines[i] = mRect;
-            drawRects[i] = new Rect(mRect);
+            mTextRectDisplayLines[i] = mRect;
+            mDrawRects[i] = new Rect(mRect);
         }
     }
 
+    /**
+     * Get total height of lyrics layout
+     *
+     * @return Height in pixels
+     */
     public int getHeight() {
-        if (mLayoutBG == null) {
+        if (mLayoutBg == null) {
             return 0;
         }
-        return mLayoutBG.getHeight();
+        return mLayoutBg.getHeight();
     }
 
+    /**
+     * Get total width of lyrics layout
+     *
+     * @return Width in pixels
+     */
     public int getWidth() {
-        return mLayoutBG.getWidth();
+        return mLayoutBg.getWidth();
     }
 
+    /**
+     * Draw background lyrics text
+     *
+     * @param canvas Canvas to draw on
+     */
     public void draw(Canvas canvas) {
-        mLayoutBG.draw(canvas);
+        mLayoutBg.draw(canvas);
     }
 
-    public void drawFG(Canvas canvas) {
-        mLayoutFG.draw(canvas);
+    /**
+     * Draw foreground (highlighted) lyrics text
+     *
+     * @param canvas Canvas to draw on
+     */
+    public void drawFg(Canvas canvas) {
+        mLayoutFg.draw(canvas);
     }
 
+    /**
+     * Calculate drawing rectangles based on current time
+     *
+     * @param time Current timestamp in milliseconds
+     * @return Array of rectangles for drawing
+     */
     public Rect[] getDrawRectByTime(long time) {
         int doneLen = 0;
         float curLen = 0f;
@@ -174,14 +271,14 @@ public class LyricsLineDrawerHelper {
                     // Last syllable, highlight all
                     doneLen = Integer.MAX_VALUE;
                 } else {
-                    doneLen = textRectTotalWords[i].width();
+                    doneLen = mTextRectTotalWords[i].width();
                 }
             } else {
                 int wordLen = 0;
                 if (i == 0) {
-                    wordLen = textRectTotalWords[i].width();
+                    wordLen = mTextRectTotalWords[i].width();
                 } else {
-                    wordLen = textRectTotalWords[i].width() - textRectTotalWords[i - 1].width();
+                    wordLen = mTextRectTotalWords[i].width() - mTextRectTotalWords[i - 1].width();
                 }
 
                 if (tone.isFullLine) {
@@ -189,7 +286,7 @@ public class LyricsLineDrawerHelper {
                     curLen = wordLen + 2;
                 } else {
                     float percent = (time - tone.begin) / (float) (tone.end - tone.begin);
-                    // 应用比例因子到进度计算中
+
                     // Apply scale factor to progress calculation
                     curLen = wordLen * (percent > 0 ? percent : 0) * mWidthRatio;
                 }
@@ -197,52 +294,51 @@ public class LyricsLineDrawerHelper {
             }
         }
 
-        // 应用比例因子到已完成长度
         // Apply scale factor to completed length
         int showLen = (int) ((doneLen != Integer.MAX_VALUE ? doneLen * mWidthRatio : doneLen) + curLen);
 
         // Handle highlighting in multi-line situations
-        for (int i = 0; i < mLayoutFG.getLineCount(); i++) {
-            if (i >= textRectDisplayLines.length) {
+        for (int i = 0; i < mLayoutFg.getLineCount(); i++) {
+            if (i >= mTextRectDisplayLines.length) {
                 break;
             }
 
-            drawRects[i].left = textRectDisplayLines[i].left;
+            mDrawRects[i].left = mTextRectDisplayLines[i].left;
 
             if (doneLen == Integer.MAX_VALUE) {
                 // If it's the last syllable and it's finished, highlight the entire line
-                drawRects[i].right = textRectDisplayLines[i].right;
+                mDrawRects[i].right = mTextRectDisplayLines[i].right;
                 continue;
             }
 
-            int curLineWidth = textRectDisplayLines[i].width();
+            int curLineWidth = mTextRectDisplayLines[i].width();
 
             if (showLen <= 0) {
                 // Current line doesn't need highlighting
-                drawRects[i].right = drawRects[i].left;
+                mDrawRects[i].right = mDrawRects[i].left;
             } else if (curLineWidth <= showLen) {
                 // Highlight the entire current line
-                drawRects[i].right = textRectDisplayLines[i].right;
+                mDrawRects[i].right = mTextRectDisplayLines[i].right;
                 showLen -= curLineWidth;
             } else {
                 // Partially highlight the current line
-                drawRects[i].right = drawRects[i].left + showLen;
+                mDrawRects[i].right = mDrawRects[i].left + showLen;
                 showLen = 0;
             }
         }
 
-        return drawRects;
+        return mDrawRects;
     }
 
     /**
-     * Get the number of lyrics lines
+     * Get number of lines in lyrics layout
      *
-     * @return Number of lyrics lines
+     * @return Number of lines
      */
     public int getLineCount() {
-        if (mLayoutBG == null) {
+        if (mLayoutBg == null) {
             return 0;
         }
-        return mLayoutBG.getLineCount();
+        return mLayoutBg.getLineCount();
     }
 }

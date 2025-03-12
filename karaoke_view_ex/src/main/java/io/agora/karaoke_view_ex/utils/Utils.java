@@ -11,7 +11,17 @@ import java.util.ArrayList;
 
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 
+/**
+ * Utility class providing common file operations and string manipulation methods.
+ * Contains methods for reading files, deleting directories, and text processing.
+ */
 public class Utils {
+    /**
+     * Reads a file and returns its contents as a byte array
+     *
+     * @param path The path to the file to be read
+     * @return The file contents as a byte array, or null if the file cannot be read
+     */
     public static byte[] readFileToByteArray(String path) {
         File file = new File(path);
         if (!file.exists()) {
@@ -42,6 +52,12 @@ public class Utils {
         }
     }
 
+    /**
+     * Reads a file containing numeric values and converts them to a double array
+     *
+     * @param file The file to read (each line should contain a single numeric value)
+     * @return An array of double values read from the file, or null if the file cannot be read
+     */
     public static double[] readFileToDoubleArray(File file) {
         if (file == null || !file.exists()) {
             return null;
@@ -57,7 +73,7 @@ public class Utils {
         } catch (IOException e) {
             LogUtils.e("Error reading file: " + e.getMessage());
         } catch (NumberFormatException e) {
-            System.err.println("Error parsing number: " + e.getMessage());
+            LogUtils.e("Error parsing number: " + e.getMessage());
         }
 
         double[] doubleArray = new double[doubleList.size()];
@@ -68,29 +84,44 @@ public class Utils {
         return doubleArray;
     }
 
+    /**
+     * Recursively deletes a folder and all its contents
+     *
+     * @param folderPath The path to the folder to be deleted
+     */
     public static void deleteFolder(String folderPath) {
         File folder = new File(folderPath);
 
-        // 如果文件夹存在
+        // Check if folder exists
         if (folder.exists()) {
-            File[] files = folder.listFiles(); // 获取文件夹下的所有文件和文件夹
+            // Get all files and folders in the directory
+            File[] files = folder.listFiles();
 
-            // 删除文件夹下所有的文件和文件夹
-            for (File file : files) {
-                if (file.isFile()) {
-                    file.delete(); // 如果是文件，直接删除
-                } else {
-                    deleteFolder(file.getAbsolutePath()); // 如果是文件夹，递归调用删除文件夹方法
+            // Delete all files and subdirectories
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile()) {
+                        file.delete(); // Delete file directly
+                    } else {
+                        // Recursively delete subdirectories
+                        deleteFolder(file.getAbsolutePath());
+                    }
                 }
             }
 
-            folder.delete(); // 删除文件夹本身
-            System.out.println("文件夹删除成功！");
+            folder.delete(); // Delete the empty folder
+            LogUtils.d("Folder deleted successfully");
         } else {
-            System.out.println("文件夹不存在！");
+            LogUtils.d("Folder does not exist");
         }
     }
 
+    /**
+     * Removes single and double quotes from a string
+     *
+     * @param content The string to process
+     * @return The string with all quotes removed, or the original string if empty
+     */
     public static String removeQuotes(String content) {
         if (TextUtils.isEmpty(content)) {
             return content;

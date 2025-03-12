@@ -1,16 +1,30 @@
 package io.agora.karaoke_view_ex.internal.utils;
 
+/**
+ * Utility class for adjusting voice pitch in karaoke applications.
+ * Provides functionality to handle pitch adjustments based on reference values.
+ */
 public class VoicePitchChanger {
 
-    double offset = 0.0F;
-    int n = 0;
+    /**
+     * The accumulated pitch offset
+     */
+    private double mOffset = 0.0F;
 
-    /// 处理 Pitch(该方法不是幂等的，使用时候要特别注意)
-    /// - Parameters:
-    ///   - refPitch: 标准值 来自歌词文件
-    ///   - pitch: 实际值 来自 rtc 回调
-    ///   - refMaxPitch: 最大值 来自标准值
-    /// - Returns: 处理后的值
+    /**
+     * Counter for the number of pitch adjustments made
+     */
+    private int mN = 0;
+
+    /**
+     * Processes and adjusts the pitch value based on reference values.
+     * This method is not idempotent - special care should be taken when using it.
+     *
+     * @param refPitch    Standard pitch value from the lyrics file
+     * @param pitch       Actual pitch value from RTC callback
+     * @param refMaxPitch Maximum reference pitch value
+     * @return The processed pitch value
+     */
     public double handlePitch(double refPitch,
                               double pitch,
                               double refMaxPitch) {
@@ -18,15 +32,15 @@ public class VoicePitchChanger {
             return 0;
         }
 
-        n += 1;
+        mN += 1;
         double gap = refPitch - pitch;
 
-        offset = offset * (n - 1) / n + gap / n;
+        mOffset = mOffset * (mN - 1) / mN + gap / mN;
 
-        if (offset < 0) {
-            offset = Math.max(offset, -1 * refMaxPitch * 0.4);
+        if (mOffset < 0) {
+            mOffset = Math.max(mOffset, -1 * refMaxPitch * 0.4);
         } else {
-            offset = Math.min(offset, refMaxPitch * 0.4);
+            mOffset = Math.min(mOffset, refMaxPitch * 0.4);
         }
 
         // 这个算法问题
@@ -37,24 +51,28 @@ public class VoicePitchChanger {
             return Math.min(pitch, refMaxPitch);
         }
 
-        switch (n) {
+        switch (mN) {
             case 1:
-                return Math.min(pitch + 0.5 * offset, refMaxPitch);
+                return Math.min(pitch + 0.5 * mOffset, refMaxPitch);
             case 2:
-                return Math.min(pitch + 0.6 * offset, refMaxPitch);
+                return Math.min(pitch + 0.6 * mOffset, refMaxPitch);
             case 3:
-                return Math.min(pitch + 0.7 * offset, refMaxPitch);
+                return Math.min(pitch + 0.7 * mOffset, refMaxPitch);
             case 4:
-                return Math.min(pitch + 0.8 * offset, refMaxPitch);
+                return Math.min(pitch + 0.8 * mOffset, refMaxPitch);
             case 5:
-                return Math.min(pitch + 0.9 * offset, refMaxPitch);
+                return Math.min(pitch + 0.9 * mOffset, refMaxPitch);
             default:
-                return Math.min(pitch + offset, refMaxPitch);
+                return Math.min(pitch + mOffset, refMaxPitch);
         }
     }
 
+    /**
+     * Resets the pitch changer state.
+     * Clears the accumulated offset and counter.
+     */
     void reset() {
-        offset = 0.0;
-        n = 0;
+        mOffset = 0.0;
+        mN = 0;
     }
 }

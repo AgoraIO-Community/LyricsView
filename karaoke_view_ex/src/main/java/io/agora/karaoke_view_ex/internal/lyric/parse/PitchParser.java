@@ -17,7 +17,18 @@ import io.agora.karaoke_view_ex.internal.model.PitchData;
 import io.agora.karaoke_view_ex.internal.model.XmlPitchData;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 
+/**
+ * Parser for pitch data in various formats.
+ * This class provides methods to parse pitch data from different file formats
+ * and convert them into standardized data structures for use in karaoke applications.
+ */
 public class PitchParser {
+    /**
+     * Parses XML format pitch data
+     *
+     * @param fileData The byte array containing XML pitch data
+     * @return An XmlPitchData object containing the parsed pitch data
+     */
     @NonNull
     public static XmlPitchData doParseXml(byte[] fileData) {
         XmlPitchData model = new XmlPitchData(new ArrayList<>());
@@ -57,6 +68,15 @@ public class PitchParser {
         return model;
     }
 
+    /**
+     * Fetches the average pitch value within a specified time range
+     *
+     * @param data             The XmlPitchData containing pitch values
+     * @param startOfFirstTone The start time of the first tone in milliseconds
+     * @param start            The start time of the range in milliseconds
+     * @param end              The end time of the range in milliseconds
+     * @return The average pitch value within the range, or 0 if no valid pitches found
+     */
     public static double fetchPitchWithRange(XmlPitchData data, long startOfFirstTone, long start, long end) {
         if (data == null) {
             return 0d;
@@ -80,6 +100,13 @@ public class PitchParser {
         return 0d;
     }
 
+    /**
+     * Reads a 32-bit integer in little-endian format from a ByteBuffer
+     *
+     * @param buffer The ByteBuffer to read from
+     * @return The integer value read
+     * @throws IOException If an I/O error occurs
+     */
     private static int readLittleEndianInt(ByteBuffer buffer) throws IOException {
         int b1 = getUnsignedByte(buffer);
         int b2 = getUnsignedByte(buffer);
@@ -89,11 +116,25 @@ public class PitchParser {
         return (b4 << 24) | (b3 << 16) | (b2 << 8) | b1;
     }
 
+    /**
+     * Reads a 64-bit double in little-endian format from a ByteBuffer
+     *
+     * @param buffer The ByteBuffer to read from
+     * @return The double value read
+     * @throws IOException If an I/O error occurs
+     */
     private static double readLittleEndianDouble(ByteBuffer buffer) throws IOException {
         long bits = readLittleEndianLong(buffer);
         return Double.longBitsToDouble(bits);
     }
 
+    /**
+     * Reads a 64-bit long in little-endian format from a ByteBuffer
+     *
+     * @param buffer The ByteBuffer to read from
+     * @return The long value read
+     * @throws IOException If an I/O error occurs
+     */
     private static long readLittleEndianLong(ByteBuffer buffer) throws IOException {
         long b1 = getUnsignedByte(buffer);
         long b2 = getUnsignedByte(buffer);
@@ -107,6 +148,12 @@ public class PitchParser {
         return (b8 << 56) | (b7 << 48) | (b6 << 40) | (b5 << 32) | (b4 << 24) | (b3 << 16) | (b2 << 8) | b1;
     }
 
+    /**
+     * Gets an unsigned byte from the current position in a ByteBuffer and advances the position
+     *
+     * @param buffer The ByteBuffer to read from
+     * @return The unsigned byte value as an int
+     */
     static int getUnsignedByte(ByteBuffer buffer) {
         int pos = buffer.position();
         int rtn = getUnsignedByte(buffer, pos);
@@ -114,15 +161,33 @@ public class PitchParser {
         return rtn;
     }
 
+    /**
+     * Gets an unsigned byte from a specific position in a ByteBuffer
+     *
+     * @param buffer The ByteBuffer to read from
+     * @param offset The position to read from
+     * @return The unsigned byte value as an int
+     */
     static int getUnsignedByte(ByteBuffer buffer, int offset) {
         return asUnsignedByte(buffer.get(offset));
     }
 
+    /**
+     * Converts a signed byte to an unsigned byte value
+     *
+     * @param b The signed byte to convert
+     * @return The unsigned byte value as an int
+     */
     static int asUnsignedByte(byte b) {
         return b & 0xFF;
     }
 
-
+    /**
+     * Parses KRC format pitch data
+     *
+     * @param fileData The byte array containing KRC pitch data
+     * @return A list of PitchData objects, or null if parsing fails
+     */
     public static List<PitchData> doParseKrc(byte[] fileData) {
         if (fileData == null || fileData.length == 0) {
             return null;

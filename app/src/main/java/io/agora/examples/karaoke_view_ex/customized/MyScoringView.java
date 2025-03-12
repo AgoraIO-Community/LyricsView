@@ -50,8 +50,8 @@ public class MyScoringView extends ScoringView {
     }
 
     @Override
-    protected void drawOverpastWallAndStartLine(Canvas canvas) {
-        drawOverpastWall(canvas);
+    protected void drawOverPastWallAndStartLine(Canvas canvas) {
+        drawOverPastWall(canvas);
 
         // Same as drawStartLine, but with extra gradient color on it
         mStartLinePaint.setShader(mStartLineLinearGradient);
