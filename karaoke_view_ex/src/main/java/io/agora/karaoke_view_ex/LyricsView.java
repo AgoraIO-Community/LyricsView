@@ -31,6 +31,7 @@ import java.util.Objects;
 
 import io.agora.karaoke_view_ex.internal.LyricMachine;
 import io.agora.karaoke_view_ex.internal.config.Config;
+import io.agora.karaoke_view_ex.internal.constants.LyricType;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.internal.utils.LyricsLineDrawerHelper;
@@ -1188,7 +1189,7 @@ public class LyricsView extends View {
         }
         this.mLyricMachine = machine;
         this.mLyricsModel = machine.getLyricsModel();
-
+        forceCheckLineWrap();
         // Update values from UI view if necessary
     }
 
@@ -1333,6 +1334,7 @@ public class LyricsView extends View {
     public void enableLineWrap(boolean enable) {
         if (this.mEnableLineWrap != enable) {
             this.mEnableLineWrap = enable;
+            forceCheckLineWrap();
             mForceUpdateUi = UpdateUiType.UPDATE_UI_TYPE_NORMAL;
             performInvalidateIfNecessary();
         }
@@ -1345,6 +1347,15 @@ public class LyricsView extends View {
      */
     public boolean isLineWrapEnabled() {
         return mEnableLineWrap;
+    }
+
+    private void forceCheckLineWrap() {
+        if (null == mLyricsModel || null == mLyricsModel.lines || mLyricsModel.lines.isEmpty()) {
+            return;
+        }
+        if (mLyricsModel.type == LyricType.LRC) {
+            mEnableLineWrap = true;
+        }
     }
 
     /**
