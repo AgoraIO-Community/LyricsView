@@ -183,6 +183,7 @@ public class LyricsLineDrawerHelper {
         // When mEnableLineWrap is false, use a large enough width to ensure no wrapping
         int layoutWidth = mEnableLineWrap ? width : Integer.MAX_VALUE / 2;
 
+        // Ensure consistent size parameters when creating foreground and background layouts
         if (textPaintFg != null) {
             mLayoutFg = new StaticLayout(text, textPaintFg, layoutWidth, align, 1f, 0f, false);
         }
@@ -282,13 +283,18 @@ public class LyricsLineDrawerHelper {
                 }
 
                 if (tone.isFullLine) {
-                    //+2 fix the bug that the last word is not displayed for chinese lyric
-                    curLen = wordLen + 2;
+                    //+5 fix the bug that the last word is not displayed for lyric
+                    curLen = wordLen + 5;
                 } else {
                     float percent = (time - tone.begin) / (float) (tone.end - tone.begin);
 
                     // Apply scale factor to progress calculation
                     curLen = wordLen * (percent > 0 ? percent : 0) * mWidthRatio;
+                    
+                    // Add a small offset to ensure the last character is fully visible
+                    if (percent > 0.9f && i == tones.size() - 1) {
+                        curLen += 2;
+                    }
                 }
                 break;
             }
@@ -298,7 +304,7 @@ public class LyricsLineDrawerHelper {
         int showLen = (int) ((doneLen != Integer.MAX_VALUE ? doneLen * mWidthRatio : doneLen) + curLen);
 
         // Handle highlighting in multi-line situations
-        for (int i = 0; i < mLayoutFg.getLineCount(); i++) {
+        for (int i = 0; i < mDrawRects.length; i++) {
             if (i >= mTextRectDisplayLines.length) {
                 break;
             }
@@ -323,6 +329,10 @@ public class LyricsLineDrawerHelper {
             } else {
                 // Partially highlight the current line
                 mDrawRects[i].right = mDrawRects[i].left + showLen;
+                // Add a small offset for the last character when near the end of a word
+                if (showLen > 0 && curLineWidth - showLen < 10) {
+                    mDrawRects[i].right += 2;
+                }
                 showLen = 0;
             }
         }

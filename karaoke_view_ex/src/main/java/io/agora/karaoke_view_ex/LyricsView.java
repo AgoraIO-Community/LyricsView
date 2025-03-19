@@ -638,6 +638,12 @@ public class LyricsView extends View {
         }
 
         if (line != mIndexOfCurrentLine) {
+            // When changing lines, pre-set text size to reduce flickering
+            if (mTextSize > mCurrentLineTextSize) {
+                mPaintBg.setTextSize(mCurrentLineTextSize);
+                mPaintFg.setTextSize(mCurrentLineTextSize);
+            }
+            
             // NORMAL & ANIMATION
             mForceUpdateUi = UpdateUiType.UPDATE_UI_TYPE_NORMAL | UpdateUiType.UPDATE_UI_TYPE_WITH_ANIMATION;
             mIndexOfCurrentLine = line;
@@ -905,12 +911,16 @@ public class LyricsView extends View {
     }
 
     private void doConfigCanvasAndTexts(float fraction) {
-        float textSize = (mCurrentLineTextSize - mTextSize) * fraction;
-        if (textSize < 0) {
-            // Supposedly we think `mCurrentLineTextSize` is larger than `mTextSize`
+        // Calculate the current line text size considering font size differences
+        float textSize;
+        
+        // When normal line font is larger than current line font, optimize to avoid flickering
+        if (mTextSize > mCurrentLineTextSize) {
+            // Directly use current line font size, avoid gradient processing during transitions
             textSize = mCurrentLineTextSize;
         } else {
-            textSize += mTextSize;
+            // Normal gradient calculation for cases when mCurrentLineTextSize >= mTextSize
+            textSize = mTextSize + (mCurrentLineTextSize - mTextSize) * fraction;
         }
 
         mPaintBg.setColor(mCurrentLineTextColor);
@@ -921,6 +931,9 @@ public class LyricsView extends View {
 
         if (mBitmapBg != null) {
             mBitmapBg.eraseColor(0);
+        }
+        if (mBitmapFg != null) {
+            mBitmapFg.eraseColor(0);
         }
     }
 
@@ -1080,7 +1093,18 @@ public class LyricsView extends View {
             return;
         }
 
-        float yOfTargetLine = (getViewportHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
+        // Correct calculation method, considering font size differences
+        float yOfTargetLine;
+        
+        // Special handling for vertical centering when normal line font is larger than current line font
+        if (mTextSize > mCurrentLineTextSize) {
+            // Adjust vertical position to avoid flickering
+            float sizeRatio = mCurrentLineTextSize / mTextSize;
+            yOfTargetLine = (getViewportHeight() - currentLineDrawHelper.getHeight()) / 2F + mPaddingTop;
+        } else {
+            // Normal vertical centering calculation
+            yOfTargetLine = (getViewportHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
+        }
 
         mCanvasBg.save();
 
@@ -1156,7 +1180,17 @@ public class LyricsView extends View {
         mBitmapFg.eraseColor(0);
 
         Rect[] drawRects = currentLineDrawHelper.getDrawRectByTime(mCurrentTime);
-        float yOfTargetLine = (getViewportHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
+        
+        // Use the same vertical position calculation logic as in drawCurrent method
+        float yOfTargetLine;
+        if (mTextSize > mCurrentLineTextSize) {
+            // Adjust vertical position to avoid flickering
+            float sizeRatio = mCurrentLineTextSize / mTextSize;
+            yOfTargetLine = (getViewportHeight() - currentLineDrawHelper.getHeight()) / 2F + mPaddingTop;
+        } else {
+            // Normal vertical centering calculation
+            yOfTargetLine = (getViewportHeight() - currentLineDrawHelper.getHeight() * fraction) / 2F + mPaddingTop;
+        }
 
         for (Rect dr : drawRects) {
             if (dr.left == dr.right) {
