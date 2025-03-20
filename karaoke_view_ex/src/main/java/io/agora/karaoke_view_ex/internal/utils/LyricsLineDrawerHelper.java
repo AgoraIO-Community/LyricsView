@@ -40,9 +40,9 @@ public class LyricsLineDrawerHelper {
     private Rect[] mDrawRects;
 
     /**
-     * Array of rectangles for each word segment in lyrics
+     * Array of rectangles for total words in lyrics line
      */
-    private Rect[] mTextRectTotalWords;
+    private int[] mToneLineWordsWidth;
 
     /**
      * Array of rectangles for each displayed line of lyrics
@@ -157,24 +157,25 @@ public class LyricsLineDrawerHelper {
 
         StringBuilder sb = new StringBuilder();
         List<LyricsLineModel.Tone> tones = mLine.tones;
-        mTextRectTotalWords = new Rect[tones.size()];
+        mToneLineWordsWidth = new int[tones.size()];
         String text;
         for (int i = 0; i < tones.size(); i++) {
             LyricsLineModel.Tone tone = tones.get(i);
-            Rect rectTotal = new Rect();
-            mTextRectTotalWords[i] = rectTotal;
             String s = tone.word;
             // Sometimes, lyrics/sentence contains no word-tag
             if (s == null) {
                 s = "";
             }
-            if (tone.lang == LyricsLineModel.Lang.English) {
+            if (tone.lang == LyricsLineModel.Lang.English || i == tones.size() - 1) {
                 s = s + " ";
             }
             sb.append(s);
 
             text = sb.toString();
-            textPaintBg.getTextBounds(text, 0, text.length(), rectTotal);
+
+            float strWidth = textPaintBg.measureText(text);
+
+            mToneLineWordsWidth[i] = (int) strWidth;
         }
 
         text = sb.toString();
@@ -209,6 +210,19 @@ public class LyricsLineDrawerHelper {
             mLayoutBg.getLineBounds(i, mRect);
             mRect.left = (int) mLayoutBg.getLineLeft(i);
             mRect.right = (int) mLayoutBg.getLineRight(i);
+
+            String lineText = text.substring(mLayoutBg.getLineStart(i), mLayoutBg.getLineEnd(i));
+            boolean hasEnglishChar = false;
+            for (char c : lineText.toCharArray()) {
+                if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+                    hasEnglishChar = true;
+                    break;
+                }
+            }
+
+            if (hasEnglishChar) {
+                mRect.bottom += 5;
+            }
 
             mTextRectDisplayLines[i] = mRect;
             mDrawRects[i] = new Rect(mRect);
@@ -272,25 +286,25 @@ public class LyricsLineDrawerHelper {
                     // Last syllable, highlight all
                     doneLen = Integer.MAX_VALUE;
                 } else {
-                    doneLen = mTextRectTotalWords[i].width();
+                    doneLen = mToneLineWordsWidth[i];
                 }
             } else {
                 int wordLen = 0;
                 if (i == 0) {
-                    wordLen = mTextRectTotalWords[i].width();
+                    wordLen = mToneLineWordsWidth[i];
                 } else {
-                    wordLen = mTextRectTotalWords[i].width() - mTextRectTotalWords[i - 1].width();
+                    wordLen = mToneLineWordsWidth[i] - mToneLineWordsWidth[i - 1];
                 }
 
                 if (tone.isFullLine) {
-                    //+5 fix the bug that the last word is not displayed for lyric
-                    curLen = wordLen + 5;
+                    //fix the bug that the last word is not displayed for lyric
+                    curLen = wordLen;
                 } else {
                     float percent = (time - tone.begin) / (float) (tone.end - tone.begin);
 
                     // Apply scale factor to progress calculation
                     curLen = wordLen * (percent > 0 ? percent : 0) * mWidthRatio;
-                    
+
                     // Add a small offset to ensure the last character is fully visible
                     if (percent > 0.9f && i == tones.size() - 1) {
                         curLen += 2;
@@ -330,7 +344,7 @@ public class LyricsLineDrawerHelper {
                 // Partially highlight the current line
                 mDrawRects[i].right = mDrawRects[i].left + showLen;
                 // Add a small offset for the last character when near the end of a word
-                if (showLen > 0 && curLineWidth - showLen < 10) {
+                if (curLineWidth - showLen < 10) {
                     mDrawRects[i].right += 2;
                 }
                 showLen = 0;

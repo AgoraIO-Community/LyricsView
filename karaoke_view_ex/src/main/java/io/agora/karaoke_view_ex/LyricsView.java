@@ -643,7 +643,7 @@ public class LyricsView extends View {
                 mPaintBg.setTextSize(mCurrentLineTextSize);
                 mPaintFg.setTextSize(mCurrentLineTextSize);
             }
-            
+
             // NORMAL & ANIMATION
             mForceUpdateUi = UpdateUiType.UPDATE_UI_TYPE_NORMAL | UpdateUiType.UPDATE_UI_TYPE_WITH_ANIMATION;
             mIndexOfCurrentLine = line;
@@ -913,7 +913,7 @@ public class LyricsView extends View {
     private void doConfigCanvasAndTexts(float fraction) {
         // Calculate the current line text size considering font size differences
         float textSize;
-        
+
         // When normal line font is larger than current line font, optimize to avoid flickering
         if (mTextSize > mCurrentLineTextSize) {
             // Directly use current line font size, avoid gradient processing during transitions
@@ -1095,7 +1095,7 @@ public class LyricsView extends View {
 
         // Correct calculation method, considering font size differences
         float yOfTargetLine;
-        
+
         // Special handling for vertical centering when normal line font is larger than current line font
         if (mTextSize > mCurrentLineTextSize) {
             // Adjust vertical position to avoid flickering
@@ -1180,7 +1180,7 @@ public class LyricsView extends View {
         mBitmapFg.eraseColor(0);
 
         Rect[] drawRects = currentLineDrawHelper.getDrawRectByTime(mCurrentTime);
-        
+
         // Use the same vertical position calculation logic as in drawCurrent method
         float yOfTargetLine;
         if (mTextSize > mCurrentLineTextSize) {
@@ -1196,14 +1196,21 @@ public class LyricsView extends View {
             if (dr.left == dr.right) {
                 continue;
             }
-
+            
             mRectClip.left = dr.left;
             mRectClip.top = (int) (dr.top + yOfTargetLine);
             mRectClip.right = dr.right;
             mRectClip.bottom = (int) (dr.bottom + yOfTargetLine);
 
+            Rect drawFgRect = new Rect(mRectClip);
+
+            drawFgRect.left = mRectClip.left;
+            drawFgRect.top = mRectClip.top;
+            drawFgRect.right = (int) (mRectClip.right + mCurrentLineTranslateX);
+            drawFgRect.bottom = mRectClip.bottom;
+
             mCanvasFg.save();
-            mCanvasFg.clipRect(mRectClip);
+            mCanvasFg.clipRect(drawFgRect);
             mCanvasFg.translate(mCurrentLineTranslateX, yOfTargetLine);
             currentLineDrawHelper.drawFg(mCanvasFg);
             mCanvasFg.restore();

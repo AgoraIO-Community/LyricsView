@@ -370,6 +370,12 @@ class LyricsParserXml {
             try {
                 pitch = Integer.parseInt(t.trim());
             } catch (NumberFormatException e) {
+                try {
+                    double doubleValue = Double.parseDouble(t.trim());
+                    pitch = (int) doubleValue;
+                } catch (NumberFormatException ex) {
+                    LogUtils.e("readTone: " + t);
+                }
             }
         }
         tone.pitch = pitch;
