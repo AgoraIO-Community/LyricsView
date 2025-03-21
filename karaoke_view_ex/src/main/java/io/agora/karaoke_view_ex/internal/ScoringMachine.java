@@ -16,57 +16,133 @@ import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 
 /**
- * State/Information of playing/rendering/on-going lyrics
- * <p>
- * Non-ui related, shared by all components
+ * State and information manager for karaoke scoring functionality.
+ * This class handles the non-UI related logic for pitch tracking, scoring calculation,
+ * and performance evaluation. It is shared by all scoring-related components.
  */
 public class ScoringMachine {
+    /**
+     * The current lyrics model being processed
+     */
     private LyricModel mLyricsModel;
+
+    /**
+     * Listener for scoring-related events
+     */
     private final OnScoringListener mListener;
+
+    /**
+     * Current pitch progress in milliseconds
+     */
     private long mCurrentPitchProgress = 0;
+
+    /**
+     * Current lyrics progress in milliseconds
+     */
     private long mCurrentLyricProgress = 0;
+
+    /**
+     * Maximum reference pitch value detected in the song
+     */
     private float mMaximumRefPitch = 0;
+
+    /**
+     * Minimum reference pitch value detected in the song
+     */
     private float mMinimumRefPitch = 100;
 
+    /**
+     * List of pitch line models for each lyrics line
+     */
     private List<LyricsPitchLineModel> mPitchLines;
 
+    /**
+     * The scoring algorithm implementation
+     */
     private IScoringAlgorithm mScoringAlgorithm;
+
+    /**
+     * Flag indicating whether internal scoring is being used
+     */
     private boolean mUsingInternalScoring = false;
 
+    /**
+     * Default time delta between updates in milliseconds
+     */
     private static final int DEFAULT_DELTA_OF_UPDATE = 20;
+
+    /**
+     * Current time delta between updates in milliseconds
+     */
     private int mDeltaOfUpdate = DEFAULT_DELTA_OF_UPDATE;
 
-
-    // Pitches for every line, we will reset every new line
+    /**
+     * Map storing pitch values for the current line
+     */
     public final LinkedHashMap<Long, Float> mPitchesForLine = new LinkedHashMap<>();
 
+    /**
+     * Map storing scores for each line by index
+     */
     public final LinkedHashMap<Integer, Integer> mScoreForEachLine = new LinkedHashMap<>();
 
-    // Start time of first pitch or word or tone
+    /**
+     * Start time of the first reference pitch in milliseconds
+     */
     private long mTimestampOfFirstRefPitch = -1;
 
-    // End time of this lyrics
+    /**
+     * End time of the current lyrics in milliseconds
+     */
     private long mEndTimeOfThisLyrics = 0;
-    // Index of current line
+
+    /**
+     * Index of the current line being processed
+     */
     private int mIndexOfCurrentLine = 0;
 
-    // Initial score for the lyrics(can change by app)
+    /**
+     * Initial score for the lyrics (can be changed by application)
+     */
     private float mInitialScore;
-    // Cumulative score
+
+    /**
+     * Cumulative score across all lines
+     */
     private float mCumulativeScore;
 
+    /**
+     * Counter for continuous zero pitch detections
+     */
     private int mContinuousZeroCount = 0;
+
+    /**
+     * Threshold for consecutive zero pitch readings before resetting
+     */
     private static final int ZERO_PITCH_COUNT_THRESHOLD = 10;
 
+    /**
+     * Empty lyrics model used as a fallback
+     */
+    private static final LyricModel EMPTY_LYRICS_MODEL = new LyricModel(LyricType.LRC);
+
+    /**
+     * Constructs a new ScoringMachine instance
+     *
+     * @param listener The listener to handle scoring-related events
+     */
     public ScoringMachine(OnScoringListener listener) {
         reset();
         this.mListener = listener;
         this.mScoringAlgorithm = new DefaultScoringAlgorithm();
     }
 
-    private static final LyricModel EMPTY_LYRICS_MODEL = new LyricModel(LyricType.LRC);
-
-    // Set data and prepare to rendering
+    /**
+     * Sets the lyrics data and prepares for scoring
+     *
+     * @param model                The lyrics model to be processed
+     * @param usingInternalScoring Whether to use internal scoring algorithm
+     */
     public void prepare(LyricModel model, boolean usingInternalScoring) {
         reset();
 
@@ -134,6 +210,12 @@ public class ScoringMachine {
         LogUtils.d("prepare mMinimumRefPitch:" + mMinimumRefPitch + ",mMaximumRefPitch:" + mMaximumRefPitch);
     }
 
+    /**
+     * Fixes potential issues in the lyric model, such as overlapping lines
+     *
+     * @param model The original lyrics model
+     * @return A fixed copy of the lyrics model
+     */
     private LyricModel mayBeFixLyricModel(LyricModel model) {
         if (model == null || model.lines == null || model.lines.isEmpty()) {
             LogUtils.e("Invalid lyrics model, use built-in EMPTY_LYRICS_MODEL");
@@ -164,14 +246,30 @@ public class ScoringMachine {
         return model;
     }
 
+    /**
+     * Checks if the scoring machine is ready for operation
+     *
+     * @return true if lyrics model is set, false otherwise
+     */
     public boolean isReady() {
         return mLyricsModel != null;
     }
 
+    /**
+     * Sets the current lyrics progress
+     *
+     * @param progress Current playback time in milliseconds
+     */
     public void setLyricProgress(long progress) {
         mCurrentLyricProgress = progress;
     }
 
+    /**
+     * Updates the pitch data and calculates scoring
+     *
+     * @param speakerPitch The detected pitch from the user's voice
+     * @param progressInMs The current progress in milliseconds
+     */
     public void setPitch(float speakerPitch, int progressInMs) {
         if (Config.DEBUG) {
             LogUtils.d("setPitch speakerPitch:" + speakerPitch + ",progressInMs:" + progressInMs);
@@ -261,10 +359,12 @@ public class ScoringMachine {
     }
 
     /**
-     * 根据当前播放时间获取 Pitch，并且更新当前 Pitch 相关数据
-     * <p>
+     * Finds the reference pitch for the current time and updates line-related data
      *
-     * @return 当前时间歌词的 Pitch 以及是否换行 returnNewLine 和 returnIndexOfMostRecentLine
+     * @param timestamp                   The current timestamp in milliseconds
+     * @param returnNewLine               Output parameter indicating if a new line has started
+     * @param returnIndexOfMostRecentLine Output parameter with the index of the most recent line
+     * @return The reference pitch at the current time, or -1 if not found
      */
     private float findRefPitchByTime(long timestamp, final boolean[] returnNewLine, final int[] returnIndexOfMostRecentLine) {
         if (mLyricsModel == null || mLyricsModel.lines == null) {
@@ -317,26 +417,34 @@ public class ScoringMachine {
         return referencePitch;
     }
 
+    /**
+     * Determines if the current timestamp indicates a new line has started
+     *
+     * @param timestamp          The current timestamp in milliseconds
+     * @param numberOfLines      Total number of lines in the lyrics
+     * @param timestampLineIndex Current line index for the timestamp
+     * @return true if a new line has started, false otherwise
+     */
     private boolean isNewLine(long timestamp, int numberOfLines, int timestampLineIndex) {
         LogUtils.d("isNewLine timestamp:" + timestamp + ",numberOfLines:" + numberOfLines + ",timestampLineIndex:" + timestampLineIndex);
         boolean newLine = false;
         if (mIndexOfCurrentLine >= 0 && mIndexOfCurrentLine + 1 <= numberOfLines) {
             if (timestamp > mLyricsModel.lines.get(mIndexOfCurrentLine).getEndTime()) {
-                //当前行歌词结束
+                // Current line lyrics ended
                 if (-1 == timestampLineIndex) {
-                    //当前行歌词结尾，但是未到下一行开始
+                    // End of current line, but not yet at the start of next line
                     if (!mScoreForEachLine.containsKey(mIndexOfCurrentLine)) {
                         newLine = true;
                     }
                 } else if (mIndexOfCurrentLine != timestampLineIndex) {
-                    //换了一行了
+                    // Changed to a new line
                     if (!mScoreForEachLine.containsKey(mIndexOfCurrentLine)) {
                         newLine = true;
                     }
                 }
             }
         } else if (mIndexOfCurrentLine + 2 == numberOfLines) {
-            //last line
+            // Last line
             if (timestamp >= mLyricsModel.lines.get(mIndexOfCurrentLine).getEndTime()) {
                 if (!mScoreForEachLine.containsKey(mIndexOfCurrentLine)) {
                     newLine = true;
@@ -348,6 +456,13 @@ public class ScoringMachine {
         return newLine;
     }
 
+    /**
+     * Updates the score for the most recently completed line
+     *
+     * @param timestamp             Current timestamp in milliseconds
+     * @param newLine               Whether a new line has started
+     * @param indexOfMostRecentLine Index of the most recently completed line
+     */
     private void updateScoreForMostRecentLine(long timestamp, boolean newLine, int indexOfMostRecentLine) {
         // Not started
         if ((timestamp < mTimestampOfFirstRefPitch) || mTimestampOfFirstRefPitch == -1) {
@@ -369,7 +484,7 @@ public class ScoringMachine {
                 lyricsContentLine.append(tone.word);
             }
 
-            // 统计到累计分数
+            // Add to cumulative score
             mCumulativeScore += scoreThisTime;
 
             LogUtils.d("updateScoreForMostRecentLine timestamp:" + timestamp + " index:" + indexOfMostRecentLine + " startTime:" + lineJustFinished.getStartTime() +
@@ -385,6 +500,13 @@ public class ScoringMachine {
         }
     }
 
+    /**
+     * Calculates a score based on the difference between speaker pitch and reference pitch
+     *
+     * @param speakerPitch The detected pitch from the user's voice
+     * @param progressInMs The current progress in milliseconds
+     * @return The calculated score (0-100)
+     */
     public double calculateScoreWithPitch(float speakerPitch, int progressInMs) {
         mCurrentPitchProgress = progressInMs;
         float refPitch = getRefPitch(progressInMs);
@@ -395,6 +517,11 @@ public class ScoringMachine {
         return scoreAfterNormalization;
     }
 
+    /**
+     * Handles progress updates when dragging occurs
+     *
+     * @param progress The new progress position in milliseconds
+     */
     public void whenDraggingHappen(long progress) {
         minorReset();
 
@@ -412,13 +539,18 @@ public class ScoringMachine {
         }
     }
 
+    /**
+     * Resets all states and properties
+     */
     public void reset() {
         resetProperties();
-
         resetStats();
     }
 
-    private void resetProperties() { // Reset when song changed
+    /**
+     * Resets properties when song changes
+     */
+    private void resetProperties() {
         mLyricsModel = null;
         mMinimumRefPitch = 100;
         mMaximumRefPitch = 0;
@@ -428,6 +560,9 @@ public class ScoringMachine {
         mEndTimeOfThisLyrics = 0;
     }
 
+    /**
+     * Resets statistics and scores
+     */
     private void resetStats() {
         minorReset();
 
@@ -436,7 +571,9 @@ public class ScoringMachine {
         mScoreForEachLine.clear();
     }
 
-    // Will recover immediately
+    /**
+     * Performs a minor reset that will recover immediately
+     */
     private void minorReset() {
         mCurrentPitchProgress = 0;
         mCurrentLyricProgress = 0;
@@ -445,33 +582,65 @@ public class ScoringMachine {
         mPitchesForLine.clear();
     }
 
+    /**
+     * Prepares the UI for scoring display
+     */
     public void prepareUi() {
         if (mListener != null) {
             mListener.resetUi();
         }
     }
 
+    /**
+     * Gets the current lyrics model
+     *
+     * @return The current lyrics model
+     */
     public LyricModel getLyricsModel() {
         return this.mLyricsModel;
     }
 
-
+    /**
+     * Gets the current pitch progress
+     *
+     * @return Current progress in milliseconds
+     */
     public long getCurrentPitchProgress() {
         return mCurrentPitchProgress != 0 ? mCurrentPitchProgress : mCurrentLyricProgress;
     }
 
+    /**
+     * Gets the minimum reference pitch in the song
+     *
+     * @return The minimum reference pitch value
+     */
     public float getMinimumRefPitch() {
         return this.mMinimumRefPitch;
     }
 
+    /**
+     * Gets the maximum reference pitch in the song
+     *
+     * @return The maximum reference pitch value
+     */
     public float getMaximumRefPitch() {
         return this.mMaximumRefPitch;
     }
 
+    /**
+     * Gets the list of pitch line models
+     *
+     * @return List of pitch line models
+     */
     public List<LyricsPitchLineModel> getPitchLines() {
         return mPitchLines;
     }
 
+    /**
+     * Checks if the lyrics model has pitch data
+     *
+     * @return true if pitch data is available, false otherwise
+     */
     public boolean hasPitchData() {
         if (null == mLyricsModel) {
             return false;
@@ -479,6 +648,12 @@ public class ScoringMachine {
         return mLyricsModel.hasPitch;
     }
 
+    /**
+     * Gets the start time of a specific line
+     *
+     * @param lineIndex The index of the line
+     * @return The start time in milliseconds, or 0 if index is invalid
+     */
     public long getLineStartTime(int lineIndex) {
         if (lineIndex < 0 || lineIndex >= mLyricsModel.lines.size()) {
             return 0;
@@ -487,6 +662,12 @@ public class ScoringMachine {
         return mLyricsModel.lines.get(lineIndex).getStartTime();
     }
 
+    /**
+     * Gets the reference pitch at a specific time
+     *
+     * @param progressInMs The time in milliseconds
+     * @return The reference pitch at the specified time, or 0 if not found
+     */
     public float getRefPitch(int progressInMs) {
         if (mLyricsModel == null) {
             return 0;
@@ -513,11 +694,22 @@ public class ScoringMachine {
         return 0;
     }
 
+    /**
+     * Sets the initial score for the performance
+     *
+     * @param initialScore The initial score value
+     */
     public void setInitialScore(float initialScore) {
         this.mCumulativeScore += initialScore;
         this.mInitialScore = initialScore;
     }
 
+    /**
+     * Sets the scoring algorithm to be used
+     *
+     * @param algorithm The scoring algorithm implementation
+     * @throws IllegalArgumentException if algorithm is null
+     */
     public void setScoringAlgorithm(IScoringAlgorithm algorithm) {
         if (algorithm == null) {
             throw new IllegalArgumentException("IScoringAlgorithm should not be an empty object");
@@ -525,12 +717,22 @@ public class ScoringMachine {
         this.mScoringAlgorithm = algorithm;
     }
 
+    /**
+     * Sets the scoring difficulty level
+     *
+     * @param level The difficulty level
+     */
     public void setScoringLevel(int level) {
         if (null != mScoringAlgorithm) {
             mScoringAlgorithm.setScoringLevel(level);
         }
     }
 
+    /**
+     * Gets the current scoring difficulty level
+     *
+     * @return The current difficulty level
+     */
     public int getScoringLevel() {
         if (null != mScoringAlgorithm) {
             return mScoringAlgorithm.getScoringLevel();
@@ -538,12 +740,22 @@ public class ScoringMachine {
         return 0;
     }
 
+    /**
+     * Sets the scoring compensation offset
+     *
+     * @param offset The compensation offset value
+     */
     public void setScoringCompensationOffset(int offset) {
         if (null != mScoringAlgorithm) {
             mScoringAlgorithm.setScoringCompensationOffset(offset);
         }
     }
 
+    /**
+     * Gets the current scoring compensation offset
+     *
+     * @return The current compensation offset
+     */
     public int getScoringCompensationOffset() {
         if (null != mScoringAlgorithm) {
             return mScoringAlgorithm.getScoringCompensationOffset();
@@ -551,28 +763,46 @@ public class ScoringMachine {
         return 0;
     }
 
+    /**
+     * Checks if internal scoring is being used
+     *
+     * @return true if internal scoring is enabled, false otherwise
+     */
     public boolean isUsingInternalScoring() {
         return mUsingInternalScoring;
     }
 
-
+    /**
+     * Interface for handling scoring-related events
+     */
     public interface OnScoringListener {
+        /**
+         * Called when UI needs to be reset
+         */
         void resetUi();
 
+        /**
+         * Called when UI refresh is requested
+         */
         void requestRefreshUi();
 
+        /**
+         * Called when pitch and score are updated
+         *
+         * @param speakerPitch            The processed pitch from the user's voice
+         * @param scoreAfterNormalization The normalized score (0-100)
+         * @param progress                The current progress in milliseconds
+         */
         void onPitchAndScoreUpdate(float speakerPitch, double scoreAfterNormalization, long progress);
 
         /**
-         * Called automatically when the line is finished
-         * <p>
-         * Do not block this callback
+         * Called automatically when a line is finished
          *
-         * @param line            LyricsLineModel
-         * @param score           score
-         * @param cumulativeScore cumulativeScore
-         * @param index           index
-         * @param lineCount       lineCount
+         * @param line            The lyrics line model that was just finished
+         * @param score           The score for this line
+         * @param cumulativeScore The total cumulative score so far
+         * @param index           The index of the finished line
+         * @param lineCount       The total number of lines
          */
         void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int index, int lineCount);
     }

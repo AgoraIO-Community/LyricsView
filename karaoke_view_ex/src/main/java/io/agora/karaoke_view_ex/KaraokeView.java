@@ -3,6 +3,7 @@ package io.agora.karaoke_view_ex;
 import android.content.Context;
 
 import java.io.File;
+import java.util.Objects;
 
 import io.agora.karaoke_view_ex.internal.LyricMachine;
 import io.agora.karaoke_view_ex.internal.ScoringMachine;
@@ -12,14 +13,47 @@ import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 import io.agora.logging.Logger;
 
+/**
+ * Main controller class for karaoke functionality.
+ * Manages lyrics display, scoring, and synchronization between different components.
+ */
 public class KaraokeView {
+    /**
+     * Event listener for karaoke-related callbacks
+     */
     private KaraokeEvent mKaraokeEvent;
+
+    /**
+     * View component for displaying lyrics
+     */
     private LyricsView mLyricsView;
+
+    /**
+     * Controller for lyrics timing and progression
+     */
     private LyricMachine mLyricMachine;
+
+    /**
+     * View component for displaying scoring information
+     */
     private ScoringView mScoringView;
+
+    /**
+     * Controller for scoring calculation and management
+     */
     private ScoringMachine mScoringMachine;
+
+    /**
+     * Application context
+     */
     private Context mContext;
 
+    /**
+     * Constructor with both lyrics and scoring views
+     *
+     * @param lyricsView  View for displaying lyrics
+     * @param scoringView View for displaying score
+     */
     public KaraokeView(LyricsView lyricsView, ScoringView scoringView) {
         this.mLyricsView = lyricsView;
         this.mScoringView = scoringView;
@@ -31,15 +65,26 @@ public class KaraokeView {
         initialize();
     }
 
+    /**
+     * Default constructor
+     */
     public KaraokeView() {
         initialize();
     }
 
+    /**
+     * Constructor with context
+     *
+     * @param context Application context
+     */
     public KaraokeView(Context context) {
         mContext = context;
         initialize();
     }
 
+    /**
+     * Initialize the karaoke components including lyrics and scoring machines
+     */
     private void initialize() {
         LogUtils.d("initialize");
         mLyricMachine = new LyricMachine(new LyricMachine.OnLyricListener() {
@@ -65,7 +110,6 @@ public class KaraokeView {
         });
 
         mScoringMachine = new ScoringMachine(new ScoringMachine.OnScoringListener() {
-
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int index, int lineCount) {
                 LogUtils.d("onLineFinished line startTime:" + line.getStartTime() + ",line endTime:" + line.getEndTime() +
@@ -110,10 +154,13 @@ public class KaraokeView {
         });
 
         if (null != mContext) {
-            LogUtils.enableLog(mContext, true, true, mContext.getExternalFilesDir(null).getPath());
+            LogUtils.enableLog(mContext, true, true, Objects.requireNonNull(mContext.getExternalFilesDir(null)).getPath());
         }
     }
 
+    /**
+     * Reset all components to their initial state
+     */
     public void reset() {
         LogUtils.d("reset");
         if (mLyricsView != null) {
@@ -126,31 +173,85 @@ public class KaraokeView {
         mScoringMachine.reset();
     }
 
-
+    /**
+     * Parse lyrics data from files
+     *
+     * @param lyricFile Lyrics file
+     * @param pitchFile Pitch data file
+     * @return Parsed lyrics model
+     */
     public static LyricModel parseLyricData(File lyricFile, File pitchFile) {
         return LyricPitchParser.parseFile(lyricFile, pitchFile, true, 0);
     }
 
+    /**
+     * Parse lyrics data from files with copyright control
+     *
+     * @param lyricFile                Lyrics file
+     * @param pitchFile                Pitch data file
+     * @param includeCopyrightSentence Whether to include copyright information
+     * @return Parsed lyrics model
+     */
     public static LyricModel parseLyricData(File lyricFile, File pitchFile, boolean includeCopyrightSentence) {
         return LyricPitchParser.parseFile(lyricFile, pitchFile, includeCopyrightSentence, 0);
     }
 
+    /**
+     * Parse lyrics data from files with copyright control and offset
+     *
+     * @param lyricFile                Lyrics file
+     * @param pitchFile                Pitch data file
+     * @param includeCopyrightSentence Whether to include copyright information
+     * @param lyricOffset              Timing offset for lyrics
+     * @return Parsed lyrics model
+     */
     public static LyricModel parseLyricData(File lyricFile, File pitchFile, boolean includeCopyrightSentence, int lyricOffset) {
         return LyricPitchParser.parseFile(lyricFile, pitchFile, includeCopyrightSentence, lyricOffset);
     }
 
+    /**
+     * Parse lyrics data from byte arrays
+     *
+     * @param lyricData Lyrics data bytes
+     * @param pitchData Pitch data bytes
+     * @return Parsed lyrics model
+     */
     public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData) {
         return LyricPitchParser.parseLyricData(lyricData, pitchData, true, 0);
     }
 
+    /**
+     * Parse lyrics data from byte arrays with copyright control
+     *
+     * @param lyricData                Lyrics data bytes
+     * @param pitchData                Pitch data bytes
+     * @param includeCopyrightSentence Whether to include copyright information
+     * @return Parsed lyrics model
+     */
     public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence) {
         return LyricPitchParser.parseLyricData(lyricData, pitchData, includeCopyrightSentence, 0);
     }
 
+    /**
+     * Parse lyrics data from byte arrays with copyright control and offset
+     *
+     * @param lyricData                Lyrics data bytes
+     * @param pitchData                Pitch data bytes
+     * @param includeCopyrightSentence Whether to include copyright information
+     * @param lyricOffset              Timing offset for lyrics
+     * @return Parsed lyrics model
+     */
     public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         return LyricPitchParser.parseLyricData(lyricData, pitchData, includeCopyrightSentence, lyricOffset);
     }
 
+    /**
+     * Attach UI components to the karaoke view
+     *
+     * @param lyrics  Lyrics view component
+     * @param scoring Scoring view component
+     * @throws IllegalStateException if called before initialization
+     */
     public void attachUi(LyricsView lyrics, ScoringView scoring) {
         LogUtils.d("attachUi lyrics:" + lyrics + ",scoring:" + scoring);
         if (mLyricMachine == null) {
@@ -194,6 +295,12 @@ public class KaraokeView {
         }
     }
 
+    /**
+     * Set lyrics data and initialize scoring system
+     *
+     * @param model                Lyrics model containing timing and text data
+     * @param usingInternalScoring Whether to use internal scoring algorithm
+     */
     public void setLyricData(LyricModel model, boolean usingInternalScoring) {
         LogUtils.d("setLyricData model:" + model);
         mLyricMachine.prepare(model);
@@ -211,18 +318,21 @@ public class KaraokeView {
         mScoringMachine.prepareUi();
     }
 
+    /**
+     * Get current lyrics data model
+     *
+     * @return Current lyrics model
+     */
     public final LyricModel getLyricData() {
         return mLyricMachine.getLyricsModel();
     }
 
     /**
-     * 设置实时采集(mic)的Pitch
-     * - Note: 可以从AgoraRTC DRM回调方法 `onPitch`[该回调频率是50ms/次]  获取
-     * - Parameter speakerPitch: 演唱者的实时音高值
-     * - Parameter progressInMs: 当前音高、得分对应的实时进度（ms）
+     * Set real-time pitch data from microphone input
+     * Note: Can be obtained from AgoraRTC DRM callback method 'onPitch' (50ms interval)
      *
-     * @param speakerPitch 演唱者的实时音高值
-     * @param progressInMs 当前音高、得分对应的实时进度（ms）
+     * @param speakerPitch Current pitch value from singer
+     * @param progressInMs Current progress timestamp in milliseconds
      */
     public void setPitch(float speakerPitch, int progressInMs) {
         if (null != mScoringMachine) {
@@ -231,11 +341,10 @@ public class KaraokeView {
     }
 
     /**
-     * 设置当前歌曲的进度 [需要20ms/次的频率进行调用]
-     * - Note: 可以获取播放器的当前进度进行设置
-     * - Parameter progress: 歌曲进度 (ms)
+     * Set current song progress (should be called every 20ms)
+     * Note: Can be obtained from the player's current progress
      *
-     * @param progress 歌曲进度 (ms)
+     * @param progress Current song progress in milliseconds
      */
     public void setProgress(long progress) {
         LogUtils.d("setProgress progress:" + progress);
@@ -243,6 +352,11 @@ public class KaraokeView {
         mScoringMachine.setLyricProgress(progress);
     }
 
+    /**
+     * Set event listener for karaoke callbacks
+     *
+     * @param event Karaoke event listener
+     */
     public void setKaraokeEvent(KaraokeEvent event) {
         LogUtils.d("setKaraokeEvent event:" + event);
         this.mKaraokeEvent = event;
@@ -260,17 +374,20 @@ public class KaraokeView {
 
                 @Override
                 public void onStartTrackingTouch() {
-
                 }
 
                 @Override
                 public void onStopTrackingTouch() {
-
                 }
             });
         }
     }
 
+    /**
+     * Set custom scoring algorithm
+     *
+     * @param algorithm Custom scoring algorithm implementation
+     */
     public void setScoringAlgorithm(IScoringAlgorithm algorithm) {
         LogUtils.d("setScoringAlgorithm algorithm:" + algorithm);
         if (mScoringMachine != null) {
@@ -278,6 +395,11 @@ public class KaraokeView {
         }
     }
 
+    /**
+     * Set scoring difficulty level
+     *
+     * @param level Scoring difficulty level
+     */
     public void setScoringLevel(int level) {
         LogUtils.d("setScoringLevel level:" + level);
         if (null != mScoringMachine) {
@@ -285,6 +407,11 @@ public class KaraokeView {
         }
     }
 
+    /**
+     * Get current scoring difficulty level
+     *
+     * @return Current scoring level, defaults to 15
+     */
     public int getScoringLevel() {
         if (null != mScoringMachine) {
             return mScoringMachine.getScoringLevel();
@@ -293,12 +420,11 @@ public class KaraokeView {
     }
 
     /**
-     * 不推荐使用此方法。建议使用 {@link #setScoringLevel(int)} 代替。
-     * <p>
-     * 此方法可能在未来版本中被移除或更改。
+     * Set scoring compensation offset
+     * Not recommended, use {@link #setScoringLevel(int)} instead.
      *
-     * @param offset 偏移量值。
-     * @deprecated 由于上述原因，此方法已被弃用。
+     * @param offset Compensation offset value
+     * @deprecated Use {@link #setScoringLevel(int)} instead
      */
     @Deprecated
     public void setScoringCompensationOffset(int offset) {
@@ -308,6 +434,12 @@ public class KaraokeView {
         }
     }
 
+    /**
+     * Get current scoring compensation offset
+     *
+     * @return Current compensation offset value
+     * @deprecated Use {@link #getScoringLevel()} instead
+     */
     @Deprecated
     public int getScoringCompensationOffset() {
         if (null != mScoringMachine) {
@@ -316,14 +448,27 @@ public class KaraokeView {
         return 0;
     }
 
+    /**
+     * Add custom logger
+     *
+     * @param logger Logger implementation to add
+     */
     public void addLogger(Logger logger) {
         LogUtils.addLogger(logger);
     }
 
+    /**
+     * Remove custom logger
+     *
+     * @param logger Logger implementation to remove
+     */
     public void removeLogger(Logger logger) {
         LogUtils.removeLogger(logger);
     }
 
+    /**
+     * Remove all custom loggers
+     */
     public void removeAllLogger() {
         LogUtils.destroy();
     }

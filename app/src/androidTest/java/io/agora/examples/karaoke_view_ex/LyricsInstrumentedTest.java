@@ -2,6 +2,7 @@ package io.agora.examples.karaoke_view_ex;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -1483,5 +1484,22 @@ public class LyricsInstrumentedTest {
             assertEquals(expectedNumberOfScoringLines, mNumberOfScoringLines);
             assertEquals(expectedFinalCumulativeScore, mFinalCumulativeScore);
         }
+    }
+
+    @Test
+    public void testParseXmlFile() {
+        enableLyricViewExLog();
+        String fileNameOfSong = "20250317.xml";
+
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        File lyrics = Utils.copyAssetsToCreateNewFile(appContext, fileNameOfSong);
+        LyricModel model = LyricPitchParser.parseFile(lyrics, null, true, 0);
+
+        Log.d(TAG, "testParseXmlFile model: " + model);
+        assert model != null;
+        assertFalse(model.lines.isEmpty());
+        assertFalse(model.lines.get(0).tones.isEmpty());
+        assertNotEquals(0, model.lines.get(0).tones.get(0).pitch);
     }
 }

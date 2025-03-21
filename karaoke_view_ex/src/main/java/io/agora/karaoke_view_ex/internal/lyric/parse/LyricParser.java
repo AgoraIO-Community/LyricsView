@@ -19,12 +19,28 @@ import io.agora.karaoke_view_ex.model.LyricModel;
 import io.agora.karaoke_view_ex.utils.Utils;
 
 /**
- * 歌词解析
+ * Lyrics parser for different file formats.
+ * This class provides methods to parse lyrics from various formats (KRC, LRC, XML)
+ * and convert them into a standardized LyricModel.
  */
 public class LyricParser {
+    /**
+     * Regular expression pattern for matching time tags in LRC format
+     */
     private static final Pattern LRC_PATTERN_TIME = Pattern.compile("\\[(\\d{2}):(\\d{2})\\.(\\d{2,3})]");
+
+    /**
+     * Regular expression pattern for matching lyric content with time tags in LRC format
+     */
     private static final Pattern LRC_LYRIC_CONTENT_PATTERN = Pattern.compile("<(\\d{2}):(\\d{2})\\.(\\d{3})>(.*?)(?=<|$)");
 
+    /**
+     * Parses KRC format lyrics file data
+     *
+     * @param krcFileData The byte array containing KRC file data
+     * @param lyricOffset Time offset to apply to lyrics (in milliseconds)
+     * @return A LyricModel containing the parsed lyrics data
+     */
     public static LyricModel doParseKrc(byte[] krcFileData, int lyricOffset) {
         String content = new String(krcFileData);
 
@@ -40,13 +56,13 @@ public class LyricParser {
                 line = io.agora.karaoke_view_ex.internal.utils.Utils.removeStringBom(line);
                 isFirstLine = false;
             }
-            // 处理metadata部分：`[ti:星晴]`
+            // Process metadata section: `[ti:星晴]`
             if (line.startsWith("[")) {
                 int index = line.indexOf(":");
                 if (index != -1) {
-                    // key值，从第二个字符开始取，到“:”之前
+                    // Key value, from the second character to before ":"
                     String key = line.substring(1, index);
-                    // value值，“:”之后到“]”之前
+                    // Value, from after ":" to before "]"
                     String value = line.substring(index + 1, line.length() - 1);
                     metadata.put(key, value);
                 } else {
@@ -85,7 +101,13 @@ public class LyricParser {
         return lyrics;
     }
 
-    // 解析行内容
+    /**
+     * Parses a single line from KRC format
+     *
+     * @param line   The line to parse
+     * @param offset Time offset to apply (in milliseconds)
+     * @return A LyricsLineModel representing the parsed line, or null if parsing fails
+     */
     private static LyricsLineModel parseKrcLine(String line, long offset) {
         try {
             int rangeStart = line.indexOf("[");
@@ -97,7 +119,7 @@ public class LyricParser {
             String timeStr = line.substring(rangeStart + 1, rangeEnd);
             String[] timeComponents = timeStr.split(",");
 
-            // 处理行时间: `0,1600`
+            // Process line time: `0,1600`
             if (timeComponents.length != 2) {
                 return null;
             }
@@ -108,7 +130,7 @@ public class LyricParser {
             long lineDuration = Long.parseLong(timeComponents[1].trim());
             String lineContent = line.substring(rangeEnd + 1).trim();
 
-            // 解析行内容
+            // Parse line content
             List<LyricsLineModel.Tone> tones = new ArrayList<>();
             String[] toneComponents = lineContent.split("<");
             for (String toneComponent : toneComponents) {
@@ -116,7 +138,7 @@ public class LyricParser {
                     continue;
                 }
 
-                // 解析字内容： '0,177,0>星'
+                // Parse word content: '0,177,0>星'
                 String[] toneParts = toneComponent.split(">");
                 if (toneParts.length == 2) {
                     String word = toneParts[1];
@@ -145,7 +167,12 @@ public class LyricParser {
         return null;
     }
 
-
+    /**
+     * Parses LRC format lyrics file data
+     *
+     * @param fileData The byte array containing LRC file data
+     * @return A LyricModel containing the parsed lyrics data, or null if parsing fails
+     */
     public static LyricModel doParseLrc(byte[] fileData) {
         if (null == fileData) {
             return null;
@@ -174,6 +201,12 @@ public class LyricParser {
         return parseLrcLines(lines);
     }
 
+    /**
+     * Processes a list of parsed LRC lines into a complete LyricModel
+     *
+     * @param lines List of parsed LyricsLineModel objects
+     * @return A LyricModel containing the processed lyrics data
+     */
     private static LyricModel parseLrcLines(List<LyricsLineModel> lines) {
         LyricModel lyrics = new LyricModel(LyricType.LRC);
         if (null == lines || lines.isEmpty()) {
@@ -209,9 +242,11 @@ public class LyricParser {
         return lyrics;
     }
 
-
     /**
-     * 解析一行歌词
+     * Parses a single line from LRC format
+     *
+     * @param line The line to parse
+     * @return A list of LyricsLineModel objects representing the parsed line, or null if parsing fails
      */
     private static List<LyricsLineModel> parseLrcLine(String line) {
         if (TextUtils.isEmpty(line)) {
@@ -271,7 +306,7 @@ public class LyricParser {
                     if (null != milInString) {
                         mil = Long.parseLong(milInString);
                     }
-                    // 如果毫秒是两位数，需要乘以 10
+                    // If milliseconds is two digits, multiply by 10
                     if (!TextUtils.isEmpty(milInString) && milInString.length() == 2) {
                         mil = mil * 10;
                     }
@@ -291,6 +326,12 @@ public class LyricParser {
         return lines;
     }
 
+    /**
+     * Parses XML format lyrics file data
+     *
+     * @param fileData The byte array containing XML file data
+     * @return A LyricModel containing the parsed lyrics data
+     */
     public static LyricModel doParseXml(byte[] fileData) {
         if (null == fileData) {
             return null;

@@ -1,6 +1,7 @@
 package io.agora.karaoke_view_ex;
 
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -23,6 +24,7 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
@@ -31,6 +33,7 @@ import com.plattysoft.leonids.ParticleSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import io.agora.karaoke_view_ex.constants.Constants;
 import io.agora.karaoke_view_ex.internal.ScoringMachine;
@@ -39,80 +42,223 @@ import io.agora.karaoke_view_ex.internal.model.LyricsPitchLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 
 /**
- * Scoring view for karaoke
+ * View component for displaying karaoke scoring information.
+ * Handles pitch visualization, scoring indicators, and animations.
  */
 public class ScoringView extends View {
+    /**
+     * Horizontal bias for the start point position
+     */
     private float mStartPointHorizontalBias = 0.4f;
 
+    /**
+     * Handler for managing delayed tasks and animations
+     */
     private Handler mHandler;
 
+    /**
+     * Pixels moved per millisecond for animation
+     */
     private float mMovingPixelsPerMs;
 
+    /**
+     * Height of pitch stick visualization
+     */
     protected float mPitchStickHeight;
 
+    /**
+     * Radius of local pitch indicator
+     */
     protected float mLocalPitchIndicatorRadius;
+
+    /**
+     * Color of local pitch indicator
+     */
     protected int mLocalPitchIndicatorColor;
 
+    /**
+     * Paint for drawing local pitch indicator
+     */
     protected final Paint mLocalPitchIndicatorPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    /**
+     * Corner effect for local pitch indicator
+     */
     protected final CornerPathEffect mLocalPitchEffect = new CornerPathEffect(8);
 
+    /**
+     * Paint for drawing start line
+     */
     protected final Paint mStartLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
+    /**
+     * Paint for drawing overpast gradient
+     */
     protected final Paint mOverpastLinearGradientPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    /**
+     * Linear gradient for overpast effect
+     */
     protected LinearGradient mOverpastLinearGradient;
 
+    /**
+     * Paint for drawing pitch sticks
+     */
     private final Paint mPitchStickPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    /**
+     * Default color for reference pitch stick
+     */
     protected int mRefPitchStickDefaultColor;
+
+    /**
+     * Paint for highlighted pitch sticks
+     */
     private final Paint mPitchStickHighlightedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+    /**
+     * Color for highlighted pitch sticks
+     */
     private int mPitchStickHighlightedColor;
 
-    protected float mCenterXOfStartPoint = 0f; // centerX of start point(portrait divider), same as local pitch indicator
+    /**
+     * Center X coordinate of start point
+     */
+    protected float mCenterXOfStartPoint = 0f;
 
+    /**
+     * Paint for drawing leading lines
+     */
     protected final Paint mLeadingLinesPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
+    /**
+     * Particle system for visual effects
+     */
     protected ParticleSystem mParticleSystem;
+
+    /**
+     * Particles emitted per second
+     */
     protected int mParticlesPerSecond = 16;
 
+    /**
+     * Initial score value
+     */
     private float mInitialScore;
 
+    /**
+     * Threshold score for hit detection
+     */
     private float mThresholdOfHitScore;
 
+    /**
+     * Whether particle effects are enabled
+     */
     private boolean mEnableParticleEffect;
 
+    /**
+     * Threshold time for off-progress detection
+     */
     private long mThresholdOfOffProgressTime;
+
+    /**
+     * Timestamp of pitch highlight
+     */
     private long mPitchHighlightedTime = -1;
 
+    /**
+     * Current local pitch value
+     */
     protected volatile float mLocalPitch = 0.0F;
+
+    /**
+     * Timestamp of last animation decrease
+     */
+    private long mTimestampForLastAnimationDecrease = -1;
+
+    /**
+     * Timestamp of last view invalidation
+     */
+    private long mLastViewInvalidateTs;
+
+    /**
+     * Scoring machine instance
+     */
+    protected ScoringMachine mScoringMachine;
+
+    /**
+     * Token for delayed tasks
+     */
+    private Object mDelayedTaskToken;
+
+    /**
+     * Custom bitmap for local pitch indicator
+     */
+    protected Bitmap mCustomizedLocalPitchIndicator;
+
+    /**
+     * Current highlight status
+     */
+    private boolean mInHighlightStatus;
+
+    /**
+     * Previous highlight status
+     */
+    private boolean mPreHighlightStatus = false;
+
+    /**
+     * Whether emitting is initialized
+     */
+    private volatile boolean mEmittingInitialized = false;
+
+
+    /**
+     * RectF object for avoiding new object creation
+     */
+    private final RectF mRectFAvoidingNewObject = new RectF(0, 0, 0, 0);
+
+    /**
+     * Whether the scoring machine is uninitialized or has no lyrics
+     */
+    private long lastCurrentTs = 0;
 
     /**
      * Called automatically when animation of local indicator triggered
      * <p>
      * Mark it protected for implicit accessing from subclass
      *
-     * @param pitch
+     * @param pitch New pitch value
      */
     protected final void setMLocalPitch(float pitch) {
         this.mLocalPitch = pitch;
     }
 
-    private long mTimestampForLastAnimationDecrease = -1;
-
-    private long mLastViewInvalidateTs;
-
-    protected ScoringMachine mScoringMachine;
-
-    private Object mDelayedTaskToken;
-
-
-    //<editor-fold desc="Init Related">
+    /**
+     * Default constructor
+     *
+     * @param context Application context
+     */
     public ScoringView(Context context) {
         this(context, null);
     }
 
+    /**
+     * Constructor with attributes
+     *
+     * @param context Application context
+     * @param attrs   Attribute set from XML
+     */
     public ScoringView(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
+    /**
+     * Constructor with style attribute
+     *
+     * @param context      Application context
+     * @param attrs        Attribute set from XML
+     * @param defStyleAttr Default style attribute
+     */
     public ScoringView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(attrs);
@@ -124,6 +270,11 @@ public class ScoringView extends View {
         init(attrs);
     }
 
+    /**
+     * Set default color for reference pitch stick
+     *
+     * @param color Color value to set
+     */
     public void setRefPitchStickDefaultColor(@ColorInt int color) {
         if (color == 0) {
             color = getResources().getColor(R.color.default_popular_color);
@@ -133,6 +284,11 @@ public class ScoringView extends View {
         performInvalidateIfNecessary();
     }
 
+    /**
+     * Set color for highlighted pitch stick
+     *
+     * @param color Color value to set
+     */
     public void setRefPitchStickHighlightedColor(int color) {
         if (color == 0) {
             color = getResources().getColor(R.color.pitch_stick_highlighted_color);
@@ -142,16 +298,26 @@ public class ScoringView extends View {
         performInvalidateIfNecessary();
     }
 
+    /**
+     * Set height for reference pitch stick
+     *
+     * @param height Height value to set
+     */
     public void setRefPitchStickHeight(float height) {
         this.mPitchStickHeight = height;
     }
 
+    /**
+     * Initialize view with attributes
+     *
+     * @param attrs Attribute set from XML
+     */
     private void init(@Nullable AttributeSet attrs) {
         if (attrs == null) {
             return;
         }
 
-        this.mHandler = new Handler(Looper.myLooper());
+        this.mHandler = new Handler(Objects.requireNonNull(Looper.myLooper()));
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.ScoringView);
         mLocalPitchIndicatorRadius = ta.getDimension(R.styleable.ScoringView_pitchIndicatorRadius, getResources().getDimension(R.dimen.local_pitch_indicator_radius));
         mLocalPitchIndicatorColor = ta.getColor(R.styleable.ScoringView_pitchIndicatorColor, getResources().getColor(R.color.local_pitch_indicator_color));
@@ -197,11 +363,27 @@ public class ScoringView extends View {
         mLeadingLinesPaint.setColor(getResources().getColor(R.color.leading_lines_color));
     }
 
+    /**
+     * Handle view measurement
+     *
+     * @param widthMeasureSpec  Width measurement specifications
+     * @param heightMeasureSpec Height measurement specifications
+     */
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
+    /**
+     * Handle view layout changes
+     *
+     * @param changed Whether the layout has changed
+     * @param left    Left position
+     * @param top     Top position
+     * @param right   Right position
+     * @param bottom  Bottom position
+     */
+    @SuppressLint("DrawAllocation")
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
@@ -220,16 +402,19 @@ public class ScoringView extends View {
         }
     }
 
+    /**
+     * Check if canvas is ready for drawing
+     *
+     * @return true if canvas is not ready
+     */
     protected final boolean isCanvasNotReady() {
         return mCenterXOfStartPoint <= 0;
     }
 
     /**
-     * Enable particle effect or not
-     * <p>
-     * Do not call this regularly, this is expensive
+     * Enable or disable particle effect
      *
-     * @param enable enable or not
+     * @param enable Whether to enable particle effect
      */
     public void enableParticleEffect(boolean enable) {
         this.mEnableParticleEffect = enable;
@@ -242,12 +427,10 @@ public class ScoringView extends View {
     }
 
     /**
-     * Enable particle effect or not
-     * <p>
-     * Do not call this regularly, this is expensive
+     * Enable particle effect with custom particles
      *
-     * @param enable    enable or not
-     * @param particles the particles to be used
+     * @param enable    Whether to enable particle effect
+     * @param particles Custom particle drawables
      */
     public void enableParticleEffect(boolean enable, Drawable[] particles) {
         this.mEnableParticleEffect = enable;
@@ -260,9 +443,9 @@ public class ScoringView extends View {
     }
 
     /**
-     * set the threshold of hit score
+     * Set threshold for hit score detection
      *
-     * @param thresholdOfHitScore the threshold of hit score, must > 0 and <= 1
+     * @param thresholdOfHitScore Score threshold value (0-1)
      */
     public void setThresholdOfHitScore(float thresholdOfHitScore) {
         if (thresholdOfHitScore <= 0 || thresholdOfHitScore > 1.0f) {
@@ -272,6 +455,11 @@ public class ScoringView extends View {
         mThresholdOfHitScore = thresholdOfHitScore;
     }
 
+    /**
+     * Try to enable particle effect with optional custom particles
+     *
+     * @param particles Custom particle drawables (optional)
+     */
     private void tryEnableParticleEffect(Drawable[] particles) {
         if (mEnableParticleEffect) {
             if (mDelayedTaskToken != null) {
@@ -280,13 +468,15 @@ public class ScoringView extends View {
             }
 
             mDelayedTaskToken = new Object();
-            boolean result = mHandler.postAtTime(() -> {
-                // Create a particle system and start emiting
+            mHandler.postAtTime(() -> {
                 setParticles(particles);
             }, mDelayedTaskToken, SystemClock.uptimeMillis() + 1000);
         }
     }
 
+    /**
+     * Try to disable particle effect
+     */
     private void tryDisableParticleEffect() {
         if (!mEnableParticleEffect) {
             if (mDelayedTaskToken != null) {
@@ -295,7 +485,7 @@ public class ScoringView extends View {
             }
 
             mDelayedTaskToken = new Object();
-            boolean result = mHandler.postAtTime(() -> {
+            mHandler.postAtTime(() -> {
                 if (mParticleSystem != null) {
                     mParticleSystem.cancel();
                 }
@@ -304,11 +494,9 @@ public class ScoringView extends View {
     }
 
     /**
-     * Set particles if do not use the default ones
-     * <p>
-     * Do not call this regularly, this is expensive
+     * Set custom particles for the particle system
      *
-     * @param particles
+     * @param particles Array of particle drawables
      */
     public void setParticles(Drawable[] particles) {
         if (!mEnableParticleEffect) {
@@ -324,6 +512,11 @@ public class ScoringView extends View {
         mEmittingInitialized = false;
     }
 
+    /**
+     * Build default particle drawables list
+     *
+     * @return Array of default particle drawables
+     */
     protected final Drawable[] buildDefaultParticleList() {
         Drawable[] particles = new Drawable[8];
         particles[0] = getResources().getDrawable(R.drawable.star1);
@@ -337,6 +530,11 @@ public class ScoringView extends View {
         return particles;
     }
 
+    /**
+     * Initialize particle system with custom particles
+     *
+     * @param particles Array of particle drawables
+     */
     protected void initParticleSystem(Drawable[] particles) {
         mParticlesPerSecond = 12;
 
@@ -350,8 +548,15 @@ public class ScoringView extends View {
                 .setFadeOut(300, new AccelerateInterpolator());
     }
 
-    private final RectF mRectFAvoidingNewObject = new RectF(0, 0, 0, 0);
-
+    /**
+     * Build a RectF object with given coordinates
+     *
+     * @param left   Left coordinate
+     * @param top    Top coordinate
+     * @param right  Right coordinate
+     * @param bottom Bottom coordinate
+     * @return RectF object
+     */
     private RectF buildRectF(float left, float top, float right, float bottom) {
         mRectFAvoidingNewObject.left = left;
         mRectFAvoidingNewObject.top = top;
@@ -361,15 +566,16 @@ public class ScoringView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
 
-        if (isCanvasNotReady()) { // Fail fast
+        // Fail fast if canvas is not ready
+        if (isCanvasNotReady()) {
             return;
         }
 
         drawLeadingLines(canvas);
-        drawOverpastWallAndStartLine(canvas);
+        drawOverPastWallAndStartLine(canvas);
         drawPitchSticks(canvas);
         drawLocalPitchIndicator(canvas);
 
@@ -389,8 +595,11 @@ public class ScoringView extends View {
         }
     }
 
-    protected Bitmap mCustomizedLocalPitchIndicator;
-
+    /**
+     * Set the local pitch indicator bitmap
+     *
+     * @param bitmap Custom bitmap for pitch indicator
+     */
     public void setLocalPitchIndicator(Bitmap bitmap) {
         if (bitmap == null) {
             if (mCustomizedLocalPitchIndicator != null) {
@@ -402,6 +611,11 @@ public class ScoringView extends View {
         }
     }
 
+    /**
+     * Draw the local pitch indicator
+     *
+     * @param canvas Canvas to draw on
+     */
     protected void drawLocalPitchIndicator(Canvas canvas) {
         float value = getYForPitchIndicator();
         if (value >= 0) {
@@ -425,6 +639,11 @@ public class ScoringView extends View {
         }
     }
 
+    /**
+     * Calculate Y coordinate for pitch indicator
+     *
+     * @return Y coordinate value
+     */
     protected float getYForPitchIndicator() {
         float targetY = 0;
 
@@ -448,12 +667,17 @@ public class ScoringView extends View {
         return targetY;
     }
 
+    /**
+     * Draw leading lines on canvas
+     *
+     * @param canvas Canvas to draw on
+     */
     protected void drawLeadingLines(Canvas canvas) {
         int height = getHeight();
         int width = getWidth();
 
-        int heightOfLine0 = height * 0 / 5;
-        int heightOfLine1 = height * 1 / 5;
+        int heightOfLine0 = 0 / 5;
+        int heightOfLine1 = height / 5;
         int heightOfLine2 = height * 2 / 5;
         int heightOfLine3 = height * 3 / 5;
         int heightOfLine4 = height * 4 / 5;
@@ -470,19 +694,34 @@ public class ScoringView extends View {
         canvas.drawLine(0, heightOfLine5, width, heightOfLine5, mLeadingLinesPaint);
     }
 
-    protected void drawOverpastWallAndStartLine(Canvas canvas) {
-        drawOverpastWall(canvas);
+    /**
+     * Draw overpass wall and start line
+     *
+     * @param canvas Canvas to draw on
+     */
+    protected void drawOverPastWallAndStartLine(Canvas canvas) {
+        drawOverPastWall(canvas);
 
         drawStartLine(canvas);
     }
 
-    protected final void drawOverpastWall(Canvas canvas) {
+    /**
+     * Draw the overpass wall effect
+     *
+     * @param canvas Canvas to draw on
+     */
+    protected final void drawOverPastWall(Canvas canvas) {
         mOverpastLinearGradientPaint.setShader(null);
         mOverpastLinearGradientPaint.setShader(mOverpastLinearGradient);
         mOverpastLinearGradientPaint.setAntiAlias(true);
         canvas.drawRect(0, 0, mCenterXOfStartPoint, getHeight(), mOverpastLinearGradientPaint);
     }
 
+    /**
+     * Draw the start line
+     *
+     * @param canvas Canvas to draw on
+     */
     protected final void drawStartLine(Canvas canvas) {
         mStartLinePaint.setShader(null);
         mStartLinePaint.setColor(mLocalPitchIndicatorColor);
@@ -491,6 +730,11 @@ public class ScoringView extends View {
         canvas.drawLine(mCenterXOfStartPoint, 0, mCenterXOfStartPoint, getHeight(), mStartLinePaint);
     }
 
+    /**
+     * Draw pitch sticks on canvas
+     *
+     * @param canvas Canvas to draw on
+     */
     private void drawPitchSticks(Canvas canvas) {
         mPitchStickPaint.setShader(null);
         mPitchStickPaint.setColor(mRefPitchStickDefaultColor);
@@ -520,9 +764,11 @@ public class ScoringView extends View {
 
         float y;
         float widthOfPitchStick;
-        float stickHeightPerPitchLevel = (getHeight() - mPitchStickHeight /** make pitch stick always above bottom line **/) / (realPitchMax - realPitchMin);
+        // make pitch stick always above bottom line
+        float stickHeightPerPitchLevel = (getHeight() - mPitchStickHeight) / (realPitchMax - realPitchMin);
 
-        long endTimeOfPreviousLine = 0; // Not used so far
+        // Not used so far
+        long endTimeOfPreviousLine = 0;
 
         for (int i = 0; i < lines.size(); i++) {
             LyricsPitchLineModel line = lines.get(i);
@@ -572,8 +818,8 @@ public class ScoringView extends View {
             for (int pitchIndex = 0; pitchIndex < pitches.size(); pitchIndex++) {
                 LyricsPitchLineModel.Pitch pitch = pitches.get(pitchIndex);
 
-
-                pixelsAwayFromPilot = (pitch.begin - mScoringMachine.getCurrentPitchProgress()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
+                // For every time, we need to locate the new coordinate
+                pixelsAwayFromPilot = (pitch.begin - mScoringMachine.getCurrentPitchProgress()) * mMovingPixelsPerMs;
                 x = mCenterXOfStartPoint + pixelsAwayFromPilot;
                 widthOfPitchStick = mMovingPixelsPerMs * pitch.getDuration();
                 float endX = x + widthOfPitchStick;
@@ -581,12 +827,14 @@ public class ScoringView extends View {
                 float pitchXStart = x;
                 float pitchXEnd = x + mMovingPixelsPerMs * pitch.getDuration();
 
-                if (endX <= 0) { // when moves out of the view port
+                // when moves out of the view port
+                if (endX <= 0) {
                     pitch.resetHighlight();
                     continue;
                 }
 
-                if (x >= getWidth()) { // before moves into the view port
+                // before moves into the view port
+                if (x >= getWidth()) {
                     break;
                 }
 
@@ -666,11 +914,11 @@ public class ScoringView extends View {
         }
     }
 
-
-    //</editor-fold>
-
-    private volatile boolean mEmittingInitialized = false;
-
+    /**
+     * Tweak highlight animation
+     *
+     * @param endX End X coordinate
+     */
     private void tweakTheHighlightAnimation(float endX) {
         if (!mEnableParticleEffect) {
             return;
@@ -686,6 +934,12 @@ public class ScoringView extends View {
         }
     }
 
+
+    /**
+     * Attach to a scoring machine
+     *
+     * @param machine Scoring machine instance
+     */
     public final void attachToScoreMachine(ScoringMachine machine) {
         if (!machine.isReady()) {
             throw new IllegalStateException("Must call ScoringMachine.prepare before attaching");
@@ -696,6 +950,9 @@ public class ScoringView extends View {
         this.mScoringMachine.setInitialScore(mInitialScore);
     }
 
+    /**
+     * Detach from the scoring machine
+     */
     public final void requestRefreshUi() {
         if (mScoringMachine == null) {
             return;
@@ -707,6 +964,9 @@ public class ScoringView extends View {
         performInvalidateIfNecessary();
     }
 
+    /**
+     * Invalidate the view if necessary
+     */
     private void performInvalidateIfNecessary() {
         long delta = System.currentTimeMillis() - mLastViewInvalidateTs;
         if (delta <= 16) {
@@ -716,6 +976,9 @@ public class ScoringView extends View {
         invalidateForSureAndMarkTheTimestamp();
     }
 
+    /**
+     * Invalidate the view for sure and mark the timestamp
+     */
     private void invalidateForSureAndMarkTheTimestamp() {
         // Try to avoid too many `invalidate` operations, it is expensive
         if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
@@ -727,7 +990,10 @@ public class ScoringView extends View {
         mLastViewInvalidateTs = System.currentTimeMillis();
     }
 
-    private final Runnable mRemoveNoPitchAnimationCallback = new Runnable() { // No pitch
+    /**
+     * Remove no pitch animation callback
+     */
+    private final Runnable mRemoveNoPitchAnimationCallback = new Runnable() {
         @Override
         public void run() {
             assureAnimationForPitchIndicator(0); // Force stop the animation when there is no pitch
@@ -735,16 +1001,29 @@ public class ScoringView extends View {
             ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(duration).start(); // Decrease the local pitch indicator
 
             int tryN = 20;
-            while (tryN-- > 0) { // Workaround: when no `setProgress` any more, start self-triggering
+            // Workaround: when no `setProgress` any more, start self-triggering animation
+            while (tryN-- > 0) {
                 postInvalidateDelayed((20 - tryN) * (duration / 20L));
             }
         }
     };
 
+    /**
+     * Check if scoring machine is uninitialized or no lyrics
+     *
+     * @param machine Scoring machine instance
+     * @return true if uninitialized or no lyrics
+     */
     protected final boolean uninitializedOrNoLyrics(ScoringMachine machine) {
         return machine == null || mScoringMachine == null;
     }
 
+    /**
+     * Update pitch and score
+     *
+     * @param speakerPitch Speaker pitch value
+     * @param score        Score value
+     */
     public void updatePitchAndScore(float speakerPitch, final float score) {
         if (uninitializedOrNoLyrics(mScoringMachine)) {
             return;
@@ -765,8 +1044,12 @@ public class ScoringView extends View {
 
     }
 
-    private long lastCurrentTs = 0;
 
+    /**
+     * Perform indicator animation if necessary
+     *
+     * @param scoreAfterNormalization Score value after normalization
+     */
     private void performIndicatorAnimationIfNecessary(final double scoreAfterNormalization) {
         if (System.currentTimeMillis() - lastCurrentTs >= 80) {
             //int duration = (ScoringView.this.mLocalPitch == 0 && pitch > 0) ? 20 : 80;
@@ -776,6 +1059,11 @@ public class ScoringView extends View {
         }
     }
 
+    /**
+     * Assure animation for pitch indicator
+     *
+     * @param scoreAfterNormalization Score value after normalization
+     */
     protected final void assureAnimationForPitchIndicator(double scoreAfterNormalization) {
         // Be very careful if you wanna add condition case
         // Should not related with lyrics or other status
@@ -804,6 +1092,9 @@ public class ScoringView extends View {
         }
     }
 
+    /**
+     * Reset pitch indicator and animation
+     */
     public final void resetPitchIndicatorAndAnimation() {
         mInHighlightStatus = false;
         if (this.mLocalPitch != 0) {
@@ -817,6 +1108,11 @@ public class ScoringView extends View {
         }
     }
 
+    /**
+     * Reset pitch indicator and animation when full line finished
+     *
+     * @param score Score value
+     */
     public final void resetPitchIndicatorAndAnimationWhenFullLineFinished(double score) {
         if (score == 0 && this.mLocalPitch != 0) {
             mInHighlightStatus = false;
@@ -836,9 +1132,9 @@ public class ScoringView extends View {
         });
     }
 
-    private boolean mInHighlightStatus;
-    private boolean mPreHighlightStatus = false;
-
+    /**
+     * Reset the view
+     */
     public void reset() {
         resetInternal();
         mHandler.post(new Runnable() {
@@ -851,6 +1147,9 @@ public class ScoringView extends View {
         });
     }
 
+    /**
+     * Reset internal state of the view
+     */
     private void resetInternal() {
         mInHighlightStatus = false;
         mPreHighlightStatus = false;
@@ -858,6 +1157,9 @@ public class ScoringView extends View {
         mScoringMachine = null;
     }
 
+    /**
+     * Handle view detachment from window
+     */
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();

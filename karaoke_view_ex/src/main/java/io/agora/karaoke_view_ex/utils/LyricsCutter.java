@@ -9,31 +9,51 @@ import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 
-
+/**
+ * Utility class for cutting and trimming lyrics based on time ranges.
+ * Provides functionality to extract portions of lyrics between specified start and end times.
+ */
 public class LyricsCutter {
 
+    /**
+     * Internal class representing a single line of lyrics with timing information
+     */
     static class Line {
-        private int beginTime;
-        private int duration;
+        private final int mBeginTime;
+        private final int mDuration;
 
+        /**
+         * Constructs a new Line instance
+         *
+         * @param beginTime The start time of the line in milliseconds
+         * @param duration  The duration of the line in milliseconds
+         */
         public Line(long beginTime, long duration) {
-            this.beginTime = (int) beginTime;
-            this.duration = (int) duration;
+            this.mBeginTime = (int) beginTime;
+            this.mDuration = (int) duration;
         }
 
         public int getBeginTime() {
-            return beginTime;
+            return mBeginTime;
         }
 
         public int getDuration() {
-            return duration;
+            return mDuration;
         }
 
         public int getEndTime() {
-            return beginTime + duration;
+            return mBeginTime + mDuration;
         }
     }
 
+    /**
+     * Adjusts the start and end times to match the nearest line boundaries
+     *
+     * @param startTime The requested start time in milliseconds
+     * @param endTime   The requested end time in milliseconds
+     * @param lines     List of lyrics lines to process
+     * @return A Pair containing the adjusted start and end times, or null if invalid
+     */
     private static Pair<Integer, Integer> handleFixTime(int startTime, int endTime, List<LyricsLineModel> lines) {
         if (startTime >= endTime || lines.isEmpty()) {
             return null;
@@ -50,7 +70,7 @@ public class LyricsCutter {
             return null;
         }
 
-        // 跨过第一个或最后一个
+        // Adjust boundaries if they cross first or last line
         if (start < firstLine.getStartTime()) {
             start = firstLine.getStartTime();
         }
@@ -86,6 +106,15 @@ public class LyricsCutter {
         return null;
     }
 
+    /**
+     * Cuts the lyrics model to include only lines within the specified time range
+     *
+     * @param model     The lyrics model to cut
+     * @param startTime The start time in milliseconds
+     * @param endTime   The end time in milliseconds
+     * @return The modified lyrics model containing only the lines within the specified range,
+     * or the original model if cutting is not possible
+     */
     public static LyricModel cut(LyricModel model, int startTime, int endTime) {
         LogUtils.d("cut LyricModel startTime: " + startTime + " endTime: " + endTime + " model: " + model);
         if (model == null || model.lines == null || model.lines.isEmpty()) {

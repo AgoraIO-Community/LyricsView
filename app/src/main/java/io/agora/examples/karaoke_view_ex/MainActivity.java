@@ -346,6 +346,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         boolean lyricsDraggingOn = prefs.getBoolean(getString(R.string.prefs_key_lyrics_dragging_switch), true);
         binding.lyricsView.enableDragging(lyricsDraggingOn);
 
+        boolean lyricsLineWrapOn = prefs.getBoolean(getString(R.string.prefs_key_lyrics_line_wrap_switch), false);
+        binding.lyricsView.enableLineWrap(lyricsLineWrapOn);
+
         String labelWhenNoLyrics = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text), getString(R.string.no_lyrics_label));
         binding.lyricsView.setLabelShownWhenNoLyrics(labelWhenNoLyrics);
 

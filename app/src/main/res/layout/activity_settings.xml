@@ -481,6 +481,26 @@
                         app:layout_constraintStart_toEndOf="@+id/enable_dragging_title"
                         app:layout_constraintTop_toTopOf="@id/enable_dragging_title" />
 
+                    <TextView
+                        android:id="@+id/enable_line_wrap_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="8dp"
+                        android:lines="1"
+                        android:text="@string/line_wrap_switch"
+                        app:layout_constraintHorizontal_bias="0.18"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/enable_dragging_title" />
+
+                    <androidx.appcompat.widget.AppCompatCheckBox
+                        android:id="@+id/line_wrap_switch"
+                        android:layout_width="0dp"
+                        android:layout_height="20dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0.82"
+                        app:layout_constraintStart_toEndOf="@+id/enable_line_wrap_title"
+                        app:layout_constraintTop_toTopOf="@id/enable_line_wrap_title" />
 
                     <TextView
                         android:id="@+id/lyrics_not_available_title"
@@ -492,7 +512,7 @@
                         android:text="@string/when_no_lyrics"
                         app:layout_constraintHorizontal_bias="0.6"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/enable_dragging_title" />
+                        app:layout_constraintTop_toBottomOf="@id/enable_line_wrap_title" />
 
                     <androidx.appcompat.widget.AppCompatSpinner
                         android:id="@+id/lyrics_not_available_selector"

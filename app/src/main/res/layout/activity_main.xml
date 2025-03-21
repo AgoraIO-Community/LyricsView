@@ -50,6 +50,7 @@
         app:currentLineHighlightedTextColor="#FFF44336"
         app:currentLineTextColor="#FFFFFF"
         app:currentLineTextSize="20sp"
+        app:enableLineWrap="false"
         app:labelWhenNoLyrics=""
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
