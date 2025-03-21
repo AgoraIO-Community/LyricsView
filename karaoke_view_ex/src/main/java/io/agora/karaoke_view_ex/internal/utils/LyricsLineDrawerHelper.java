@@ -182,36 +182,38 @@ public class LyricsLineDrawerHelper {
 
         // Fix: Correctly handle line wrapping logic
         // When mEnableLineWrap is false, use a large enough width to ensure no wrapping
-        int layoutWidth = mEnableLineWrap ? width : Integer.MAX_VALUE / 2;
-
-        // Ensure consistent size parameters when creating foreground and background layouts
-        if (textPaintFg != null) {
-            mLayoutFg = new StaticLayout(text, textPaintFg, layoutWidth, align, 1f, 0f, false);
-        }
-        mLayoutBg = new StaticLayout(text, textPaintBg, layoutWidth, align, 1f, 0f, false);
+        int layoutWidth = width;
 
         // If line wrapping is not allowed, but the text width exceeds the widget width, adjust the layout width
         if (!mEnableLineWrap) {
             int textWidth = (int) textPaintBg.measureText(text);
             // Use the actual measured text width to ensure it won't be forced to wrap due to insufficient width
             layoutWidth = Math.max(width, textWidth);
+        }
 
-            if (textPaintFg != null) {
-                mLayoutFg = new StaticLayout(text, textPaintFg, layoutWidth, align, 1f, 0f, false);
-            }
+        if (textPaintFg != null) {
+            mLayoutFg = new StaticLayout(text, textPaintFg, layoutWidth, align, 1f, 0f, false);
             mLayoutBg = new StaticLayout(text, textPaintBg, layoutWidth, align, 1f, 0f, false);
+        } else {
+            LogUtils.e("LyricsLineDrawerHelper init: textPaintFg is null");
+            return;
         }
 
         int totalLine = mLayoutBg.getLineCount();
         mTextRectDisplayLines = new Rect[totalLine];
         mDrawRects = new Rect[totalLine];
         for (int i = 0; i < totalLine; i++) {
-            Rect mRect = new Rect();
-            mLayoutBg.getLineBounds(i, mRect);
-            mRect.left = (int) mLayoutBg.getLineLeft(i);
-            mRect.right = (int) mLayoutBg.getLineRight(i);
-
+            Rect textRect = new Rect();
             String lineText = text.substring(mLayoutBg.getLineStart(i), mLayoutBg.getLineEnd(i));
+
+            float lineWidth = textPaintBg.measureText(lineText);
+
+            mLayoutBg.getLineBounds(i, textRect);
+
+            float lineLeft = mLayoutBg.getLineLeft(i);
+            textRect.left = (int) lineLeft;
+            textRect.right = (int) (lineLeft + lineWidth);
+
             boolean hasEnglishChar = false;
             for (char c : lineText.toCharArray()) {
                 if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
@@ -221,11 +223,11 @@ public class LyricsLineDrawerHelper {
             }
 
             if (hasEnglishChar) {
-                mRect.bottom += 5;
+                textRect.bottom += 5;
             }
 
-            mTextRectDisplayLines[i] = mRect;
-            mDrawRects[i] = new Rect(mRect);
+            mTextRectDisplayLines[i] = textRect;
+            mDrawRects[i] = new Rect(textRect);
         }
     }
 
