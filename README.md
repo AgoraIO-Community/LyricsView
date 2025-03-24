@@ -1,20 +1,64 @@
 # KaraokeView for Android
 
-Build KTV app effortlessly with KaraokeView
+> Build KTV app effortlessly with KaraokeView
 
-# 简介
+## 目录
 
-声网 KTV 控件(KaraokeView)支持在歌曲播放的同时同步显示歌词，支持演唱打分以及相关效果显示。本文介绍如何在项目中集成并使用 KaraokeView。
+- [简介](#简介)
+- [功能特点](#功能特点)
+- [运行示例](#运行示例)
+- [集成方式](#集成方式)
+    - [Maven 集成](#方式一maven-集成)
+    - [源代码集成](#方式二源代码集成)
+- [使用指南](#使用指南)
+    - [初始化与基本使用](#初始化与基本使用)
+    - [事件回调接口](#事件回调接口)
+- [自定义配置](#自定义配置)
+    - [LyricsView 自定义属性](#lyricsview-自定义属性)
+    - [ScoringView 自定义属性](#scoringview-自定义属性)
+    - [自定义粒子动画效果](#自定义粒子动画效果)
+    - [自定义打分算法](#自定义打分算法)
+
+## 简介
+
+声网 KTV 控件(KaraokeView)是一个专为 Android
+平台设计的歌词同步显示和演唱打分组件。它支持在歌曲播放的同时同步显示歌词，支持演唱打分以及相关效果显示，为开发者提供了构建
+KTV 应用的完整解决方案。
 
 > **注意**：该版本稳定版 2.x 在 API 上并不兼容1.x版本，但2.1.x版本后兼容1.x版本的所有功能，建议升级到2.1.x版本
 
 ## 功能特点
 
+✨ **核心功能**
+
 - 歌曲播放时，根据当前播放进度显示对应的歌词
 - 手势拖动到指定时间的歌词，歌曲进度随之改变
-- 自定义歌词界面布局
-- 自定义更换歌词背景
 - 根据演唱结果进行打分以及显示对应的视图效果
+
+🎨 **自定义选项**
+
+- 自定义歌词界面布局和字体样式
+- 自定义更换歌词背景
+- 自定义粒子动画效果
+- 自定义打分算法
+
+## 运行示例
+
+1. 在项目根目录下编辑 `local.properties` 文件，添加以下配置参数：
+
+```properties
+# 声网配置
+APP_CERTIFICATE=XXX  # 声网证书
+APP_ID=XXX           # 声网 App ID
+# 音速达曲库配置
+YSD_APP_ID=XXX       # 音速达曲库 App ID
+YSD_APP_KEY=XXX      # 音速达曲库 App Key
+YSD_TOKEN_HOST=XXX   # 音速达曲库 Token 获取地址
+```
+
+2. 使用 Android Studio 打开项目，等待依赖同步完成
+
+3. 点击工具栏中的"运行"按钮（绿色三角形）或使用快捷键 `Shift+F10` 即可启动示例应用
 
 ## 集成方式
 
@@ -24,13 +68,14 @@ Build KTV app effortlessly with KaraokeView
 
 ```gradle
 dependencies {
-    implementation("io.github.winskyan:Agora-LyricsViewEx:2.1.0")
+    implementation("io.github.winskyan:Agora-LyricsViewEx:2.2.0")
 }
 ```
 
 ### 方式二：源代码集成
 
 1. 将该项目下的 `karaoke_view_ex` 文件夹拷贝至你的项目文件夹下
+
 2. 在项目的 `settings.gradle` 文件中添加：
 
 ```gradle
@@ -59,8 +104,8 @@ public class LiveActivity extends RtcBaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // 1. 初始化KaraokeView
         mKaraokeView = new KaraokeView(
-            binding.enableLyrics.isChecked() ? binding.lyricsView : null, 
-            binding.enableScoring.isChecked() ? binding.scoringView : null
+                binding.enableLyrics.isChecked() ? binding.lyricsView : null,
+                binding.enableScoring.isChecked() ? binding.scoringView : null
         );
 
         // 2. 设置事件回调
@@ -71,8 +116,8 @@ public class LiveActivity extends RtcBaseActivity {
             }
 
             @Override
-            public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, 
-                                      int cumulativeScore, int index, int lineCount) {
+            public void onLineFinished(KaraokeView view, LyricsLineModel line, int score,
+                                       int cumulativeScore, int index, int lineCount) {
                 // 启用内部打分时，每行歌词结束会触发此回调
             }
         });
@@ -123,8 +168,8 @@ public interface KaraokeEvent {
      * @param index           当前句索引
      * @param lineCount       整个歌词总句数
      */
-    void onLineFinished(KaraokeView view, LyricsLineModel line, int score, 
-                       int cumulativeScore, int index, int lineCount);
+    void onLineFinished(KaraokeView view, LyricsLineModel line, int score,
+                        int cumulativeScore, int index, int lineCount);
 }
 ```
 
@@ -135,14 +180,11 @@ public interface KaraokeEvent {
 在XML布局文件中定义LyricsView：
 
 ```xml
-<io.agora.karaoke_view_ex.LyricsView 
-    android:id="@+id/lyrics_view"
-    android:layout_width="match_parent" 
-    android:layout_height="match_parent"
-    android:paddingStart="10dp" 
-    android:paddingTop="20dp" 
-    android:paddingEnd="10dp"
-    
+
+<io.agora.karaoke_view_ex.LyricsView android:id="@+id/lyrics_view"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:paddingStart="10dp" android:paddingTop="20dp" android:paddingEnd="10dp"
+
     app:currentLineTextColor="@color/ktv_lrc_current"           <!-- 当前行歌词颜色 -->
     app:currentLineTextSize="26sp"                              <!-- 当前行歌词字体大小 -->
     app:currentLineHighlightedTextColor="@color/ktv_lrc_highlight" <!-- 当前行歌词高亮颜色 -->
@@ -160,10 +202,9 @@ public interface KaraokeEvent {
 在XML布局文件中定义ScoringView：
 
 ```xml
-<io.agora.karaoke_view_ex.ScoringView
-    android:id="@+id/scoring_view"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+
+<io.agora.karaoke_view_ex.ScoringView android:id="@+id/scoring_view"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
     app:pitchStickHeight="4dp"                                 <!-- 基准音条高度 -->
     app:pitchStickHighlightedColor="@color/pink_b4" />         <!-- 基准音条高亮状态颜色 -->
 ```
@@ -178,16 +219,16 @@ public class MyScoringView extends ScoringView {
     public void initParticleSystem(Drawable[] particles) {
         // 使用Leonids库时需添加依赖
         // api 'com.github.guohai:Leonids:9f5a9190f6'
-        
+
         mParticlesPerSecond = 16;
         particles = {..., ..., ...}  // 可选
 
-        mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(), 
-                                            particles.length * 6, particles, 900);
+        mParticleSystem = new ParticleSystem((ViewGroup) this.getParent(),
+                particles.length * 6, particles, 900);
         mParticleSystem.setRotationSpeedRange(90, 180)
-                       .setScaleRange(0.7f, 1.6f)
-                       .setSpeedModuleAndAngleRange(0.10f, 0.20f, 120, 240)
-                       .setFadeOut(300, new AccelerateInterpolator());
+                .setScaleRange(0.7f, 1.6f)
+                .setSpeedModuleAndAngleRange(0.10f, 0.20f, 120, 240)
+                .setFadeOut(300, new AccelerateInterpolator());
     }
 }
 ```
@@ -204,19 +245,18 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
     @Override
     public float getPitchScore(float currentPitch, float currentRefPitch) {
         final float scoreAfterNormalization = ScoringMachine.calculateScore2(
-            0, mScoringLevel, mScoringCompensationOffset, currentPitch, currentRefPitch);
+                0, mScoringLevel, mScoringCompensationOffset, currentPitch, currentRefPitch);
         // 返回的为 [0, 1] 之间的规范值
         return scoreAfterNormalization;
     }
 
     @Override
-    public int getLineScore(final LinkedHashMap<Long, Float> pitchesForLine, 
-                          final int indexOfLineJustFinished, 
-                          final LyricsLineModel lineJustFinished) {
+    public int getLineScore(final LinkedHashMap<Long, Float> pitchesForLine,
+                            final int indexOfLineJustFinished,
+                            final LyricsLineModel lineJustFinished) {
         // 自定义每行得分计算逻辑
         int scoreThisLine = ...;
         return scoreThisLine;
     }
 }
 ```
-
