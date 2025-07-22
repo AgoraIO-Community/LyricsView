@@ -72,6 +72,9 @@ android {
     buildFeatures {
         buildConfig true
     }
+
+    //must high than 23 because for support 16kb page size
+    ndkVersion ndkLibVersion.toString()
 }
 
 dependencies {
