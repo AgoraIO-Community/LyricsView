@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 2.8.0)
+cmake_minimum_required(VERSION 3.4.1)
 project(ai-engine-sdk)
+
+# add linker flag to set 16K page size
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=0x4000")
 
 add_library( # Sets the name of the library.
         agora-karaoke-ai
@@ -10,7 +13,7 @@ add_library( # Sets the name of the library.
         # Provides a relative path to your source file(s).
         io_agora_karaoke_view_ex_internal_ai_AIAlgorithmScoreNative.cpp
         Algorithm.c
-        )
+)
 
 find_library( # Sets the name of the path variable.
         log-lib

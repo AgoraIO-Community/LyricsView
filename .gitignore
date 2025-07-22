@@ -82,3 +82,6 @@ lint/tmp/
 
 repo/
 mavenUpload/
+
+libs/
+jniLibs/
