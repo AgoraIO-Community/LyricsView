@@ -72,52 +72,12 @@ android {
     buildFeatures {
         buildConfig true
     }
-
-    sourceSets {
-        main {
-            java {
-                if (enableMcc3.toBoolean()) {
-                    exclude 'io/agora/examples/karaoke_view_ex/agora/MccManager.2.java'
-                } else {
-                    exclude 'io/agora/examples/karaoke_view_ex/agora/MccManager.3.java'
-                }
-            }
-        }
-    }
-
-    task modifyMccFileNames {
-        doLast {
-            def enableMcc3 = project.hasProperty('enableMcc3') && project.property('enableMcc3').toBoolean()
-            def srcDir = 'src/main/java/io/agora/examples/karaoke_view_ex/agora'
-
-            def file3 = file("${srcDir}/MccManager.3.java")
-            def file2 = file("${srcDir}/MccManager.2.java")
-            def originalFile = file("${srcDir}/MccManager.java")
-
-            if (enableMcc3) {
-                if (file3.exists()) {
-                    originalFile.renameTo(file2)
-                    file3.renameTo(originalFile)
-                }
-            } else {
-                if (file2.exists()) {
-                    originalFile.renameTo(file3)
-                    file2.renameTo(originalFile)
-                }
-            }
-        }
-    }
-
-    preBuild.dependsOn modifyMccFileNames
 }
 
 dependencies {
     api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-    if (isSdkMode.toBoolean()) {
-        implementation "io.github.winskyan:Agora-LyricsViewEx:${sdkVersion.toString()}"
-    } else {
-        implementation project(':karaoke_view_ex')
-    }
+    implementation "io.github.winskyan:Agora-LyricsViewEx:${sdkVersion.toString()}"
+    implementation 'io.agora.rtc:agora-special-full:4.4.1.10'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
@@ -127,24 +87,11 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
-    if (enableMcc3.toBoolean()) {
-
-    } else {
-        implementation 'io.agora.rtc:agora-special-full:4.4.1.3'
-    }
-
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'io.agora:authentication:2.0.0'
     implementation 'commons-codec:commons-codec:1.16.0'
     implementation 'pub.devrel:easypermissions:3.0.0'
-
-    implementation("io.github.winskyan:Agora-MccExService:2.2.0.132-alpha.6") {
-        exclude(group: "io.agora.rtc", module: "agora-special-full")
-    }
-//    def roomVersion = "2.5.2"
-//    implementation("androidx.room:room-runtime:${roomVersion.toString()}")
-//    implementation("androidx.room:room-ktx:${roomVersion.toString()}")
 }
 
 static def releaseTime() {

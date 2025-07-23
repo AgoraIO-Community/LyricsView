@@ -1,4 +1,4 @@
-package io.agora.examples.utils
+package io.agora.examples.karaoke_view_ex.utils
 
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull

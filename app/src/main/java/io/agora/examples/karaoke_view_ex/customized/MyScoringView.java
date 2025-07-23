@@ -50,18 +50,6 @@ public class MyScoringView extends ScoringView {
     }
 
     @Override
-    protected void drawOverpastWallAndStartLine(Canvas canvas) {
-        drawOverpastWall(canvas);
-
-        // Same as drawStartLine, but with extra gradient color on it
-        mStartLinePaint.setShader(mStartLineLinearGradient);
-        mStartLinePaint.setColor(mLocalPitchIndicatorColor);
-        mStartLinePaint.setAntiAlias(true);
-        mStartLinePaint.setStrokeWidth(3);
-        canvas.drawLine(mCenterXOfStartPoint, 0, mCenterXOfStartPoint, getHeight(), mStartLinePaint);
-    }
-
-    @Override
     public void initParticleSystem(Drawable[] particles) {
         // Import Leonids as below when re-write initParticleSystem
         // api 'com.github.guohai:Leonids:9f5a9190f6'
