@@ -446,7 +446,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (mKaraokeView != null) {
             mKaraokeView.setProgress(0);
-            mKaraokeView.setPitch(0, 0);
+            mKaraokeView.setPitch(0, 0, 0);
             mKaraokeView.reset();
             mKaraokeView = null;
         }
@@ -553,7 +553,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mKaraokeView.setPitch((float) speakerPitch, (int) progressInMs);
+                    mKaraokeView.setPitch((float) speakerPitch, 0F, (int) progressInMs);
                 }
             });
         }
