@@ -332,11 +332,12 @@ public class KaraokeView {
      * Note: Can be obtained from AgoraRTC DRM callback method 'onPitch' (50ms interval)
      *
      * @param speakerPitch Current pitch value from singer
+     * @param pitchScore   Current pitch score (0.0 to 100.0)
      * @param progressInMs Current progress timestamp in milliseconds
      */
-    public void setPitch(float speakerPitch, int progressInMs) {
+    public void setPitch(float speakerPitch, float pitchScore, int progressInMs) {
         if (null != mScoringMachine) {
-            mScoringMachine.setPitch(speakerPitch, progressInMs);
+            mScoringMachine.setPitch(speakerPitch, pitchScore, progressInMs);
         }
     }
 

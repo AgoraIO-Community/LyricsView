@@ -268,11 +268,12 @@ public class ScoringMachine {
      * Updates the pitch data and calculates scoring
      *
      * @param speakerPitch The detected pitch from the user's voice
+     * @param pitchScore   The calculated pitch score
      * @param progressInMs The current progress in milliseconds
      */
-    public void setPitch(float speakerPitch, int progressInMs) {
+    public void setPitch(float speakerPitch, float pitchScore, int progressInMs) {
         if (Config.DEBUG) {
-            LogUtils.d("setPitch speakerPitch:" + speakerPitch + ",progressInMs:" + progressInMs);
+            LogUtils.d("setPitch speakerPitch:" + speakerPitch + ",progressInMs:" + pitchScore + ",progressInMs:" + progressInMs);
         }
         if (mUsingInternalScoring) {
             //ignore set pitch progress
@@ -347,9 +348,15 @@ public class ScoringMachine {
                 mListener.onPitchAndScoreUpdate(pitchAfterProcess, scoreAfterNormalization, progressInMs);
             }
         } else {
-            double calculateScore = calculateScoreWithPitch(speakerPitch, progressInMs);
+            float calculateScore = 0F;
+            if (pitchScore > 0) {
+                calculateScore = pitchScore;
+            } else {
+                calculateScore = (float) calculateScoreWithPitch(speakerPitch, progressInMs);
+            }
+
             if (null != mListener) {
-                mListener.onPitchAndScoreUpdate(speakerPitch, (float) calculateScore, progressInMs);
+                mListener.onPitchAndScoreUpdate(speakerPitch, calculateScore, progressInMs);
             }
         }
 
