@@ -194,9 +194,8 @@ object MusicManager {
         if (mStatus != ExampleConstants.Status.IDLE) {
             mStatus = ExampleConstants.Status.Stopped
         }
-        mCallback?.onMusicStop()
         stopDisplayLrc()
-        reset()
+        mCallback?.onMusicStop()
     }
 
     fun onMusicOpenError(error: Int) {
@@ -205,13 +204,15 @@ object MusicManager {
 
     fun onMusicCompleted() {
         Log.i(TAG, "onMusicCompleted() called")
-        mCallback?.onMusicStop()
         stopDisplayLrc()
         reset()
+        mCallback?.onMusicStop()
+
     }
 
     @SuppressLint("DiscouragedApi")
     private fun startDisplayLrc() {
+        Log.d(TAG, "startDisplayLrc() called")
         maybeCreateNewScheduledService()
         mPlayPosition = -1L
         mScheduledExecutorService?.scheduleAtFixedRate({
@@ -228,19 +229,23 @@ object MusicManager {
     }
 
     private fun stopDisplayLrc() {
+        Log.d(TAG, "stopDisplayLrc() called")
         mScheduledExecutorService?.shutdown()
+        mScheduledExecutorService = null
     }
 
     private fun maybeCreateNewScheduledService() {
-        if (null == mScheduledExecutorService || mScheduledExecutorService!!.isShutdown) {
+        if (null == mScheduledExecutorService || mScheduledExecutorService?.isShutdown == true) {
             mScheduledExecutorService = Executors.newScheduledThreadPool(5)
         }
     }
 
     private fun reset() {
         mStatus = ExampleConstants.Status.IDLE
-        mScheduledExecutorService?.shutdown()
-        mScheduledExecutorService = null
+        if (null != mScheduledExecutorService) {
+            mScheduledExecutorService?.shutdown()
+            mScheduledExecutorService = null
+        }
     }
 
     private fun updateMusicPosition(position: Long) {
