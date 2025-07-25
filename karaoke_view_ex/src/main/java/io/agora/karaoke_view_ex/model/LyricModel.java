@@ -9,55 +9,71 @@ import io.agora.karaoke_view_ex.internal.constants.LyricType;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.model.PitchData;
 
+/**
+ * Model class representing lyrics data for a song.
+ * Contains song information, lyrics lines, and pitch data for karaoke functionality.
+ */
 public class LyricModel {
     /**
-     * 歌词类型
+     * Type of lyrics (e.g., LRC, XML, KRC)
      */
     public LyricType type;
+
     /**
-     * 歌曲名称
+     * Name of the song
      */
     public String name;
+
     /**
-     * 歌星名称
+     * Name of the singer/artist
      */
     public String singer;
 
     /**
-     * 歌词行
+     * List of lyrics lines containing timing and text information
      */
     public List<LyricsLineModel> lines;
 
     /**
-     * 前奏结束时间, milliseconds
+     * End time of the song's prelude in milliseconds
      */
     public long preludeEndPosition;
 
     /**
-     * 歌词总时长, milliseconds
+     * Total duration of the lyrics in milliseconds
      */
     public long duration;
 
     /**
-     * 是否包含音高信息
+     * Whether the lyrics contain pitch information
      */
     public boolean hasPitch;
 
     /**
-     * 版权句行数
+     * Number of lines containing copyright information
      */
     public int copyrightSentenceLineCount;
 
     /**
-     * 音高文件数据
+     * List of pitch data points for karaoke scoring
      */
     public List<PitchData> pitchDataList;
 
+    /**
+     * Constructor for LyricModel
+     *
+     * @param type Type of lyrics to be used
+     */
     public LyricModel(LyricType type) {
         this.type = type;
         copyrightSentenceLineCount = 0;
     }
 
+    /**
+     * Create a deep copy of the LyricModel
+     *
+     * @return New instance of LyricModel with copied data
+     */
     public LyricModel copy() {
         LyricModel lyricModel = new LyricModel(type);
         lyricModel.name = name;
@@ -74,6 +90,11 @@ public class LyricModel {
         return lyricModel;
     }
 
+    /**
+     * Convert the LyricModel to a string representation
+     *
+     * @return String containing all model properties
+     */
     @NonNull
     @Override
     public String toString() {

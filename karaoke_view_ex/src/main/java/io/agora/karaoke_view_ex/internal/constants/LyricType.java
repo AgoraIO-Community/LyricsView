@@ -1,27 +1,22 @@
 package io.agora.karaoke_view_ex.internal.constants;
 
+/**
+ * Enumeration of supported lyrics file formats.
+ * This enum defines the different types of lyric files that can be parsed and displayed.
+ */
 public enum LyricType {
-    XML(0),
-    LRC(1),
-    LRC_WITH_PITCHS(2),
-    KRC(3);
+    /**
+     * XML format lyrics, typically containing detailed timing and pitch information
+     */
+    XML,
 
-    private final int value;
+    /**
+     * LRC format lyrics, a simple text-based format with timestamps
+     */
+    LRC,
 
-    LyricType(int value) {
-        this.value = value;
-    }
-
-    public int value() {
-        return value;
-    }
-
-    public static LyricType fromValue(int value) {
-        for (LyricType type : LyricType.values()) {
-            if (type.value() == value) {
-                return type;
-            }
-        }
-        return XML;
-    }
+    /**
+     * KRC format lyrics, Karaoke-specific format with enhanced timing and pitch data
+     */
+    KRC;
 }

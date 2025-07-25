@@ -5,24 +5,46 @@ import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
 
 /**
- * State/Information of playing/rendering/on-going lyrics
- * <p>
- * Non-ui related, shared by all components
+ * State/Information manager for playing/rendering/on-going lyrics.
+ * This class handles the non-UI related logic and is shared by all components.
+ * It manages the lyrics model, progress tracking, and UI update notifications.
  */
 public class LyricMachine {
+    /**
+     * The current lyrics model being processed
+     */
     private LyricModel mLyricsModel;
+
+    /**
+     * Listener for lyric-related events
+     */
     private final OnLyricListener mListener;
+
+    /**
+     * Current progress of lyrics playback in milliseconds
+     */
     private long mCurrentLyricProgress = 0;
 
+    /**
+     * Empty lyrics model used as a fallback
+     */
+    private static final LyricModel EMPTY_LYRICS_MODEL = new LyricModel(LyricType.LRC);
 
+    /**
+     * Constructs a new LyricMachine instance
+     *
+     * @param listener The listener to handle lyric-related events
+     */
     public LyricMachine(OnLyricListener listener) {
         reset();
         this.mListener = listener;
     }
 
-    private static final LyricModel EMPTY_LYRICS_MODEL = new LyricModel(LyricType.LRC);
-
-    // Set data and prepare to rendering
+    /**
+     * Sets the lyrics data and prepares for rendering
+     *
+     * @param model The lyrics model to be processed
+     */
     public void prepare(LyricModel model) {
         reset();
 
@@ -35,16 +57,20 @@ public class LyricMachine {
         mLyricsModel = model;
     }
 
+    /**
+     * Checks if the lyrics machine is ready for operation
+     *
+     * @return true if lyrics model is set, false otherwise
+     */
     public boolean isReady() {
         return mLyricsModel != null;
     }
 
-
     /**
-     * 更新歌词进度，单位毫秒
+     * Updates the lyrics progress
      *
-     * @param progress 当前播放时间，毫秒
-     *                 progress 一定要大于歌词结束时间才可以触发最后一句的回调
+     * @param progress Current playback time in milliseconds.
+     *                 Note: progress must be greater than the lyrics end time to trigger the callback for the last line
      */
     public void setProgress(long progress) {
         if (progress <= 0L) {
@@ -67,47 +93,84 @@ public class LyricMachine {
         }
     }
 
+    /**
+     * Handles progress updates when dragging occurs
+     *
+     * @param progress The new progress position in milliseconds
+     */
     public void whenDraggingHappen(long progress) {
         minorReset();
-
         mCurrentLyricProgress = progress;
     }
 
+    /**
+     * Resets all states and properties
+     */
     public void reset() {
         resetProperties();
-
         resetStats();
     }
 
-    private void resetProperties() { // Reset when song changed
+    /**
+     * Resets properties when song changes
+     */
+    private void resetProperties() {
         mLyricsModel = null;
     }
 
+    /**
+     * Resets statistics and progress
+     */
     private void resetStats() {
         minorReset();
     }
 
-    private void minorReset() { // Will recover immediately
+    /**
+     * Performs a minor reset that will recover immediately
+     */
+    private void minorReset() {
         mCurrentLyricProgress = 0;
     }
 
+    /**
+     * Prepares the UI for lyrics display
+     */
     public void prepareUi() {
         if (mListener != null) {
             mListener.resetUi();
         }
     }
 
+    /**
+     * Gets the current lyrics model
+     *
+     * @return The current lyrics model
+     */
     public LyricModel getLyricsModel() {
         return this.mLyricsModel;
     }
 
+    /**
+     * Gets the current lyrics progress
+     *
+     * @return Current progress in milliseconds
+     */
     public long getCurrentLyricProgress() {
         return mCurrentLyricProgress;
     }
 
+    /**
+     * Interface for handling lyric-related events
+     */
     public interface OnLyricListener {
-        public void resetUi();
+        /**
+         * Called when UI needs to be reset
+         */
+        void resetUi();
 
-        public void requestRefreshUi();
+        /**
+         * Called when UI refresh is requested
+         */
+        void requestRefreshUi();
     }
 }

@@ -19,24 +19,56 @@ import io.agora.karaoke_view_ex.constants.Constants;
 import io.agora.karaoke_view_ex.internal.config.Config;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 
-
+/**
+ * HTTP request handler for downloading data.
+ * Provides methods for making HTTP GET and POST requests with support for streaming responses.
+ */
 public class HttpUrlRequest {
     private static final String TAG = Constants.TAG + "-HttpURLRequest";
+
+    /**
+     * Callback for HTTP request events
+     */
     private RequestCallback mCallback;
+
+    /**
+     * Flag to indicate if the request has been cancelled
+     */
     private volatile boolean mCancelled;
 
+    /**
+     * Default constructor
+     */
     public HttpUrlRequest() {
         mCancelled = false;
     }
 
+    /**
+     * Sets the callback for HTTP request events
+     *
+     * @param callback The callback to set
+     */
     public void setCallback(RequestCallback callback) {
         this.mCallback = callback;
     }
 
+    /**
+     * Sets the cancelled state of the request
+     *
+     * @param cancelled true to cancel the request, false otherwise
+     */
     public void setCancelled(boolean cancelled) {
         this.mCancelled = cancelled;
     }
 
+    /**
+     * Performs an HTTP POST request
+     *
+     * @param urlStr          The URL to request
+     * @param requestProperty Map of request headers
+     * @param writeData       Data to send in the request body
+     * @param isStream        Whether to handle the response as a stream
+     */
     public void requestPostUrl(String urlStr, Map<String, String> requestProperty, String writeData, boolean isStream) {
         LogUtils.d("http requestPostUrl urlStr:" + urlStr + ",requestProperty:" + requestProperty + ", writeData:" + writeData);
         InputStream is = null;
@@ -74,7 +106,7 @@ public class HttpUrlRequest {
             int code = conn.getResponseCode();
 
             if (Config.DEBUG) {
-                // 获取服务器返回的头信息
+                // Get server response headers
                 Map<String, List<String>> headers = conn.getHeaderFields();
                 for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
                     String name = entry.getKey();
@@ -162,6 +194,12 @@ public class HttpUrlRequest {
         }
     }
 
+    /**
+     * Performs an HTTP GET request
+     *
+     * @param urlStr  The URL to request
+     * @param headers Map of request headers
+     */
     public void requestGetUrl(String urlStr, Map<String, String> headers) {
         LogUtils.d("http requestGetUrl urlStr:" + urlStr + ",headers:" + headers);
         try {
@@ -181,7 +219,7 @@ public class HttpUrlRequest {
             int code = conn.getResponseCode();
 
             if (Config.DEBUG) {
-                // 获取服务器返回的头信息
+                // Get server response headers
                 Map<String, List<String>> responseHeaders = conn.getHeaderFields();
                 for (Map.Entry<String, List<String>> entry : responseHeaders.entrySet()) {
                     String name = entry.getKey();
@@ -211,7 +249,7 @@ public class HttpUrlRequest {
                 }
 
                 if (-1 == total) {
-                    //just for server not support content-length
+                    // Just for server not supporting content-length
                     if (null != mCallback) {
                         mCallback.updateResponseData(null, 0, sum, sum);
                     }
@@ -257,18 +295,39 @@ public class HttpUrlRequest {
         }
     }
 
+    /**
+     * Interface for HTTP request callbacks
+     */
     public interface RequestCallback {
+        /**
+         * Called when new response data is available
+         *
+         * @param bytes      The response data
+         * @param len        The length of the data
+         * @param currentLen The current length of the data
+         * @param total      The total length of the data
+         */
         default void updateResponseData(byte[] bytes, int len, int currentLen, int total) {
         }
 
+        /**
+         * Called when the request fails
+         *
+         * @param errorCode The error code
+         * @param msg       The error message
+         */
         default void requestFail(int errorCode, String msg) {
-
         }
 
+        /**
+         * Called when the request is complete
+         */
         default void requestFinish() {
-
         }
 
+        /**
+         * Called when the request is complete
+         */
         default void onHttpResponse(String responseTxt) {
 
         }
