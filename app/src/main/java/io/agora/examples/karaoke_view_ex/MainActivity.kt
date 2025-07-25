@@ -582,6 +582,7 @@ class MainActivity : AppCompatActivity(), IMccCallback {
             runOnUiThread(Runnable {
                 mKaraokeView?.setPitch(
                     voicePitch.toFloat(),
+                    pitchScore.toFloat(),
                     progressInMs.toInt()
                 )
             })
@@ -611,7 +612,7 @@ class MainActivity : AppCompatActivity(), IMccCallback {
 
         if (mKaraokeView != null) {
             mKaraokeView?.setProgress(0)
-            mKaraokeView?.setPitch(0f, 0)
+            mKaraokeView?.setPitch(0f, 0f, 0)
             mKaraokeView?.reset()
             mKaraokeView = null
         }

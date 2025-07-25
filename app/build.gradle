@@ -76,7 +76,11 @@ android {
 
 dependencies {
     api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-    implementation "io.github.winskyan:Agora-LyricsViewEx:${sdkVersion.toString()}"
+    if (isSdkMode.toBoolean()) {
+        implementation "io.github.winskyan:Agora-LyricsViewEx:${sdkVersion.toString()}"
+    } else {
+        implementation project(':karaoke_view_ex')
+    }
     implementation 'io.agora.rtc:agora-special-full:4.4.1.10'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
