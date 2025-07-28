@@ -25,7 +25,7 @@
 平台设计的歌词同步显示和演唱打分组件。它支持在歌曲播放的同时同步显示歌词，支持演唱打分以及相关效果显示，为开发者提供了构建
 KTV 应用的完整解决方案。
 
-> **注意**：该版本稳定版 2.x 在 API 上并不兼容1.x版本，但2.1.x版本后兼容1.x版本的所有功能，建议升级到2.1.x版本
+> **注意**：该版本稳定版 2.x 及后续版本 在 API 上并不兼容1.x版本，但2.1.x版本后兼容1.x版本的所有功能，建议升级到最新版本
 
 ## 功能特点
 
@@ -68,7 +68,7 @@ YSD_TOKEN_HOST=XXX   # 音速达曲库 Token 获取地址
 
 ```gradle
 dependencies {
-    implementation("io.github.winskyan:Agora-LyricsViewEx:2.2.1")
+    implementation("io.github.winskyan:Agora-LyricsViewEx:3.0.0")
 }
 ```
 
@@ -135,7 +135,7 @@ public class LiveActivity extends RtcBaseActivity {
         mKaraokeView.setProgress(position);
 
         // 5. 设置演唱者音高和媒体播放器进度
-        mKaraokeView.setPitch((float) speakerPitch, (int) progressInMs);
+        mKaraokeView.setPitch((float) speakerPitch, (float) pitchScore, (int) progressInMs);
 
         // 6. 重置控件
         mKaraokeView.reset();
@@ -263,6 +263,14 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 
 ## 更新日志
 
+### [3.0.0] - 2025-07-28
+
+#### 接口变更
+
+- `setPitch` 接口新增参数 `pitchScore`，用于传入当前音高分数，便于更精细的打分控制和展示。
+
+---
+
 ### [2.2.1] - 2025-07-22
 
 #### 优化
@@ -296,4 +304,4 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 
 ---
 
-> 注：2.x 版本在 API 上与 1.x 不兼容，2.1.x 版本后兼容 1.x 的全部功能，建议升级至最新版本。
+> 注：2.x 及后续版本在 API 上与 1.x 不兼容，2.1.x 版本后兼容 1.x 的全部功能，建议升级至最新版本。
