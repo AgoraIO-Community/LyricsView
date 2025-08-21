@@ -5,7 +5,10 @@
 ## 目录
 
 - [简介](#简介)
+- [方案总览](#方案总览)
+- [环境要求](#环境要求)
 - [功能特点](#功能特点)
+- [支持的格式与能力](#支持的格式与能力)
 - [运行示例](#运行示例)
 - [集成方式](#集成方式)
   - [Maven 集成](#方式一maven-集成)
@@ -18,6 +21,11 @@
   - [ScoringView 自定义属性](#scoringview-自定义属性)
   - [自定义粒子动画效果](#自定义粒子动画效果)
   - [自定义打分算法](#自定义打分算法)
+- [示例与分支](#示例与分支)
+- [更新日志](#更新日志)
+- [常见问题](#常见问题)
+- [许可证](#许可证)
+- [权限与混淆](#权限与混淆)
 
 ## 简介
 
@@ -26,6 +34,26 @@
 KTV 应用的完整解决方案。
 
 > **注意**：该版本稳定版 2.x 及后续版本 在 API 上并不兼容1.x版本，但2.1.x版本后兼容1.x版本的所有功能，建议升级到最新版本
+
+> **重要**：自 3.0 版本起，支持 K歌 融合方案（RTC 版本号：4.4.1.10）。K歌 融合方案集成方案参考《[K歌融合集成文档](K歌融合集成文档.md)》，示例参考 `dev/3.0` 分支。K歌 融合方案基于 RTC SDK 原生支持音集协与音速达曲库，无需再使用插件方案（MccEx）。
+
+## 方案总览
+
+歌词组件最新版本3.x版本，支持RTC K歌所有方案。
+
+- **RTC K歌融合方案（推荐）**：依赖 RTC `4.4.1.10` 及后续支持音集协与音速达曲库的版本，RTC SDK 原生支持音集协与音速达曲库，无需插件（MccEx）。
+  - 集成指引：参见《[K歌融合集成文档](K歌融合集成文档.md)》
+  - 示例工程：参见分支 `dev/3.0`  
+- **RTC K歌独立方案（存量兼容）**：RTC K歌 SDK只支持音集协曲库，音速达曲库需要使用MccEx方案。
+  - 示例工程：参见分支 `dev/main`
+
+## 环境要求
+
+- Android：minSdk 17、targetSdk 34、compileSdk 34（示例与库已对齐）
+- JDK：1.8（Java 8 兼容）
+- NDK：26.1.10909125 或更高（为支持 16KB page size）
+- ABI：示例工程默认仅 `arm64-v8a`；如需更多 ABI，请在 `abiFilters` 中自行添加并确保依赖匹配
+- 构建：AndroidX 开启（`android.useAndroidX=true`）、Jetifier 开启（`android.enableJetifier=true`）
 
 ## 功能特点
 
@@ -41,6 +69,21 @@ KTV 应用的完整解决方案。
 - 自定义更换歌词背景
 - 自定义粒子动画效果
 - 自定义打分算法
+
+## 支持的格式与能力
+
+- **歌词与音高数据**：
+  - 支持 `XML`（适配主流曲库）、`LRC`、`KRC` 等歌词格式
+  - 支持独立 `pitch` 文件输入，用于更精细的打分与高亮
+  - 使用 `KaraokeView.parseLyricData(File lyric, File pitch)` 或 `parseLyricData(byte[] lyric, byte[] pitch)` 一次性解析歌词与可选音高数据
+- **曲库支持**：
+  - 3.0 方案：RTC SDK 原生支持音集协、音速达曲库
+  - 2.x 方案：仍可延用既有接入方式（如历史插件方案 MccEx）
+- **播放解耦**：
+  - 通过 `setProgress(position)` 与播放器解耦，适配任意播放引擎
+- **打分能力**：
+  - 内置行级与实时音高打分，`setPitch(speakerPitch, pitchScore, progressInMs)` 实时更新
+  - 支持实现 `IScoringAlgorithm` 以自定义打分策略
 
 ## 运行示例
 
@@ -261,6 +304,11 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 }
 ```
 
+## 示例与分支
+
+- 参考分支：`dev/3.0`（K歌 3.0 示例）
+- 当前主线：`dev/main`（2.x 示例与稳定演进）
+
 ## 更新日志
 
 ### [3.0.0] - 2025-07-28
@@ -305,3 +353,24 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 ---
 
 > 注：2.x 及后续版本在 API 上与 1.x 不兼容，2.1.x 版本后兼容 1.x 的全部功能，建议升级至最新版本。
+
+## 常见问题
+
+- **K歌 3.0 是否必须升级 RTC？** 必须。请使用 RTC `4.4.1.10` 及后续支持音集协与音速达曲库的版本。
+- **支持哪些歌词格式？** XML、LRC、KRC，并支持独立 pitch 数据。
+- **如何禁用内置打分？** `setLyricData(model, usingInternalScoring)` 传 `false` 可关闭内部打分；或不调用 `setPitch(...)`，仅展示歌词同步。
+- **如何自定义打分算法？** 实现 `IScoringAlgorithm` 并在业务侧替换使用。
+
+## 权限与混淆
+
+- 必要权限：`INTERNET`、`ACCESS_NETWORK_STATE`、`RECORD_AUDIO`。如需本地文件读写，可按需申请存储相关权限。
+- R8/ProGuard：默认无需额外配置。若业务侧严格混淆，建议保留公开 API 与日志库：
+
+```proguard
+-keep class io.agora.karaoke_view_ex.** { *; }
+-keep class io.agora.logging.** { *; }
+```
+
+## 许可证
+
+本项目遵循开源许可证，详见 `LICENSE` 文件。
