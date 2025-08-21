@@ -304,6 +304,7 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 }
 ```
 
+
 ## 示例与分支
 
 - 参考分支：`dev/3.0`（K歌 3.0 示例）
@@ -351,6 +352,7 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 - 兼容音速达和音集协曲库，支持更多曲库格式。
 
 ---
+
 
 > 注：2.x 及后续版本在 API 上与 1.x 不兼容，2.1.x 版本后兼容 1.x 的全部功能，建议升级至最新版本。
 
