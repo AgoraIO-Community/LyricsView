@@ -519,7 +519,19 @@ public class ScoringMachine {
         float refPitch = getRefPitch(progressInMs);
         double scoreAfterNormalization = 0;
         if (refPitch != 0) {
-            scoreAfterNormalization = Math.abs(speakerPitch - refPitch) < 5 ? 100 : 0;
+            if (speakerPitch == refPitch) {
+                scoreAfterNormalization = 100;
+            } else if (Math.abs(speakerPitch - refPitch) <= 1) {
+                scoreAfterNormalization = 90;
+            } else if (Math.abs(speakerPitch - refPitch) <= 2) {
+                scoreAfterNormalization = 80;
+            } else if (Math.abs(speakerPitch - refPitch) <= 3) {
+                scoreAfterNormalization = 70;
+            } else if (Math.abs(speakerPitch - refPitch) <= 4) {
+                scoreAfterNormalization = 60;
+            } else if (Math.abs(speakerPitch - refPitch) <= 5) {
+                scoreAfterNormalization = 50;
+            }
         }
         return scoreAfterNormalization;
     }
