@@ -111,7 +111,7 @@ YSD_TOKEN_HOST=XXX   # 音速达曲库 Token 获取地址
 
 ```gradle
 dependencies {
-    implementation("io.github.winskyan:Agora-LyricsViewEx:3.0.0")
+    implementation("io.github.winskyan:Agora-LyricsViewEx:3.0.1")
 }
 ```
 
@@ -304,13 +304,21 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 }
 ```
 
-
 ## 示例与分支
 
 - 参考分支：`dev/3.0`（K歌 3.0 示例）
 - 当前主线：`dev/main`（2.x 示例与稳定演进）
 
 ## 更新日志
+
+### [3.0.1] - 2025-08-22
+
+#### 优化
+
+- 优化音速达曲库打分算法。
+- 修复歌词解析异常问题。
+
+---
 
 ### [3.0.0] - 2025-07-28
 
@@ -352,7 +360,6 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 - 兼容音速达和音集协曲库，支持更多曲库格式。
 
 ---
-
 
 > 注：2.x 及后续版本在 API 上与 1.x 不兼容，2.1.x 版本后兼容 1.x 的全部功能，建议升级至最新版本。
 

@@ -52,20 +52,12 @@ public class LyricParser {
 
         boolean isFirstLine = true;
         for (String line : lines) {
-            if (isFirstLine) {
-                line = io.agora.karaoke_view_ex.internal.utils.Utils.removeStringBom(line);
-                isFirstLine = false;
-            }
-            // Process metadata section: `[ti:星晴]`
-            if (line.startsWith("[")) {
-                int index = line.indexOf(":");
-                if (index != -1) {
-                    // Key value, from the second character to before ":"
-                    String key = line.substring(1, index);
-                    // Value, from after ":" to before "]"
-                    String value = line.substring(index + 1, line.length() - 1);
-                    metadata.put(key, value);
-                } else {
+            try {
+                if (isFirstLine) {
+                    line = io.agora.karaoke_view_ex.internal.utils.Utils.removeStringBom(line);
+                    isFirstLine = false;
+                }
+                if (line.startsWith("[")) {
                     if (line.contains("<") && line.contains(">")) {
                         long offsetValue = 0;
                         if (metadata.containsKey("offset")) {
@@ -82,8 +74,24 @@ public class LyricParser {
                         } else {
                             LogUtils.e("parseLine error");
                         }
+                    } else {
+                        // Process metadata section: `[ti:星晴]`
+                        int index = line.indexOf(":");
+                        if (index != -1) {
+                            // Key value, from the second character to before ":"
+                            String key = line.substring(1, index);
+                            // Value, from after ":" to before "]"
+                            String value = line.substring(index + 1, line.length() - 1);
+                            metadata.put(key, value);
+                        } else {
+                            LogUtils.i("unknown metadata line: " + line);
+                        }
                     }
+                } else {
+                    LogUtils.i("ignore line: " + line);
                 }
+            } catch (Exception e) {
+                LogUtils.e("doParseKrc error: " + e.getMessage() + " line: " + line);
             }
         }
 
