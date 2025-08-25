@@ -175,6 +175,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         percent: Int,
         lyricPath: String,
         pitchPath: String,
+        musicPath: String,
         songOffsetBegin: Int,
         songOffsetEnd: Int,
         lyricOffset: Int,
