@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Pair;
+import android.view.Choreographer;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
@@ -221,6 +222,28 @@ public class ScoringView extends View {
      * Whether the scoring machine is uninitialized or has no lyrics
      */
     private long lastCurrentTs = 0;
+
+    /**
+     * Smooth animated pitch following mLocalPitch
+     */
+    private float mAnimatedPitch = 0.0f;
+
+    /**
+     * Smooth animated progress for rendering X positions
+     */
+    private double mAnimatedProgressMs = 0.0;
+
+    /**
+     * Frame loop state for vsync-driven updates
+     */
+    private boolean mFrameLoopRunning = false;
+    private long mLastFrameTimeNanos = 0L;
+    private final Choreographer.FrameCallback mFrameCallback = new Choreographer.FrameCallback() {
+        @Override
+        public void doFrame(long frameTimeNanos) {
+            stepFrame(frameTimeNanos);
+        }
+    };
 
     /**
      * Called automatically when animation of local indicator triggered
@@ -649,12 +672,12 @@ public class ScoringView extends View {
 
         if (uninitializedOrNoLyrics(mScoringMachine)) { // Not initialized
             targetY = getHeight() - this.mLocalPitchIndicatorRadius;
-        } else if (this.mLocalPitch >= mScoringMachine.getMinimumRefPitch() && mScoringMachine.getMaximumRefPitch() != 0) { // Has value, not the default case
+        } else if (this.mAnimatedPitch >= mScoringMachine.getMinimumRefPitch() && mScoringMachine.getMaximumRefPitch() != 0) { // Has value, not the default case
             float realPitchMax = mScoringMachine.getMaximumRefPitch() + 5;
             float realPitchMin = mScoringMachine.getMinimumRefPitch() - 5;
             float mItemHeightPerPitchLevel = getHeight() / (realPitchMax - realPitchMin);
-            targetY = (realPitchMax - this.mLocalPitch) * mItemHeightPerPitchLevel;
-        } else if (this.mLocalPitch < mScoringMachine.getMinimumRefPitch()) { // minimal local pitch
+            targetY = (realPitchMax - this.mAnimatedPitch) * mItemHeightPerPitchLevel;
+        } else if (this.mAnimatedPitch < mScoringMachine.getMinimumRefPitch()) { // minimal local pitch
             targetY = getHeight();
         }
 
@@ -780,27 +803,28 @@ public class ScoringView extends View {
             long startTime = line.getStartTime();
             long durationOfCurrentLine = line.getEndTime() - startTime;
 
-            if (Math.abs(mScoringMachine.getCurrentPitchProgress() - line.getEndTime()) * mMovingPixelsPerMs >= getWidth() &&
-                    Math.abs(mScoringMachine.getCurrentPitchProgress() - line.getStartTime()) * mMovingPixelsPerMs >= getWidth() &&
-                    !(mScoringMachine.getCurrentPitchProgress() >= line.getStartTime() && mScoringMachine.getCurrentPitchProgress() <= line.getEndTime())) { // If still to early for current line, we do not draw the sticks
+            long renderProgress = getRenderProgressMs();
+            if (Math.abs(renderProgress - line.getEndTime()) * mMovingPixelsPerMs >= getWidth() &&
+                    Math.abs(renderProgress - line.getStartTime()) * mMovingPixelsPerMs >= getWidth() &&
+                    !(renderProgress >= line.getStartTime() && renderProgress <= line.getEndTime())) { // If still too early for current line, we do not draw the sticks
                 continue;
             }
 
-            if (i + 1 < lines.size() && line.getStartTime() < mScoringMachine.getCurrentPitchProgress()) { // Has next line
+            if (i + 1 < lines.size() && line.getStartTime() < renderProgress) { // Has next line
                 // Get next line
                 // If start for next is far away than 2 seconds
                 // stop the current animation now
                 long startTimeOfNextLine = mScoringMachine.getLineStartTime(i + 1);
-                if ((startTimeOfNextLine - line.getEndTime() >= 2 * 1000) && mScoringMachine.getCurrentPitchProgress() > line.getEndTime() && mScoringMachine.getCurrentPitchProgress() < startTimeOfNextLine) { // Two seconds after this line stops
+                if ((startTimeOfNextLine - line.getEndTime() >= 2 * 1000) && renderProgress > line.getEndTime() && renderProgress < startTimeOfNextLine) { // Two seconds after this line stops
                     assureAnimationForPitchIndicator(0); // Force stop the animation when there is a too long stop between two lines
-                    if (mTimestampForLastAnimationDecrease < 0 || mScoringMachine.getCurrentPitchProgress() - mTimestampForLastAnimationDecrease > 4 * 1000) {
+                    if (mTimestampForLastAnimationDecrease < 0 || renderProgress - mTimestampForLastAnimationDecrease > 4 * 1000) {
                         ObjectAnimator.ofFloat(ScoringView.this, "mLocalPitch", ScoringView.this.mLocalPitch, ScoringView.this.mLocalPitch * 1 / 3, 0.0f).setDuration(600).start(); // Decrease the local pitch indicator
-                        mTimestampForLastAnimationDecrease = mScoringMachine.getCurrentPitchProgress();
+                        mTimestampForLastAnimationDecrease = renderProgress;
                     }
                 }
             }
 
-            float pixelsAwayFromPilot = (startTime - mScoringMachine.getCurrentPitchProgress()) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
+            float pixelsAwayFromPilot = (startTime - renderProgress) * mMovingPixelsPerMs; // For every time, we need to locate the new coordinate
             float x = mCenterXOfStartPoint + pixelsAwayFromPilot;
 
             if (endTimeOfPreviousLine != 0) { // If has empty divider before
@@ -819,7 +843,7 @@ public class ScoringView extends View {
                 LyricsPitchLineModel.Pitch pitch = pitches.get(pitchIndex);
 
                 // For every time, we need to locate the new coordinate
-                pixelsAwayFromPilot = (pitch.begin - mScoringMachine.getCurrentPitchProgress()) * mMovingPixelsPerMs;
+                pixelsAwayFromPilot = (pitch.begin - renderProgress) * mMovingPixelsPerMs;
                 x = mCenterXOfStartPoint + pixelsAwayFromPilot;
                 widthOfPitchStick = mMovingPixelsPerMs * pitch.getDuration();
                 float endX = x + widthOfPitchStick;
@@ -839,7 +863,7 @@ public class ScoringView extends View {
                 }
 
                 y = (realPitchMax - pitch.pitch) * stickHeightPerPitchLevel;
-                boolean isCurrentPitch = mScoringMachine.getCurrentPitchProgress() >= pitch.begin && mScoringMachine.getCurrentPitchProgress() <= pitch.end;
+                boolean isCurrentPitch = renderProgress >= pitch.begin && renderProgress <= pitch.end;
 
                 if (!isCurrentPitch) {
                     for (Map.Entry<Long, Pair<Long, Long>> entry : pitch.highlightPartMap.entrySet()) {
@@ -857,13 +881,13 @@ public class ScoringView extends View {
                 if (isCurrentPitch) {
                     if (mInHighlightStatus) {
                         if (!mPreHighlightStatus) {
-                            mPitchHighlightedTime = mScoringMachine.getCurrentPitchProgress();
-                            if (mScoringMachine.getCurrentPitchProgress() - pitch.begin < Constants.INTERVAL_AUDIO_PCM) {
+                            mPitchHighlightedTime = renderProgress;
+                            if (renderProgress - pitch.begin < Constants.INTERVAL_AUDIO_PCM) {
                                 mPitchHighlightedTime = pitch.begin;
                             }
                             mPreHighlightStatus = mInHighlightStatus;
                         }
-                        float highlightStartX = mCenterXOfStartPoint + (mPitchHighlightedTime - mScoringMachine.getCurrentPitchProgress()) * mMovingPixelsPerMs;
+                        float highlightStartX = mCenterXOfStartPoint + (mPitchHighlightedTime - renderProgress) * mMovingPixelsPerMs;
                         //着色 40ms一段
                         float highlightEndX = mCenterXOfStartPoint - mMovingPixelsPerMs * Constants.INTERVAL_AUDIO_PCM;
                         RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
@@ -874,7 +898,7 @@ public class ScoringView extends View {
                     } else {
                         mPreHighlightStatus = false;
                         if (-1 != mPitchHighlightedTime) {
-                            pitch.highlightPartMap.put(mPitchHighlightedTime, new Pair<>(mPitchHighlightedTime, mScoringMachine.getCurrentPitchProgress()));
+                            pitch.highlightPartMap.put(mPitchHighlightedTime, new Pair<>(mPitchHighlightedTime, renderProgress));
                             mPitchHighlightedTime = -1;
                         }
                     }
@@ -893,7 +917,7 @@ public class ScoringView extends View {
                             long highlightStartTime = value.first;
                             long highlightEndTime = value.second;
 
-                            float highlightStartX = mCenterXOfStartPoint + (highlightStartTime - mScoringMachine.getCurrentPitchProgress()) * mMovingPixelsPerMs;
+                            float highlightStartX = mCenterXOfStartPoint + (highlightStartTime - renderProgress) * mMovingPixelsPerMs;
                             float highlightEndX = highlightStartX + mMovingPixelsPerMs * (highlightEndTime - highlightStartTime);
                             RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
                             canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
@@ -901,7 +925,7 @@ public class ScoringView extends View {
                             if (isCurrentPitch) {
                                 long highlightStartTime = entry.getKey();
 
-                                float highlightStartX = mCenterXOfStartPoint + (highlightStartTime - mScoringMachine.getCurrentPitchProgress()) * mMovingPixelsPerMs;
+                                float highlightStartX = mCenterXOfStartPoint + (highlightStartTime - renderProgress) * mMovingPixelsPerMs;
                                 float highlightEndX = mCenterXOfStartPoint;
                                 RectF rHighlight = buildRectF(highlightStartX, y, highlightEndX, y + mPitchStickHeight);
                                 canvas.drawRoundRect(rHighlight, 8, 8, mPitchStickHighlightedPaint);
@@ -948,6 +972,11 @@ public class ScoringView extends View {
 
         // Update values from UI view
         this.mScoringMachine.setInitialScore(mInitialScore);
+
+        startFrameLoopIfNeeded();
+
+        // Initialize animated progress to avoid initial jump
+        mAnimatedProgressMs = mScoringMachine.getCurrentPitchProgress();
     }
 
     /**
@@ -1030,6 +1059,8 @@ public class ScoringView extends View {
         }
 
         mLocalPitch = speakerPitch;
+
+        startFrameLoopIfNeeded();
 
         if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
             mHandler.post(new Runnable() {
@@ -1155,6 +1186,8 @@ public class ScoringView extends View {
         mPreHighlightStatus = false;
         mPitchHighlightedTime = -1;
         mScoringMachine = null;
+        mAnimatedProgressMs = 0.0;
+        mAnimatedPitch = 0.0f;
     }
 
     /**
@@ -1163,5 +1196,89 @@ public class ScoringView extends View {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        stopFrameLoop();
+        if (mParticleSystem != null) {
+            mParticleSystem.cancel();
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        startFrameLoopIfNeeded();
+    }
+
+    private void startFrameLoopIfNeeded() {
+        if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
+            post(new Runnable() {
+                @Override
+                public void run() {
+                    startFrameLoopIfNeeded();
+                }
+            });
+            return;
+        }
+        if (mFrameLoopRunning) {
+            return;
+        }
+        mFrameLoopRunning = true;
+        mLastFrameTimeNanos = 0L;
+        Choreographer.getInstance().postFrameCallback(mFrameCallback);
+    }
+
+    private void stopFrameLoop() {
+        if (!mFrameLoopRunning) {
+            return;
+        }
+        mFrameLoopRunning = false;
+        Choreographer.getInstance().removeFrameCallback(mFrameCallback);
+        mLastFrameTimeNanos = 0L;
+    }
+
+    private void stepFrame(long frameTimeNanos) {
+        if (!mFrameLoopRunning) {
+            return;
+        }
+        if (mLastFrameTimeNanos == 0L) {
+            mLastFrameTimeNanos = frameTimeNanos;
+        }
+        long dtNanos = frameTimeNanos - mLastFrameTimeNanos;
+        mLastFrameTimeNanos = frameTimeNanos;
+        float dtMs = dtNanos / 1_000_000f;
+        if (dtMs < 0) dtMs = 0;
+        if (dtMs > 100) dtMs = 100; // clamp to avoid jumps after pauses
+
+        // Exponential smoothing towards target pitch
+        float tauMs = 120f; // smoothing constant (~response time)
+        float alpha = 1f - (float) Math.exp(-dtMs / tauMs);
+        mAnimatedPitch = mAnimatedPitch + (mLocalPitch - mAnimatedPitch) * alpha;
+
+        // Exponential smoothing for progress to remove 40/80ms stepping
+        if (!uninitializedOrNoLyrics(mScoringMachine)) {
+            double machineProgress = mScoringMachine.getCurrentPitchProgress();
+            float tauProgMs = 60f; // faster response for X movement
+            float alphaProg = 1f - (float) Math.exp(-dtMs / tauProgMs);
+            // If large jump (seek/reset), snap to target to avoid long lag
+            if (Math.abs(mAnimatedProgressMs - machineProgress) > 2000) {
+                mAnimatedProgressMs = machineProgress;
+            } else {
+                mAnimatedProgressMs = mAnimatedProgressMs + (machineProgress - mAnimatedProgressMs) * alphaProg;
+            }
+        }
+
+        // Smoothly update particle emission point while emitting
+        if (mEnableParticleEffect && mParticleSystem != null && mInHighlightStatus) {
+            float value = getYForPitchIndicator();
+            int[] location = new int[2];
+            this.getLocationInWindow(location);
+            mParticleSystem.updateEmitPoint((int) (location[0] + mCenterXOfStartPoint), location[1] + (int) (value));
+        }
+
+        performInvalidateIfNecessary();
+        Choreographer.getInstance().postFrameCallback(mFrameCallback);
+    }
+
+    private long getRenderProgressMs() {
+        return (long) (mAnimatedProgressMs);
     }
 }

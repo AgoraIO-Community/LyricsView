@@ -165,8 +165,10 @@ public class ScoringMachine {
                     mMinimumRefPitch = (float) Math.min(mMinimumRefPitch, data.pitch);
                     mMaximumRefPitch = (float) Math.max(mMaximumRefPitch, data.pitch);
                 }
-                if (null != mLyricsModel.lines) {
+                if (null != mLyricsModel.lines && !mLyricsModel.lines.isEmpty()) {
                     mPitchLines = new ArrayList<>(mLyricsModel.lines.size());
+                    long firstStartTime = mLyricsModel.lines.get(0).getStartTime();
+                    long lastEndTime = mLyricsModel.lines.get(mLyricsModel.lines.size() - 1).getEndTime();
                     for (LyricsLineModel line : mLyricsModel.lines) {
                         LyricsPitchLineModel lineModel = new LyricsPitchLineModel();
                         long startTime = line.getStartTime();
@@ -175,7 +177,15 @@ public class ScoringMachine {
                             if (data.startTime >= startTime && data.startTime < endTime) {
                                 LyricsPitchLineModel.Pitch pitch = new LyricsPitchLineModel.Pitch();
                                 pitch.begin = data.startTime;
+                                if (pitch.begin < firstStartTime) {
+                                    LogUtils.i("pitch.begin < firstStartTime pitch.begin:" + pitch.begin + " firstStartTime:" + firstStartTime);
+                                    pitch.begin = firstStartTime;
+                                }
                                 pitch.end = data.startTime + data.duration;
+                                if (pitch.end > lastEndTime) {
+                                    LogUtils.i("pitch.end > lastEndTime pitch.end:" + pitch.end + " lastEndTime:" + lastEndTime);
+                                    pitch.end = lastEndTime;
+                                }
                                 pitch.pitch = (int) data.pitch;
                                 lineModel.pitches.add(pitch);
                             }
