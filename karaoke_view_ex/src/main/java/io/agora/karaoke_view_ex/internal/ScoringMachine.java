@@ -285,7 +285,7 @@ public class ScoringMachine {
         if (Config.DEBUG) {
             LogUtils.d("setPitch speakerPitch:" + speakerPitch + ",progressInMs:" + pitchScore + ",progressInMs:" + progressInMs);
         }
-        if (mUsingInternalScoring) {
+        if (mUsingInternalScoring || progressInMs == 0) {
             //ignore set pitch progress
             progressInMs = (int) mCurrentLyricProgress;
         }
