@@ -635,7 +635,7 @@ public class ScoringMachine {
      * @return Current progress in milliseconds
      */
     public long getCurrentPitchProgress() {
-        return mCurrentPitchProgress != 0 ? mCurrentPitchProgress : mCurrentLyricProgress;
+        return mCurrentPitchProgress != 0 && Math.abs(mCurrentLyricProgress - mCurrentPitchProgress) <= 50 ? mCurrentPitchProgress : mCurrentLyricProgress;
     }
 
     /**

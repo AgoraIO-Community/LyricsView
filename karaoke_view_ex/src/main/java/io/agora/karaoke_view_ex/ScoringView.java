@@ -212,6 +212,10 @@ public class ScoringView extends View {
      */
     private volatile boolean mEmittingInitialized = false;
 
+    /**
+     * Timestamp of last pitch update (for highlight timeout detection)
+     */
+    private long mLastPitchUpdateTime = 0;
 
     /**
      * RectF object for avoiding new object creation
@@ -1059,6 +1063,8 @@ public class ScoringView extends View {
         }
 
         mLocalPitch = speakerPitch;
+        // Update timestamp for highlight timeout detection
+        mLastPitchUpdateTime = System.currentTimeMillis();
 
         startFrameLoopIfNeeded();
 
@@ -1185,6 +1191,7 @@ public class ScoringView extends View {
         mInHighlightStatus = false;
         mPreHighlightStatus = false;
         mPitchHighlightedTime = -1;
+        mLastPitchUpdateTime = 0;
         mScoringMachine = null;
         mAnimatedProgressMs = 0.0;
         mAnimatedPitch = 0.0f;
@@ -1263,6 +1270,18 @@ public class ScoringView extends View {
                 mAnimatedProgressMs = machineProgress;
             } else {
                 mAnimatedProgressMs = mAnimatedProgressMs + (machineProgress - mAnimatedProgressMs) * alphaProg;
+            }
+        }
+
+        // Check for highlight timeout (50ms without pitch update)
+        if (mInHighlightStatus && mLastPitchUpdateTime > 0) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - mLastPitchUpdateTime > 50) {
+                mInHighlightStatus = false;
+                mLocalPitch = 0.0f; // Reset pitch to 0 when timeout
+                if (mEnableParticleEffect && mParticleSystem != null) {
+                    mParticleSystem.stopEmitting();
+                }
             }
         }
 
