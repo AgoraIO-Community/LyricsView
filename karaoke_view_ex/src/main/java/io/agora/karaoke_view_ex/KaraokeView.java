@@ -86,7 +86,7 @@ public class KaraokeView {
      * Initialize the karaoke components including lyrics and scoring machines
      */
     private void initialize() {
-        LogUtils.d("initialize");
+        LogUtils.d("initialize - SDK Version: " + BuildConfig.SDK_VERSION);
         mLyricMachine = new LyricMachine(new LyricMachine.OnLyricListener() {
             @Override
             public void resetUi() {
@@ -472,5 +472,14 @@ public class KaraokeView {
      */
     public void removeAllLogger() {
         LogUtils.destroy();
+    }
+
+    /**
+     * Get the current SDK version
+     *
+     * @return SDK version string
+     */
+    public String getSdkVersion() {
+        return BuildConfig.SDK_VERSION;
     }
 }
