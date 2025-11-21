@@ -115,7 +115,7 @@ YSD_TOKEN_HOST=XXX   # 音速达曲库 Token 获取地址
 
 ```gradle
 dependencies {
-    implementation("io.github.winskyan:Agora-LyricsViewEx:3.0.2")
+    implementation("io.github.winskyan:Agora-LyricsViewEx:3.0.3")
 }
 ```
 
@@ -314,6 +314,13 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 - 当前主线：`dev/main`（2.x 示例与稳定演进）
 
 ## 更新日志
+
+### [3.0.3] - 2025-11-21
+
+#### 优化
+
+- 优化设置pitch异常值处理。
+- 优化超长歌词显示效果。
 
 ### [3.0.2] - 2025-08-25
 
