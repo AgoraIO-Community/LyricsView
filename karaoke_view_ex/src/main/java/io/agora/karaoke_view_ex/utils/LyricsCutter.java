@@ -116,7 +116,7 @@ public class LyricsCutter {
      * or the original model if cutting is not possible
      */
     public static LyricModel cut(LyricModel model, int startTime, int endTime) {
-        LogUtils.d("cut LyricModel startTime: " + startTime + " endTime: " + endTime + " model: " + model);
+        LogUtils.d("LyricsCutter:cut LyricModel startTime: " + startTime + " endTime: " + endTime + " model: " + model);
         if (model == null || model.lines == null || model.lines.isEmpty()) {
             return model;
         }
@@ -126,7 +126,7 @@ public class LyricsCutter {
         }
         int highStartTime = pair.first;
         int lowEndTime = pair.second;
-        LogUtils.d("cut LyricModel highStartTime: " + highStartTime + " lowEndTime: " + lowEndTime);
+        LogUtils.d("LyricsCutter:cut LyricModel highStartTime: " + highStartTime + " lowEndTime: " + lowEndTime);
         List<LyricsLineModel> lines = new ArrayList<>();
         boolean flag = false;
 
@@ -147,6 +147,7 @@ public class LyricsCutter {
         model.preludeEndPosition = lines.isEmpty() ? 0 : lines.get(0).getStartTime();
         model.duration = lines.isEmpty() ? 0 : lines.get(lines.size() - 1).getEndTime() - lines.get(lines.size() - 1).getStartTime();
 
+        LogUtils.d("LyricsCutter:after cut LyricModel: " + model);
         return model;
     }
 }

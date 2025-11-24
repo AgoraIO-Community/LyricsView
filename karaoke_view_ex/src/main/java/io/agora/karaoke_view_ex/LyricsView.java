@@ -1037,7 +1037,8 @@ public class LyricsView extends View {
         mCanvasBg.save();
         mCanvasBg.translate(0, yOfTargetLine);
 
-        for (int i = mIndexOfCurrentLine - 1; i >= 0; i--) {
+        int startIndex = Math.min(mIndexOfCurrentLine - 1, lyricsModel.lines.size() - 1);
+        for (int i = startIndex; i >= 0; i--) {
             lyricsTargetLineModel = lyricsModel.lines.get(i);
             lyricsTargetLineDrawerHelper = new LyricsLineDrawerHelper(lyricsTargetLineModel, mPaintFg, mPaintBg, getViewportWidth(), mTextGravity, mEnableLineWrap, mWidthRatio);
 
@@ -1196,7 +1197,7 @@ public class LyricsView extends View {
             if (dr.left == dr.right) {
                 continue;
             }
-            
+
             mRectClip.left = dr.left;
             mRectClip.top = (int) (dr.top + yOfTargetLine);
             mRectClip.right = dr.right;

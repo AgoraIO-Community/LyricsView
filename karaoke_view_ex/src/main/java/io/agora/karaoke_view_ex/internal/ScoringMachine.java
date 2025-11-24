@@ -285,7 +285,7 @@ public class ScoringMachine {
         if (Config.DEBUG) {
             LogUtils.d("setPitch speakerPitch:" + speakerPitch + ",progressInMs:" + pitchScore + ",progressInMs:" + progressInMs);
         }
-        if (mUsingInternalScoring) {
+        if (mUsingInternalScoring || progressInMs == 0) {
             //ignore set pitch progress
             progressInMs = (int) mCurrentLyricProgress;
         }
@@ -635,7 +635,7 @@ public class ScoringMachine {
      * @return Current progress in milliseconds
      */
     public long getCurrentPitchProgress() {
-        return mCurrentPitchProgress != 0 ? mCurrentPitchProgress : mCurrentLyricProgress;
+        return mCurrentPitchProgress != 0 && Math.abs(mCurrentLyricProgress - mCurrentPitchProgress) <= 50 ? mCurrentPitchProgress : mCurrentLyricProgress;
     }
 
     /**

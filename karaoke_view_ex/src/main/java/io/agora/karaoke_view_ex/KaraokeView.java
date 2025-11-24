@@ -55,6 +55,7 @@ public class KaraokeView {
      * @param scoringView View for displaying score
      */
     public KaraokeView(LyricsView lyricsView, ScoringView scoringView) {
+        LogUtils.d("KaraokeView: constructor with " + lyricsView + " and " + scoringView);
         this.mLyricsView = lyricsView;
         this.mScoringView = scoringView;
         if (null != mLyricsView) {
@@ -86,7 +87,7 @@ public class KaraokeView {
      * Initialize the karaoke components including lyrics and scoring machines
      */
     private void initialize() {
-        LogUtils.d("initialize");
+        LogUtils.d("KaraokeView:initialize - SDK Version: " + BuildConfig.SDK_VERSION);
         mLyricMachine = new LyricMachine(new LyricMachine.OnLyricListener() {
             @Override
             public void resetUi() {
@@ -112,7 +113,7 @@ public class KaraokeView {
         mScoringMachine = new ScoringMachine(new ScoringMachine.OnScoringListener() {
             @Override
             public void onLineFinished(LyricsLineModel line, int score, int cumulativeScore, int index, int lineCount) {
-                LogUtils.d("onLineFinished line startTime:" + line.getStartTime() + ",line endTime:" + line.getEndTime() +
+                LogUtils.d("KaraokeView:onLineFinished line startTime:" + line.getStartTime() + ",line endTime:" + line.getEndTime() +
                         ",score:" + score + ",cumulativeScore:" + cumulativeScore + ",index:" + index + ",lineCount:" + lineCount);
 
                 if (mScoringView != null) {
@@ -126,7 +127,7 @@ public class KaraokeView {
 
             @Override
             public void onPitchAndScoreUpdate(float speakerPitch, double scoreAfterNormalization, long progress) {
-                LogUtils.d("onPitchAndScoreUpdate speakerPitch:" + speakerPitch + ",scoreAfterNormalization:" + scoreAfterNormalization + ",progress:" + progress);
+                LogUtils.d("KaraokeView:onPitchAndScoreUpdate speakerPitch:" + speakerPitch + ",scoreAfterNormalization:" + scoreAfterNormalization + ",progress:" + progress);
                 if (mScoringView != null) {
                     mScoringView.updatePitchAndScore(speakerPitch, (float) scoreAfterNormalization);
                 }
@@ -162,7 +163,7 @@ public class KaraokeView {
      * Reset all components to their initial state
      */
     public void reset() {
-        LogUtils.d("reset");
+        LogUtils.d("KaraokeView:reset");
         if (mLyricsView != null) {
             mLyricsView.reset();
         }
@@ -181,6 +182,7 @@ public class KaraokeView {
      * @return Parsed lyrics model
      */
     public static LyricModel parseLyricData(File lyricFile, File pitchFile) {
+        LogUtils.d("KaraokeView:parseLyricData lyricFile:" + lyricFile + ",pitchFile:" + pitchFile);
         return LyricPitchParser.parseFile(lyricFile, pitchFile, true, 0);
     }
 
@@ -193,6 +195,7 @@ public class KaraokeView {
      * @return Parsed lyrics model
      */
     public static LyricModel parseLyricData(File lyricFile, File pitchFile, boolean includeCopyrightSentence) {
+        LogUtils.d("KaraokeView:parseLyricData lyricFile:" + lyricFile + ",pitchFile:" + pitchFile + ",includeCopyrightSentence:" + includeCopyrightSentence);
         return LyricPitchParser.parseFile(lyricFile, pitchFile, includeCopyrightSentence, 0);
     }
 
@@ -206,6 +209,8 @@ public class KaraokeView {
      * @return Parsed lyrics model
      */
     public static LyricModel parseLyricData(File lyricFile, File pitchFile, boolean includeCopyrightSentence, int lyricOffset) {
+        LogUtils.d("KaraokeView:parseLyricData lyricFile:" + lyricFile + ",pitchFile:" + pitchFile +
+                ",includeCopyrightSentence:" + includeCopyrightSentence + ",lyricOffset:" + lyricOffset);
         return LyricPitchParser.parseFile(lyricFile, pitchFile, includeCopyrightSentence, lyricOffset);
     }
 
@@ -217,6 +222,7 @@ public class KaraokeView {
      * @return Parsed lyrics model
      */
     public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData) {
+        LogUtils.d("KaraokeView:parseLyricData lyricData:" + lyricData + ",pitchData:" + pitchData);
         return LyricPitchParser.parseLyricData(lyricData, pitchData, true, 0);
     }
 
@@ -229,6 +235,8 @@ public class KaraokeView {
      * @return Parsed lyrics model
      */
     public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence) {
+        LogUtils.d("KaraokeView:parseLyricData lyricData:" + lyricData + ",pitchData:" + pitchData +
+                ",includeCopyrightSentence:" + includeCopyrightSentence);
         return LyricPitchParser.parseLyricData(lyricData, pitchData, includeCopyrightSentence, 0);
     }
 
@@ -242,6 +250,8 @@ public class KaraokeView {
      * @return Parsed lyrics model
      */
     public static LyricModel parseLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
+        LogUtils.d("KaraokeView:parseLyricData lyricData:" + lyricData + ",pitchData:" + pitchData +
+                ",includeCopyrightSentence:" + includeCopyrightSentence + ",lyricOffset:" + lyricOffset);
         return LyricPitchParser.parseLyricData(lyricData, pitchData, includeCopyrightSentence, lyricOffset);
     }
 
@@ -253,7 +263,7 @@ public class KaraokeView {
      * @throws IllegalStateException if called before initialization
      */
     public void attachUi(LyricsView lyrics, ScoringView scoring) {
-        LogUtils.d("attachUi lyrics:" + lyrics + ",scoring:" + scoring);
+        LogUtils.d("KaraokeView:attachUi lyrics:" + lyrics + ",scoring:" + scoring);
         if (mLyricMachine == null) {
             throw new IllegalStateException("Call this after KaraokeView initialized, this is a convenient method for attach/detach on-the-fly");
         }
@@ -302,7 +312,7 @@ public class KaraokeView {
      * @param usingInternalScoring Whether to use internal scoring algorithm
      */
     public void setLyricData(LyricModel model, boolean usingInternalScoring) {
-        LogUtils.d("setLyricData model:" + model);
+        LogUtils.d("KaraokeView:setLyricData model:" + model + ",usingInternalScoring:" + usingInternalScoring);
         mLyricMachine.prepare(model);
         mScoringMachine.prepare(model, usingInternalScoring);
 
@@ -336,6 +346,7 @@ public class KaraokeView {
      * @param progressInMs Current progress timestamp in milliseconds
      */
     public void setPitch(float speakerPitch, float pitchScore, int progressInMs) {
+        LogUtils.d("KaraokeView:setPitch speakerPitch:" + speakerPitch + ",pitchScore:" + pitchScore + ",progressInMs:" + progressInMs);
         if (null != mScoringMachine) {
             mScoringMachine.setPitch(speakerPitch, pitchScore, progressInMs);
         }
@@ -348,7 +359,7 @@ public class KaraokeView {
      * @param progress Current song progress in milliseconds
      */
     public void setProgress(long progress) {
-        LogUtils.d("setProgress progress:" + progress);
+        LogUtils.d("KaraokeView:setProgress progress:" + progress);
         mLyricMachine.setProgress(progress);
         mScoringMachine.setLyricProgress(progress);
     }
@@ -359,7 +370,7 @@ public class KaraokeView {
      * @param event Karaoke event listener
      */
     public void setKaraokeEvent(KaraokeEvent event) {
-        LogUtils.d("setKaraokeEvent event:" + event);
+        LogUtils.d("KaraokeView:setKaraokeEvent event:" + event);
         this.mKaraokeEvent = event;
 
         if (mLyricsView != null) {
@@ -390,7 +401,7 @@ public class KaraokeView {
      * @param algorithm Custom scoring algorithm implementation
      */
     public void setScoringAlgorithm(IScoringAlgorithm algorithm) {
-        LogUtils.d("setScoringAlgorithm algorithm:" + algorithm);
+        LogUtils.d("KaraokeView:setScoringAlgorithm algorithm:" + algorithm);
         if (mScoringMachine != null) {
             mScoringMachine.setScoringAlgorithm(algorithm);
         }
@@ -402,7 +413,7 @@ public class KaraokeView {
      * @param level Scoring difficulty level
      */
     public void setScoringLevel(int level) {
-        LogUtils.d("setScoringLevel level:" + level);
+        LogUtils.d("KaraokeView:setScoringLevel level:" + level);
         if (null != mScoringMachine) {
             mScoringMachine.setScoringLevel(level);
         }
@@ -429,7 +440,7 @@ public class KaraokeView {
      */
     @Deprecated
     public void setScoringCompensationOffset(int offset) {
-        LogUtils.d("setScoringCompensationOffset offset:" + offset);
+        LogUtils.d("KaraokeView:setScoringCompensationOffset offset:" + offset);
         if (null != mScoringMachine) {
             mScoringMachine.setScoringCompensationOffset(offset);
         }
@@ -472,5 +483,14 @@ public class KaraokeView {
      */
     public void removeAllLogger() {
         LogUtils.destroy();
+    }
+
+    /**
+     * Get the current SDK version
+     *
+     * @return SDK version string
+     */
+    public String getSdkVersion() {
+        return BuildConfig.SDK_VERSION;
     }
 }

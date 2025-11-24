@@ -304,8 +304,9 @@ public class LyricsLineDrawerHelper {
                 } else {
                     float percent = (time - tone.begin) / (float) (tone.end - tone.begin);
 
-                    // Apply scale factor to progress calculation
-                    curLen = wordLen * (percent > 0 ? percent : 0) * mWidthRatio;
+                    // Don't apply scale factor to progress calculation to maintain accurate timing
+                    // mWidthRatio should only affect layout, not timing synchronization
+                    curLen = wordLen * (percent > 0 ? percent : 0);
 
                     // Add a small offset to ensure the last character is fully visible
                     if (percent > 0.9f && i == tones.size() - 1) {
@@ -316,8 +317,9 @@ public class LyricsLineDrawerHelper {
             }
         }
 
-        // Apply scale factor to completed length
-        int showLen = (int) ((doneLen != Integer.MAX_VALUE ? doneLen * mWidthRatio : doneLen) + curLen);
+        // Don't apply scale factor to completed length to maintain accurate timing
+        // mWidthRatio should only affect layout, not timing synchronization
+        int showLen = (int) (doneLen + curLen);
 
         // Handle highlighting in multi-line situations
         for (int i = 0; i < mDrawRects.length; i++) {
