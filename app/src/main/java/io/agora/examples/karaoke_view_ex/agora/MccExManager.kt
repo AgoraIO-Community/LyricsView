@@ -10,7 +10,6 @@ import io.agora.mccex.IMusicContentCenterExScoreEventHandler
 import io.agora.mccex.IMusicPlayer
 import io.agora.mccex.MusicContentCenterExConfiguration
 import io.agora.mccex.constants.ChargeMode
-import io.agora.mccex.constants.LyricType
 import io.agora.mccex.constants.MccExState
 import io.agora.mccex.constants.MccExStateReason
 import io.agora.mccex.constants.MusicPlayMode
@@ -380,16 +379,8 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
                 Log.e(TAG, "getInternalSongCode failed songId=$songId")
                 return
             }
-            if (0 == mMccExService?.isPreloaded(songCode)) {
-                Log.i(TAG, "mccEx is preloaded songCode=$songCode")
-                mLyricFilePath = ""
-                mPitchFilePath = ""
-                mMccExService?.getLyric(songCode, LyricType.KRC)
-                mMccExService?.getPitch(songCode)
-            } else {
-                val requestId = mMccExService?.preload(songCode) ?: ""
-                Log.i(TAG, "preload requestId=$requestId")
-            }
+            val requestId = mMccExService?.preload(songCode) ?: ""
+            Log.i(TAG, "preload requestId=$requestId")
         } catch (e: Exception) {
             e.printStackTrace()
         }
