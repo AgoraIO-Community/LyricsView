@@ -1198,15 +1198,19 @@ public class ScoringView extends View {
     }
 
     /**
-     * Handle view detachment from window
+     * Handle view detachment from window.
+     * Must remove Choreographer callback and Handler messages to avoid leaking Activity.
      */
     @Override
     protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
         stopFrameLoop();
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
         if (mParticleSystem != null) {
             mParticleSystem.cancel();
         }
+        super.onDetachedFromWindow();
     }
 
     @Override
@@ -1244,6 +1248,12 @@ public class ScoringView extends View {
 
     private void stepFrame(long frameTimeNanos) {
         if (!mFrameLoopRunning) {
+            return;
+        }
+        // Safety: if view already detached, stop loop and do not post next frame to avoid leaking Activity
+        if (!isAttachedToWindow()) {
+            mFrameLoopRunning = false;
+            Choreographer.getInstance().removeFrameCallback(mFrameCallback);
             return;
         }
         if (mLastFrameTimeNanos == 0L) {
