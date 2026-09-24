@@ -79,5 +79,5 @@ dependencies {
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
     api 'io.github.winskyan:Agora-LoggingService:1.0.10'
     implementation 'com.google.code.gson:gson:2.10.1'
+    testImplementation 'junit:junit:4.13.2'
 }
-

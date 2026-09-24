@@ -9,6 +9,11 @@ import androidx.annotation.NonNull;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import io.agora.examples.karaoke_view_ex.BuildConfig;
 import io.agora.examples.utils.KeyCenter;
@@ -33,6 +38,10 @@ public class MccManager {
     private IAgoraMusicPlayer mAgoraMusicPlayer;
     private MusicContentCenterConfiguration mConfig;
     private final MccCallback mCallback;
+    private final boolean mIsTme;
+    private volatile TmeSong mCurrentTmeSong;
+    private volatile long mCurrentTmeSongCode;
+    private volatile boolean mTmeListPending;
     private ScheduledExecutorService mScheduledExecutorService;
     private long mCurrentMusicPosition;
     private final static int MUSIC_POSITION_UPDATE_INTERVAL = 20;
@@ -60,7 +69,17 @@ public class MccManager {
             Log.d(TAG, "onPreLoadEvent requestId:" + requestId + " songCode:" + songCode + " percent:" + percent + " lyricUrl:" + lyricUrl + " status:" + status + " errorCode:" + errorCode);
             mCallback.onMusicPreloadResult(songCode, percent);
             if (status == 0 && percent == 100) {
-                mMcc.getLyric(songCode, mLyricType);
+                if (mIsTme) {
+                    if (songCode == mCurrentTmeSongCode && mCurrentTmeSong != null) {
+                        String tmeLyricUrl = mCurrentTmeSong.lyricUrl.isEmpty() ? lyricUrl : mCurrentTmeSong.lyricUrl;
+                        Log.i(TAG, "TME preload lyric available: " + (tmeLyricUrl != null && !tmeLyricUrl.isEmpty()));
+                        mCallback.onMusicLyricRequest(songCode, tmeLyricUrl, mCurrentTmeSong.pitchUrl);
+                    }
+                } else {
+                    mMcc.getLyric(songCode, mLyricType);
+                }
+            } else if (mIsTme && status == 1) {
+                mCallback.onTmeError("TME preload failed: " + errorCode);
             }
         }
 
@@ -77,18 +96,102 @@ public class MccManager {
         @Override
         public void onLyricResult(String requestId, long songCode, String lyricUrl, int errorCode) {
             Log.d(TAG, "onLyricResult()  requestId :" + requestId + " songCode:" + songCode + " lyricUrl:" + lyricUrl + " errorCode:" + errorCode);
-            mCallback.onMusicLyricRequest(songCode, lyricUrl);
+            mCallback.onMusicLyricRequest(songCode, lyricUrl, null);
         }
 
         @Override
         public void onSongSimpleInfoResult(String requestId, long songCode, String simpleInfo, int errorCode) {
 
         }
+
+        @Override
+        public void onExtResponse(String requestId, String jsonOption, int httpCode, String response) {
+            if (!mIsTme) {
+                return;
+            }
+            try {
+                JSONObject option = new JSONObject(jsonOption);
+                if (!"songs".equals(option.optString("actionType"))) {
+                    return;
+                }
+                mTmeListPending = false;
+                if (httpCode != 200) {
+                    mCallback.onTmeError("TME song request failed: HTTP " + httpCode);
+                    return;
+                }
+                JSONObject result = new JSONObject(response);
+                if (result.optInt("code", -1) != 0) {
+                    mCallback.onTmeError("TME song request failed: " + result.optInt("code", -1));
+                    return;
+                }
+                JSONArray songs = result.getJSONObject("data").getJSONArray("songList");
+                List<TmeSong> list = new ArrayList<>();
+                int songsWithLrc = 0;
+                int songsWithKrc = 0;
+                for (int i = 0; i < Math.min(songs.length(), 20); i++) {
+                    JSONObject song = songs.getJSONObject(i);
+                    String songId = song.optString("songId");
+                    if (songId.isEmpty() || song.optInt("status", 1) != 1 || song.optInt("grantStatus", 1) != 1) {
+                        continue;
+                    }
+                    String lyricUrl = "";
+                    String lyricType = "";
+                    String lrcUrl = "";
+                    JSONArray lyrics = song.optJSONArray("lrcList");
+                    if (lyrics != null) {
+                        for (int j = 0; j < lyrics.length(); j++) {
+                            JSONObject lyric = lyrics.optJSONObject(j);
+                            if (lyric != null) {
+                                String type = lyric.optString("type");
+                                if ("krc".equalsIgnoreCase(type) && !lyric.optString("url").isEmpty()) {
+                                    lyricUrl = lyric.optString("url");
+                                    lyricType = "krc";
+                                    break;
+                                } else if ("lrc".equalsIgnoreCase(type) && lrcUrl.isEmpty()) {
+                                    lrcUrl = lyric.optString("url");
+                                }
+                            }
+                        }
+                    }
+                    if (lyricUrl.isEmpty() && !lrcUrl.isEmpty()) {
+                        lyricUrl = lrcUrl;
+                        lyricType = "lrc";
+                    }
+                    if ("krc".equals(lyricType)) {
+                        songsWithKrc++;
+                    } else if ("lrc".equals(lyricType)) {
+                        songsWithLrc++;
+                    }
+                    if (list.isEmpty()) {
+                        StringBuilder lyricTypes = new StringBuilder();
+                        if (lyrics != null) {
+                            for (int j = 0; j < lyrics.length(); j++) {
+                                JSONObject lyric = lyrics.optJSONObject(j);
+                                if (lyric != null) {
+                                    lyricTypes.append(lyric.optString("type")).append(' ');
+                                }
+                            }
+                        }
+                        Log.i(TAG, "TME first song lyric types: " + lyricTypes
+                                + ", hasLrc=" + !lyricUrl.isEmpty() + ", hasPitch=" + !song.optString("pitchUrl").isEmpty());
+                    }
+                    list.add(new TmeSong(songId, song.optString("songName"), lyricUrl, lyricType, song.optString("pitchUrl")));
+                }
+                if (list.isEmpty()) {
+                    mCallback.onTmeError("TME song list is empty");
+                } else {
+                    Log.i(TAG, "TME songs loaded: " + list.size() + ", with KRC: " + songsWithKrc + ", with LRC: " + songsWithLrc);
+                    mCallback.onTmeSongsLoaded(list);
+                }
+            } catch (Exception e) {
+                mCallback.onTmeError("Invalid TME song response");
+            }
+        }
     };
 
     private final IMediaPlayerObserver mMediaPlayerObserver = new IMediaPlayerObserver() {
         @Override
-        public void onPlayerStateChanged(io.agora.mediaplayer.Constants.MediaPlayerState state, io.agora.mediaplayer.Constants.MediaPlayerError error) {
+        public void onPlayerStateChanged(io.agora.mediaplayer.Constants.MediaPlayerState state, io.agora.mediaplayer.Constants.MediaPlayerReason error) {
             Log.d(TAG, "onPlayerStateChanged: " + state + " " + error);
             if (io.agora.mediaplayer.Constants.MediaPlayerState.PLAYER_STATE_OPEN_COMPLETED == state) {
                 if (mStatus == Status.IDLE) {
@@ -149,14 +252,23 @@ public class MccManager {
         }
 
         @Override
+        public void onPlayerCacheStats(io.agora.mediaplayer.data.CacheStatistics stats) {
+        }
+
+        @Override
+        public void onPlayerPlaybackStats(io.agora.mediaplayer.data.PlayerPlaybackStats stats) {
+        }
+
+        @Override
         public void onAudioVolumeIndication(int volume) {
 
         }
     };
 
-    public MccManager(Context context, MccCallback callback) {
+    public MccManager(Context context, MccCallback callback, boolean isTme) {
         mContext = context;
         mCallback = callback;
+        mIsTme = isTme;
         initData();
     }
 
@@ -172,28 +284,104 @@ public class MccManager {
             mConfig.appId = BuildConfig.APP_ID;
             mConfig.mccUid = KeyCenter.getUserUid();
             mConfig.token = KeyCenter.getRtmToken(KeyCenter.getUserUid());
-            //mConfig.mccDomain = "api-test.agora.io";
+            if (mIsTme && !BuildConfig.TME_MCC_DOMAIN.isEmpty()) {
+                mConfig.mccDomain = BuildConfig.TME_MCC_DOMAIN;
+            }
             mConfig.eventHandler = mMccEventHandler;
-            mMcc.initialize(mConfig);
+            int result = mMcc.initialize(mConfig);
+            if (result != 0) {
+                mCallback.onTmeError("Music content center initialization failed: " + result);
+                return;
+            }
 
             mAgoraMusicPlayer = mMcc.createMusicPlayer();
 
             mAgoraMusicPlayer.registerPlayerObserver(mMediaPlayerObserver);
+            if (mIsTme) {
+                requestTmeSongs();
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Music content center initialization failed", e);
+            mCallback.onTmeError("Music content center initialization failed");
         }
 
     }
 
     public void destroy() {
-        mAgoraMusicPlayer.unRegisterPlayerObserver(mMediaPlayerObserver);
-        mMcc.unregisterEventHandler();
-        IAgoraMusicContentCenter.destroy();
-        mAgoraMusicPlayer.destroy();
+        mCurrentTmeSong = null;
+        mCurrentTmeSongCode = 0;
+        mTmeListPending = false;
+        if (mAgoraMusicPlayer != null) {
+            mAgoraMusicPlayer.unRegisterPlayerObserver(mMediaPlayerObserver);
+            mAgoraMusicPlayer.destroy();
+        }
+        if (mMcc != null) {
+            mMcc.unregisterEventHandler();
+            IAgoraMusicContentCenter.destroy();
+        }
         mAgoraMusicPlayer = null;
         mMcc = null;
-        mConfig.eventHandler = null;
+        if (mConfig != null) {
+            mConfig.eventHandler = null;
+        }
         mConfig = null;
+    }
+
+    public void requestTmeSongs() {
+        if (mTmeListPending || mMcc == null) {
+            return;
+        }
+        mTmeListPending = true;
+        try {
+            JSONObject option = new JSONObject();
+            option.put("vendorId", IAgoraMusicContentCenter.MUSIC_CONTENT_CENTER_VENDOR_ID_TME);
+            option.put("actionType", "songs");
+            JSONObject parameters = new JSONObject();
+            parameters.put("queryInfo", "");
+            parameters.put("limit", 20);
+            option.put("actionParameter", parameters);
+            String requestId = mMcc.sendExtRequest(option.toString());
+            if (requestId == null || requestId.isEmpty()) {
+                mTmeListPending = false;
+                mCallback.onTmeError("TME song request was not submitted");
+            }
+        } catch (Exception e) {
+            mTmeListPending = false;
+            mCallback.onTmeError("TME song request failed");
+        }
+    }
+
+    public boolean preloadTmeMusic(TmeSong song) {
+        try {
+            JSONObject parameters = new JSONObject();
+            parameters.put("songCode", song.songId);
+            parameters.put("fileType", "mkv");
+            JSONObject option = new JSONObject();
+            option.put("vendorId", IAgoraMusicContentCenter.MUSIC_CONTENT_CENTER_VENDOR_ID_TME);
+            option.put("actionParameter", parameters);
+            long songCode = mMcc.getInternalSongCode(0, option.toString());
+            if (songCode <= 0) {
+                mCallback.onTmeError("TME song code conversion failed");
+                return false;
+            }
+            mCurrentTmeSong = song;
+            mCurrentTmeSongCode = songCode;
+            mLyricType = 1;
+            String requestId = mMcc.preload(songCode);
+            if (requestId == null || requestId.isEmpty()) {
+                mCallback.onTmeError("TME preload was not submitted");
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "TME preload failed", e);
+            mCallback.onTmeError("TME preload failed");
+            return false;
+        }
+    }
+
+    public long getCurrentTmeSongCode() {
+        return mCurrentTmeSongCode;
     }
 
     private void onMusicOpenCompleted() {
@@ -243,6 +431,10 @@ public class MccManager {
 
     public void stop() {
         Log.i(TAG, "stop()  called");
+        if (mIsTme) {
+            mCurrentTmeSong = null;
+            mCurrentTmeSongCode = 0;
+        }
         if (mStatus == Status.IDLE) {
             return;
         }
@@ -363,8 +555,14 @@ public class MccManager {
     }
 
     public interface MccCallback {
-        default void onMusicLyricRequest(long songCode, String lyricUrl) {
+        default void onMusicLyricRequest(long songCode, String lyricUrl, String pitchUrl) {
 
+        }
+
+        default void onTmeSongsLoaded(List<TmeSong> songs) {
+        }
+
+        default void onTmeError(String message) {
         }
 
         default void onMusicPreloadResult(long songCode, int percent) {
@@ -385,6 +583,22 @@ public class MccManager {
 
         default void onMusicStop() {
 
+        }
+    }
+
+    public static class TmeSong {
+        public final String songId;
+        public final String name;
+        public final String lyricUrl;
+        public final String lyricType;
+        public final String pitchUrl;
+
+        TmeSong(String songId, String name, String lyricUrl, String lyricType, String pitchUrl) {
+            this.songId = songId;
+            this.name = name;
+            this.lyricUrl = lyricUrl;
+            this.lyricType = lyricType;
+            this.pitchUrl = pitchUrl;
         }
     }
 }

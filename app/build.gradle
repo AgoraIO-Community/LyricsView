@@ -6,6 +6,12 @@ plugins {
 Properties properties = new Properties()
 InputStream inputStream = project.rootProject.file('local.properties').newDataInputStream()
 properties.load(inputStream)
+if (!file('libs/agora-rtc-sdk.jar').isFile()) {
+    throw new GradleException('Copy agora-rtc-sdk.jar to app/libs before building')
+}
+if (!file('src/main/jniLibs/arm64-v8a/libagora-rtc-sdk.so').isFile()) {
+    throw new GradleException('Copy RTC SDK native libraries to app/src/main/jniLibs before building')
+}
 android {
     compileSdk rootProject.ext.compileSdkVersion
 
@@ -20,9 +26,10 @@ android {
 
         buildConfigField("String", "APP_ID", "\"${properties.getProperty("APP_ID", "")}\"")
         buildConfigField("String", "APP_CERTIFICATE", "\"${properties.getProperty("APP_CERTIFICATE", "")}\"")
-        buildConfigField("String", "YSD_APP_ID", "\"${properties.getProperty("YSD_APP_ID", "")}\"")
-        buildConfigField("String", "YSD_APP_KEY", "\"${properties.getProperty("YSD_APP_KEY", "")}\"")
-        buildConfigField("String", "YSD_TOKEN_HOST", "\"${properties.getProperty("YSD_TOKEN_HOST", "")}\"")
+        buildConfigField("String", "TME_MCC_DOMAIN", "\"${properties.getProperty("TME_MCC_DOMAIN", "")}\"")
+        buildConfigField("String", "YSD_APP_ID", "\"${properties.getProperty("YSD_APP_ID", properties.getProperty("VENDOR_2_APP_ID", ""))}\"")
+        buildConfigField("String", "YSD_APP_KEY", "\"${properties.getProperty("YSD_APP_KEY", properties.getProperty("VENDOR_2_APP_KEY", ""))}\"")
+        buildConfigField("String", "YSD_TOKEN_HOST", "\"${properties.getProperty("YSD_TOKEN_HOST", properties.getProperty("VENDOR_2_TOKEN_HOST", ""))}\"")
         buildConfigField("boolean", "ENABLE_LYRIC_CUTTER", "${enableLyricCutter.toBoolean()}")
         ndk {
             abiFilters 'arm64-v8a'
@@ -58,7 +65,6 @@ android {
         viewBinding true
     }
 
-
     android.applicationVariants.all {
         variant ->
             variant.outputs.all {
@@ -92,8 +98,6 @@ dependencies {
     androidTestImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-
-    implementation 'io.agora.rtc:agora-special-full:4.1.1.24'
 
     implementation 'com.github.guohai:Leonids:9f5a9190f6'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'

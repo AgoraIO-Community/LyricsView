@@ -23,6 +23,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Objects;
 
 import io.agora.examples.karaoke_view_ex.agora.RtcManager;
@@ -41,6 +42,11 @@ import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.model.LyricModel;
 import io.agora.karaoke_view_ex.utils.LyricsCutter;
 import io.agora.rtc2.IRtcEngineEventHandler;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceManager.ServiceCallback {
@@ -52,6 +58,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private long mLyricsCurrentProgress = 0;
     private boolean mSetNoLyric = false;
     private boolean mUseInternalScoring = false;
+    private final OkHttpClient mTmeHttpClient = new OkHttpClient();
+    private int mTmeResourceRequestId = 0;
+    private String mTmeSongName = "";
+    private boolean mSwitchingMusic = false;
     private PlayerState mState = PlayerState.UNINITIALIZED;
 
     private enum PlayerState {
@@ -230,6 +240,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void loadTheLyrics(String lrcUri, String pitchUri, int songOffsetBegin, int songOffsetEnd, int lyricOffset) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+            loadTmeLyrics(lrcUri, pitchUri);
+            return;
+        }
         Log.i(TAG, "loadTheLyrics " + lrcUri + " " + pitchUri + " " + lyricOffset);
         mKaraokeView.reset();
         mLyricsModel = null;
@@ -270,10 +284,100 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private void loadTmeLyrics(String lyricUrl, String pitchUrl) {
+        int requestId = ++mTmeResourceRequestId;
+        if (TextUtils.isEmpty(lyricUrl) || !lyricUrl.startsWith("https://")) {
+            Log.w(TAG, "TME song has no HTTPS lyric URL");
+            showTmeLyrics(requestId, null, null);
+            return;
+        }
+        Request lyricRequest;
+        try {
+            lyricRequest = new Request.Builder().url(lyricUrl).build();
+        } catch (IllegalArgumentException e) {
+            showTmeLyrics(requestId, null, null);
+            return;
+        }
+        mTmeHttpClient.newCall(lyricRequest).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                Log.w(TAG, "TME lyric download failed", e);
+                showTmeLyrics(requestId, null, null);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                byte[] lyrics;
+                try (Response result = response) {
+                    Log.i(TAG, "TME lyric HTTP status: " + result.code());
+                    lyrics = result.isSuccessful() && result.body() != null ? result.body().bytes() : null;
+                } catch (IOException e) {
+                    showTmeLyrics(requestId, null, null);
+                    return;
+                }
+                if (lyrics == null || TextUtils.isEmpty(pitchUrl) || !pitchUrl.startsWith("https://")) {
+                    showTmeLyrics(requestId, lyrics, null);
+                    return;
+                }
+                Request pitchRequest;
+                try {
+                    pitchRequest = new Request.Builder().url(pitchUrl).build();
+                } catch (IllegalArgumentException e) {
+                    showTmeLyrics(requestId, lyrics, null);
+                    return;
+                }
+                mTmeHttpClient.newCall(pitchRequest).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                        showTmeLyrics(requestId, lyrics, null);
+                    }
+
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                        byte[] pitch;
+                        try (Response result = response) {
+                            pitch = result.isSuccessful() && result.body() != null ? result.body().bytes() : null;
+                        } catch (IOException e) {
+                            showTmeLyrics(requestId, lyrics, null);
+                            return;
+                        }
+                        showTmeLyrics(requestId, lyrics, pitch);
+                    }
+                });
+            }
+        });
+    }
+
+    private void showTmeLyrics(int requestId, byte[] lyrics, byte[] pitch) {
+        runOnUiThread(() -> {
+            if (requestId != mTmeResourceRequestId || ServiceManager.INSTANCE.getServiceType() != ServiceType.TME || isFinishing()) {
+                return;
+            }
+            mKaraokeView.reset();
+            try {
+                mLyricsModel = lyrics == null ? null : KaraokeView.parseLyricData(lyrics, pitch);
+                Log.i(TAG, "TME lyrics parsed: " + (mLyricsModel != null) + ", pitch bytes: " + (pitch == null ? 0 : pitch.length));
+            } catch (Exception e) {
+                Log.e(TAG, "TME lyric parsing failed", e);
+                mLyricsModel = null;
+            }
+            mUseInternalScoring = false;
+            mKaraokeView.setLyricData(mSetNoLyric ? null : mLyricsModel, false);
+            ServiceManager.INSTANCE.openMusic();
+            updateLyricsDescription();
+        });
+    }
+
     private void updateLyricsDescription() {
-        String lyricsSummary = mLyricsModel != null ? (mLyricsModel.name + ": " + mLyricsModel.singer + " " + mLyricsModel.preludeEndPosition + " " + mLyricsModel.lines.size() + " " + mLyricsModel.duration) : "Invalid lyrics";
+        String lyricsSummary = mLyricsModel != null
+                ? ((mLyricsModel.name == null ? "" : mLyricsModel.name)
+                + (mLyricsModel.singer == null ? "" : ": " + mLyricsModel.singer)
+                + " " + mLyricsModel.preludeEndPosition + " " + mLyricsModel.lines.size() + " " + mLyricsModel.duration)
+                : "Invalid lyrics";
         Log.d(TAG, "lyricsSummary: " + lyricsSummary);
-        final String finalDescription = "[" + ServiceManager.INSTANCE.getServiceType() + "]" + lyricsSummary + "\n";
+        final String finalDescription = ServiceManager.INSTANCE.getServiceType() == ServiceType.TME
+                ? "[TME] " + mTmeSongName + ((mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty()) ? "\nNo Lyrics Available" : "")
+                : "[" + ServiceManager.INSTANCE.getServiceType() + "] " + lyricsSummary + "\n";
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -307,6 +411,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             mKaraokeView.setLyricData(null, mUseInternalScoring);
             mKaraokeView.reset();
+            mTmeResourceRequestId++;
+            mTmeSongName = "";
             ServiceManager.INSTANCE.destroy();
             ServiceManager.INSTANCE.setServiceType(Objects.requireNonNull(ServiceType.Companion.fromType(serviceType)));
             ServiceManager.INSTANCE.initService(this.getApplicationContext(), this);
@@ -386,8 +492,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void switchMusic() {
+        if (!ServiceManager.INSTANCE.switchMusic()) {
+            return;
+        }
+        mSwitchingMusic = true;
         ServiceManager.INSTANCE.stop();
-        ServiceManager.INSTANCE.switchMusic();
         doPlay();
     }
 
@@ -401,13 +510,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void doPlay() {
+        if (!ServiceManager.INSTANCE.play()) {
+            mSwitchingMusic = false;
+            mState = PlayerState.IDLE;
+            binding.play.setText(R.string.play);
+            return;
+        }
         binding.play.setText(this.getResources().getString(R.string.stop));
         mLyricsCurrentProgress = 0;
         binding.playOriginal.setText(this.getResources().getString(R.string.play_accompany));
-        ServiceManager.INSTANCE.play();
     }
 
     private void doStop() {
+        mTmeResourceRequestId++;
         binding.play.setText(this.getResources().getString(R.string.play));
         mLyricsCurrentProgress = 0;
         ServiceManager.INSTANCE.stop();
@@ -452,6 +567,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         ServiceManager.INSTANCE.destroy();
+        mTmeResourceRequestId++;
     }
 
     @Override
@@ -483,9 +599,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 doPauseOrResume();
                 break;
             case R.id.switch_to_next:
-                updateCallback("Next");
                 mLyricsCurrentProgress = 0; // Replay if already playing
-                mState = PlayerState.PLAYING;
                 switchMusic();
                 break;
 
@@ -520,12 +634,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicLyricRequest(long songCode, @Nullable String lyricUrl, @Nullable String pitchUrl, int songOffsetBegin, int songOffsetEnd, int lyricOffset) {
-        loadTheLyrics(lyricUrl, pitchUrl, songOffsetBegin, songOffsetEnd, lyricOffset);
+        runOnUiThread(() -> loadTheLyrics(lyricUrl, pitchUrl, songOffsetBegin, songOffsetEnd, lyricOffset));
     }
 
     @Override
     public void onMusicPreloadResult(long songCode, int percent) {
-        updateCallback("Preload: " + songCode + "  " + percent + "%");
+        runOnUiThread(() -> updateCallback("Preload: " + songCode + "  " + percent + "%"));
+    }
+
+    @Override
+    public void onTmeSongChanged(@NonNull String songName) {
+        runOnUiThread(() -> {
+            mTmeSongName = songName;
+            updateCallback("TME: " + songName);
+        });
+    }
+
+    @Override
+    public void onTmeError(@NonNull String message) {
+        runOnUiThread(() -> {
+            mSwitchingMusic = false;
+            mState = PlayerState.IDLE;
+            binding.play.setText(R.string.play);
+            updateCallback(message);
+        });
     }
 
     @Override
@@ -549,7 +681,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicPitch(double speakerPitch, long progressInMs) {
-        if (mState == PlayerState.PLAYING) {
+        if (mState == PlayerState.PLAYING && mLyricsModel != null && mLyricsModel.hasPitch) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -561,14 +693,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicPlaying() {
-        updateCallback("Playing");
-        mState = PlayerState.PLAYING;
+        runOnUiThread(() -> {
+            updateCallback("Playing");
+            mState = PlayerState.PLAYING;
+            mSwitchingMusic = false;
+            binding.play.setText(R.string.stop);
+        });
     }
 
     @Override
     public void onMusicStop() {
-        updateCallback("Stop");
-        mState = PlayerState.IDLE;
+        runOnUiThread(() -> {
+            if (mSwitchingMusic) {
+                return;
+            }
+            updateCallback("Stop");
+            mState = PlayerState.IDLE;
+            binding.play.setText(R.string.play);
+            binding.pause.setText(R.string.pause);
+        });
     }
 
     @Override

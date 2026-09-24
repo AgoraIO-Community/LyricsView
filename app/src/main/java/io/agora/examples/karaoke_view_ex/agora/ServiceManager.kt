@@ -32,6 +32,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     private var mMccManager: MccManager? = null
     private var mMccExManager: MccExManager? = null
     private var mServiceType: ServiceType? = ServiceType.MCC
+    @Volatile private var mTmeSongs: List<MccManager.TmeSong> = emptyList()
     private var mCurrentSongCodeIndex = 0
     private var mIsOriginal = true
     private var mServiceCallback: ServiceCallback? = null
@@ -51,11 +52,12 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
     fun initService(context: Context, serviceCallback: ServiceCallback) {
         mCurrentSongCodeIndex = 0
+        mTmeSongs = emptyList()
         mServiceCallback = serviceCallback
         if (ServiceType.MCC_EX == mServiceType) {
             initMccEx(context)
-        } else if (ServiceType.MCC == mServiceType) {
-            initMcc(context)
+        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
+            initMcc(context, ServiceType.TME == mServiceType)
         }
     }
 
@@ -125,8 +127,8 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         }
     }
 
-    private fun initMcc(context: Context) {
-        mMccManager = MccManager(context, this)
+    private fun initMcc(context: Context, isTme: Boolean) {
+        mMccManager = MccManager(context, this, isTme)
         mMccManager?.init(getRtcEngine())
     }
 
@@ -134,7 +136,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.seek(position)
             mMccExManager?.updateMusicPosition(position)
-        } else if (ServiceType.MCC == mServiceType) {
+        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
             mMccManager?.seek(position)
             mMccManager?.updateMusicPosition(position)
         }
@@ -145,7 +147,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.destroy()
             mMccExManager = null
-        } else if (ServiceType.MCC == mServiceType) {
+        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
             mMccManager?.destroy()
             mMccManager = null
         }
@@ -158,26 +160,36 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
                 LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songId,
                 LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].mediaType
             )
+        } else if (ServiceType.TME == mServiceType) {
+            mMccManager?.currentTmeSongCode?.takeIf { it > 0 }?.let { mMccManager?.openMusic(it) }
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.openMusic(LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode)
         }
     }
 
-    fun switchMusic() {
+    fun switchMusic(): Boolean {
         if (ServiceType.MCC_EX == mServiceType) {
             mCurrentSongCodeIndex++
             if (mCurrentSongCodeIndex >= LyricsResourcePool.asMusicListEx().size) {
                 mCurrentSongCodeIndex = 0
             }
+        } else if (ServiceType.TME == mServiceType) {
+            if (mTmeSongs.isEmpty()) {
+                mServiceCallback?.onTmeError("TME song list is not ready")
+                return false
+            }
+            mCurrentSongCodeIndex = (mCurrentSongCodeIndex + 1) % mTmeSongs.size
+            mServiceCallback?.onTmeSongChanged("${mTmeSongs[mCurrentSongCodeIndex].name} (${mCurrentSongCodeIndex + 1}/${mTmeSongs.size})")
         } else if (ServiceType.MCC == mServiceType) {
             mCurrentSongCodeIndex++
             if (mCurrentSongCodeIndex >= LyricsResourcePool.asMusicList().size) {
                 mCurrentSongCodeIndex = 0
             }
         }
+        return true
     }
 
-    fun play() {
+    fun play(): Boolean {
         mIsOriginal = true
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.setPlayMode(MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL)
@@ -185,6 +197,14 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
                 LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songId,
                 LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].mediaType
             )
+        } else if (ServiceType.TME == mServiceType) {
+            val song = mTmeSongs.getOrNull(mCurrentSongCodeIndex)
+            if (song == null) {
+                mMccManager?.requestTmeSongs()
+                mServiceCallback?.onTmeError("Loading TME songs")
+                return false
+            }
+            return mMccManager?.preloadTmeMusic(song) ?: false
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.setPlayMode(
                 MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
@@ -195,12 +215,13 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
                 mLyricType
             )
         }
+        return true
     }
 
     fun stop() {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.stop()
-        } else if (ServiceType.MCC == mServiceType) {
+        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
             mMccManager?.stop()
         }
     }
@@ -214,18 +235,18 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
                 mIsOriginal = true
                 mMccExManager?.setPlayMode(MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL)
             }
-        } else if (ServiceType.MCC == mServiceType) {
+        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
             if (mIsOriginal) {
                 mIsOriginal = false
                 mMccManager?.setPlayMode(
                     MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY,
-                    LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
+                    if (ServiceType.TME == mServiceType) 4 else LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
                 )
             } else {
                 mIsOriginal = true
                 mMccManager?.setPlayMode(
                     MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
-                    LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
+                    if (ServiceType.TME == mServiceType) 4 else LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
                 )
             }
         }
@@ -238,7 +259,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     fun pause() {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.pause()
-        } else if (ServiceType.MCC == mServiceType) {
+        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
             mMccManager?.pause()
         }
     }
@@ -246,7 +267,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     fun resume() {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.resume()
-        } else if (ServiceType.MCC == mServiceType) {
+        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
             mMccManager?.resume()
         }
     }
@@ -254,22 +275,41 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     fun clearCache(context: Context) {
         if (ServiceType.MCC_EX == mServiceType) {
             Utils.deleteFolder(context.externalCacheDir?.path + "/song/")
-        } else if (ServiceType.MCC == mServiceType) {
+        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
             mMccManager?.clearCache()
             LyricsFileDownloader.getInstance(context).cleanAll()
         }
     }
 
     fun updateSpeakerPitch(speakerPitch: Double) {
-        if (ServiceType.MCC == mServiceType) {
+        if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
             mMccManager?.getPlayPosition()?.let { mServiceCallback?.onMusicPitch(speakerPitch, it) }
         }
     }
 
 
     //////////////////////////// MccManager.MccCallback ////////////////////////////
-    override fun onMusicLyricRequest(songCode: Long, lyricUrl: String?) {
-        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, null, 0, 0, 0)
+    override fun onMusicLyricRequest(songCode: Long, lyricUrl: String?, pitchUrl: String?) {
+        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, pitchUrl, 0, 0, 0)
+    }
+
+    override fun onTmeSongsLoaded(songs: MutableList<MccManager.TmeSong>?) {
+        if (ServiceType.TME != mServiceType || songs.isNullOrEmpty()) return
+        mTmeSongs = songs.toList()
+        val krcIndex = mTmeSongs.indexOfFirst { it.lyricType == "krc" }
+        val lrcIndex = mTmeSongs.indexOfFirst { it.lyricType == "lrc" }
+        mCurrentSongCodeIndex = when {
+            krcIndex >= 0 -> krcIndex
+            lrcIndex >= 0 -> lrcIndex
+            else -> 0
+        }
+        mServiceCallback?.onTmeSongChanged("${mTmeSongs[mCurrentSongCodeIndex].name} (${mCurrentSongCodeIndex + 1}/${mTmeSongs.size})")
+    }
+
+    override fun onTmeError(message: String?) {
+        if (ServiceType.TME == mServiceType) {
+            mServiceCallback?.onTmeError(message ?: "TME error")
+        }
     }
 
     override fun onMusicPreloadResult(songCode: Long, percent: Int) {
@@ -403,6 +443,11 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
 
     interface ServiceCallback {
+        fun onTmeSongChanged(songName: String) {
+        }
+
+        fun onTmeError(message: String) {
+        }
         fun onMusicLyricRequest(
             songCode: Long,
             lyricUrl: String?,

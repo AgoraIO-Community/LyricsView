@@ -95,17 +95,21 @@ KTV 应用的完整解决方案。
 
 ```properties
 # 声网配置
-APP_CERTIFICATE=XXX  # 声网证书
-APP_ID=XXX           # 声网 App ID
+APP_CERTIFICATE=XXX
+APP_ID=XXX
+# TME 测试环境
+TME_MCC_DOMAIN=api-test.agora.io
 # 音速达曲库配置
-YSD_APP_ID=XXX       # 音速达曲库 App ID
-YSD_APP_KEY=XXX      # 音速达曲库 App Key
-YSD_TOKEN_HOST=XXX   # 音速达曲库 Token 获取地址
+YSD_APP_ID=XXX
+YSD_APP_KEY=XXX
+YSD_TOKEN_HOST=XXX
 ```
 
-2. 使用 Android Studio 打开项目，等待依赖同步完成
+2. 将 RTC SDK 的 `rtc/sdk/agora-rtc-sdk.jar` 复制到 `app/libs/`，将 SDK 的各 ABI 目录中的 `.so` 复制到 `app/src/main/jniLibs/<ABI>/`。这些二进制文件只保留在本机，不提交到 Git。
 
-3. 点击工具栏中的"运行"按钮（绿色三角形）或使用快捷键 `Shift+F10` 即可启动示例应用
+3. 使用 Android Studio 打开项目，等待依赖同步完成
+
+4. 点击工具栏中的"运行"按钮（绿色三角形）或使用快捷键 `Shift+F10` 即可启动示例应用
 
 ## 集成方式
 

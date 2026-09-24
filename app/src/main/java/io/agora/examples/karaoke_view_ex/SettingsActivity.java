@@ -111,6 +111,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         binding.radioMcc.setChecked(prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType()) == ServiceType.MCC.getType());
         binding.radioMccEx.setChecked(prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType()) == ServiceType.MCC_EX.getType());
+        binding.radioTme.setChecked(prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType()) == ServiceType.TME.getType());
 
         binding.radioMcc.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
@@ -134,6 +135,15 @@ public class SettingsActivity extends AppCompatActivity {
 
             updateLyricType(prefs);
 
+        });
+
+        binding.radioTme.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.TME.getType());
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.LRC.ordinal());
+                editor.apply();
+            }
+            updateLyricType(prefs);
         });
 
 
@@ -171,7 +181,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void updateLyricType(SharedPreferences prefs) {
         binding.radioLyricXml.setEnabled(binding.radioMcc.isChecked());
-        binding.radioLyricLrc.setEnabled(binding.radioMcc.isChecked());
+        binding.radioLyricLrc.setEnabled(binding.radioMcc.isChecked() || binding.radioTme.isChecked());
         binding.radioLyricKrc.setEnabled(binding.radioMccEx.isChecked());
 
         binding.radioLyricXml.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.XML.ordinal());
