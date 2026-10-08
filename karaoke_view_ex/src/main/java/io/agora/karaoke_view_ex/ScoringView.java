@@ -866,7 +866,7 @@ public class ScoringView extends View {
                     break;
                 }
 
-                y = (realPitchMax - pitch.pitch) * stickHeightPerPitchLevel;
+                y = (realPitchMax - pitch.getFrequency()) * stickHeightPerPitchLevel;
                 boolean isCurrentPitch = renderProgress >= pitch.begin && renderProgress <= pitch.end;
 
                 if (!isCurrentPitch) {

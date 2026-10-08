@@ -11,6 +11,7 @@ import io.agora.karaoke_view_ex.internal.constants.LyricType;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.model.LyricsPitchLineModel;
 import io.agora.karaoke_view_ex.internal.model.PitchData;
+import io.agora.karaoke_view_ex.internal.model.TMELyricModel;
 import io.agora.karaoke_view_ex.internal.scoring.DefaultScoringAlgorithm;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
@@ -101,6 +102,8 @@ public class ScoringMachine {
      */
     private int mIndexOfCurrentLine = 0;
 
+    private int mNextTMELineToFinish = 0;
+
     /**
      * Initial score for the lyrics (can be changed by application)
      */
@@ -152,12 +155,17 @@ public class ScoringMachine {
             return;
         }
 
-        mLyricsModel = mayBeFixLyricModel(model);
+        mLyricsModel = model instanceof TMELyricModel ? model : mayBeFixLyricModel(model);
         mUsingInternalScoring = usingInternalScoring;
 
         mEndTimeOfThisLyrics = model.lines.get(model.lines.size() - 1).getEndTime();
         // find the timestamp of first reference pitch
         mTimestampOfFirstRefPitch = model.preludeEndPosition;
+
+        if (model instanceof TMELyricModel) {
+            prepareTMENotes((TMELyricModel) model);
+            return;
+        }
 
         if (mLyricsModel.hasPitch) {
             if (model.pitchDataList != null) {
@@ -218,6 +226,27 @@ public class ScoringMachine {
         }
 
         LogUtils.d("prepare mMinimumRefPitch:" + mMinimumRefPitch + ",mMaximumRefPitch:" + mMaximumRefPitch);
+    }
+
+    private void prepareTMENotes(TMELyricModel model) {
+        // Pitch sticks stay aligned to display indexes, including empty/title lines.
+        mPitchLines = new ArrayList<>(model.lines.size());
+        mMinimumRefPitch = Float.MAX_VALUE;
+        int scoringIndex = 0;
+        for (LyricsLineModel displayLine : model.lines) {
+            LyricsPitchLineModel pitchLine = new LyricsPitchLineModel();
+            if (scoringIndex < model.scoringLines.size()
+                    && model.scoringLines.get(scoringIndex).displayLine == displayLine) {
+                for (TMELyricModel.Note note : model.scoringLines.get(scoringIndex++).notes) {
+                    LyricsPitchLineModel.Pitch pitch = new TMELyricModel.Pitch(note);
+                    pitchLine.pitches.add(pitch);
+                    mMinimumRefPitch = Math.min(mMinimumRefPitch, note.frequency);
+                    mMaximumRefPitch = Math.max(mMaximumRefPitch, note.frequency);
+                }
+            }
+            mPitchLines.add(pitchLine);
+        }
+        if (mMinimumRefPitch == Float.MAX_VALUE) mMinimumRefPitch = 0;
     }
 
     /**
@@ -384,6 +413,12 @@ public class ScoringMachine {
      * @return The reference pitch at the current time, or -1 if not found
      */
     private float findRefPitchByTime(long timestamp, final boolean[] returnNewLine, final int[] returnIndexOfMostRecentLine) {
+        if (mLyricsModel instanceof TMELyricModel) {
+            finishTMELines(timestamp);
+            float pitch = getTMERefPitch(timestamp);
+            if (pitch > 0) mPitchesForLine.put(timestamp, -1f);
+            return pitch > 0 ? pitch : -1f;
+        }
         if (mLyricsModel == null || mLyricsModel.lines == null) {
             // Not ready
             return -1;
@@ -481,6 +516,7 @@ public class ScoringMachine {
      * @param indexOfMostRecentLine Index of the most recently completed line
      */
     private void updateScoreForMostRecentLine(long timestamp, boolean newLine, int indexOfMostRecentLine) {
+        if (mLyricsModel instanceof TMELyricModel) return;
         // Not started
         if ((timestamp < mTimestampOfFirstRefPitch) || mTimestampOfFirstRefPitch == -1) {
             return;
@@ -554,6 +590,18 @@ public class ScoringMachine {
     public void whenDraggingHappen(long progress) {
         minorReset();
 
+        if (mLyricsModel instanceof TMELyricModel) {
+            List<TMELyricModel.ScoringLine> lines = ((TMELyricModel) mLyricsModel).scoringLines;
+            for (int index = 0; index < lines.size(); index++) {
+                // Seeking into a previously completed line reopens that line as well.
+                if (progress < lines.get(index).getEndTime()) mScoreForEachLine.remove(index);
+                else mNextTMELineToFinish = index + 1;
+            }
+            mCumulativeScore = mInitialScore;
+            for (Integer score : mScoreForEachLine.values()) mCumulativeScore += score;
+            return;
+        }
+
         for (int index = 0; index < mLyricsModel.lines.size(); index++) {
             LyricsLineModel line = mLyricsModel.lines.get(index);
             if (progress <= line.getStartTime()) {
@@ -607,6 +655,7 @@ public class ScoringMachine {
         mCurrentPitchProgress = 0;
         mCurrentLyricProgress = 0;
         mIndexOfCurrentLine = 0;
+        mNextTMELineToFinish = 0;
 
         mPitchesForLine.clear();
     }
@@ -701,6 +750,7 @@ public class ScoringMachine {
         if (mLyricsModel == null) {
             return 0;
         }
+        if (mLyricsModel instanceof TMELyricModel) return getTMERefPitch(progressInMs);
         if (null != mLyricsModel && mLyricsModel.hasPitch) {
             if (null != mLyricsModel.pitchDataList) {
                 for (PitchData data : mLyricsModel.pitchDataList) {
@@ -721,6 +771,35 @@ public class ScoringMachine {
             }
         }
         return 0;
+    }
+
+    private float getTMERefPitch(long timestamp) {
+        for (TMELyricModel.ScoringLine line : ((TMELyricModel) mLyricsModel).scoringLines) {
+            if (timestamp < line.getStartTime()) break;
+            if (timestamp >= line.getEndTime()) continue;
+            for (TMELyricModel.Note note : line.notes) {
+                if (note.begin <= timestamp && timestamp < note.end) return note.frequency;
+            }
+            break;
+        }
+        return 0;
+    }
+
+    private void finishTMELines(long timestamp) {
+        List<TMELyricModel.ScoringLine> lines = ((TMELyricModel) mLyricsModel).scoringLines;
+        while (mNextTMELineToFinish < lines.size()
+                && timestamp >= lines.get(mNextTMELineToFinish).getEndTime()) {
+            int index = mNextTMELineToFinish++;
+            if (mScoreForEachLine.containsKey(index)) continue;
+            TMELyricModel.ScoringLine line = lines.get(index);
+            int score = mScoringAlgorithm.getLineScore(mPitchesForLine, index, line);
+            mPitchesForLine.clear();
+            mCumulativeScore += score;
+            mScoreForEachLine.put(index, score);
+            if (mListener != null) {
+                mListener.onLineFinished(line.displayLine, score, (int) mCumulativeScore, index, lines.size());
+            }
+        }
     }
 
     /**
