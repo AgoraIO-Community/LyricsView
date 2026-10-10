@@ -1,6 +1,12 @@
 <resources>
     <string name="app_name">KaraokeViewEx Example</string>
     <string name="title_activity_settings">SettingsActivity</string>
+    <string name="library_selection_title">选择曲库</string>
+    <string name="library_selection_prompt">请选择要体验的曲库</string>
+    <string name="library_mcc">音集协</string>
+    <string name="library_tme_description">选择歌曲，进入演唱与计分页</string>
+    <string name="library_mcc_description">进入现有歌词与计分示例</string>
+    <string name="tme_song_selection_title">TME · 选歌</string>
 
     <string name="prefs_key_scoring_level" translatable="false">prefs_key_scoring_level</string>
     <string name="prefs_key_scoring_compensation_offset" translatable="false">
@@ -162,4 +168,41 @@
     <string name="done">DONE</string>
     <string name="line_wrap_switch">Line Wrap Switch</string>
 
+    <string name="tme_loading_songs">正在加载 TME 歌曲…</string>
+    <string name="tme_choose_song">选择歌曲开始演唱</string>
+    <string name="tme_retry">重试</string>
+    <string name="tme_back">返回选歌</string>
+    <string name="tme_restart">重新开始</string>
+    <string name="tme_interrupted">演唱已中断，请重新开始</string>
+    <string name="tme_preloading">预加载 %1$d%%</string>
+    <string name="tme_preparing">正在准备演唱</string>
+    <string name="tme_waiting_media">等待播放器与页面就绪</string>
+    <string name="tme_starting">正在启动播放</string>
+    <string name="tme_playing_scored">正在演唱 · 内部计分</string>
+    <string name="tme_playing_unscored">正在播放 · 无计分</string>
+    <string name="tme_paused">已暂停，点击继续</string>
+    <string name="tme_completed">演唱结束</string>
+    <string name="tme_playback_failed">播放失败，请返回选歌</string>
+    <string name="tme_querying">正在查询计分资料</string>
+    <string name="tme_parsing">正在解析计分资料</string>
+    <string name="tme_preparation_ready">计分资料已就绪</string>
+    <string name="tme_preparation_failed">计分资料准备失败</string>
+    <string name="tme_reason_timeout">等待超时</string>
+    <string name="tme_reason_missing">歌曲缺少 LRC 或音高资料</string>
+    <string name="tme_reason_invalid">资料格式无法计分</string>
+    <string name="tme_reason_download">资料请求或下载失败</string>
+    <string name="tme_reason_preload">歌曲预加载失败</string>
+    <string name="tme_reason_open">媒体打开失败</string>
+    <string name="tme_reason_player">播放被中断</string>
+    <string name="tme_downloading">正在下载计分资料</string>
+    <string name="tme_lyric">歌词</string>
+    <string name="tme_pitch">音高</string>
+    <string name="tme_resource_waiting">等待下载</string>
+    <string name="tme_resource_downloading">下载中</string>
+    <string name="tme_resource_downloaded">已完成</string>
+    <string name="tme_resource_state">%1$s：%2$s</string>
+    <string name="tme_scoring_unavailable">计分资料不可用，继续无计分播放（%1$s）</string>
+    <string name="tme_media_failure_reason">播放器未能完成播放（%1$s）</string>
+    <string name="tme_line_count_mismatch">计分句数不一致</string>
+    <string name="tme_scores">本句 %1$d · 累计 %2$d / 满分 %3$d</string>
 </resources>

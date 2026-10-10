@@ -433,7 +433,7 @@ public class LyricsInstrumentedTest {
             mLatestIndexOfScoringLines++;
             for (LyricsLineModel.Tone tone : line.tones) {
                 scoringMachine.setLyricProgress(tone.begin + tone.getDuration() / 2);
-                scoringMachine.setPitch((float) (tone.pitch - 1), (int) (tone.begin + tone.getDuration() / 2));
+                scoringMachine.setPitch((float) (tone.pitch - 1), 0F, (int) (tone.begin + tone.getDuration() / 2));
             }
 
             if (mLatestIndexOfScoringLines >= 6) {
@@ -504,37 +504,37 @@ public class LyricsInstrumentedTest {
 
         mPitchHit = -1;
         scoringMachine.setLyricProgress(0);
-        scoringMachine.setPitch(0, 0);
+        scoringMachine.setPitch(0, 0F, 0);
         assertEquals(mPitchHit, -1, 0d);
 
         mPitchHit = -1;
         scoringMachine.setLyricProgress(28813);
-        scoringMachine.setPitch(0, 28813);
+        scoringMachine.setPitch(0, 0F, 28813);
         assertEquals(mPitchHit, -1, 0d);
 
         mPitchHit = -1;
         scoringMachine.setLyricProgress(28814);
-        scoringMachine.setPitch(172, 28814);
+        scoringMachine.setPitch(172, 0F, 28814);
         assertEquals(mPitchHit, 172, 0d);
 
         mPitchHit = -1;
         scoringMachine.setLyricProgress(29675);
-        scoringMachine.setPitch(172, 29675);
+        scoringMachine.setPitch(172, 0F, 29675);
         assertEquals(mPitchHit, 172, 0d);
 
         mPitchHit = -1;
         scoringMachine.setLyricProgress(185160);
-        scoringMachine.setPitch(130, 185160);
+        scoringMachine.setPitch(130, 0F, 185160);
         assertEquals(mPitchHit, 130, 0d);
 
         mPitchHit = -1;
         scoringMachine.setLyricProgress(185161);
-        scoringMachine.setPitch(213, 185161);
+        scoringMachine.setPitch(213, 0F, 185161);
         assertEquals(mPitchHit, 213, 0d);
 
         mPitchHit = -1;
         scoringMachine.setLyricProgress(187238);
-        scoringMachine.setPitch(100, 187238);
+        scoringMachine.setPitch(100, 0F, 187238);
         double processedPitch = AIAlgorithmScoreNative.handlePitch(213, 100, scoringMachine.getMaximumRefPitch());
         assertEquals(200.0, processedPitch, 0);
         assertEquals(200.0, mPitchHit, 0.01); // 120.33999633789062
@@ -571,12 +571,12 @@ public class LyricsInstrumentedTest {
                     float pitch = 0;
                     pitch = (float) Math.random() * 200;
                     scoringMachine.setLyricProgress(mCurrentPosition);
-                    scoringMachine.setPitch(pitch, (int) mCurrentPosition);
+                    scoringMachine.setPitch(pitch, 0F, (int) mCurrentPosition);
                     Log.d(PLAYER_TAG, "mCurrentPosition: " + mCurrentPosition + ", pitch: " + pitch);
                 } else if (mCurrentPosition >= DURATION_OF_SONG && mCurrentPosition < (DURATION_OF_SONG + 1000)) {
                     long lastPosition = mCurrentPosition;
                     scoringMachine.setLyricProgress(mCurrentPosition);
-                    scoringMachine.setPitch((float) 0, (int) mCurrentPosition);
+                    scoringMachine.setPitch((float) 0, 0F, (int) mCurrentPosition);
                     Log.d(PLAYER_TAG, "put the indicator back in space");
                     // Put the indicator back in space
                 } else if (mCurrentPosition >= (DURATION_OF_SONG + 1000)) {
@@ -804,7 +804,7 @@ public class LyricsInstrumentedTest {
             mLatestIndexOfScoringLines++;
             for (LyricsLineModel.Tone tone : line.tones) {
                 scoringMachine.setLyricProgress(tone.begin + tone.getDuration() / 2);
-                scoringMachine.setPitch((float) (tone.pitch - 1), (int) (tone.begin + tone.getDuration() / 2));
+                scoringMachine.setPitch((float) (tone.pitch - 1), 0F, (int) (tone.begin + tone.getDuration() / 2));
             }
 
             if (mLatestIndexOfScoringLines >= 6) {
@@ -878,13 +878,13 @@ public class LyricsInstrumentedTest {
             if (gap == 40) {
                 gap = 0;
                 scoringMachine.setLyricProgress(time);
-                scoringMachine.setPitch(50F, (int) time);
+                scoringMachine.setPitch(50F, 0F, (int) time);
             }
             gap += 20;
             time += 20;
         }
         scoringMachine.setLyricProgress(time);
-        scoringMachine.setPitch(50F, (int) time);
+        scoringMachine.setPitch(50F, 0F, (int) time);
 
         Log.d(TAG, "Started at " + new Date(startTsOfTest) + ", taken " + (System.currentTimeMillis() - startTsOfTest) + " ms");
 
@@ -1467,10 +1467,10 @@ public class LyricsInstrumentedTest {
                 }
                 if (i % 50 == 0 && i > 0) {
                     if (pitchIndex < pitchData.length) {
-                        scoringMachine.setPitch((float) pitchData[pitchIndex], i);
+                        scoringMachine.setPitch((float) pitchData[pitchIndex], 0F, i);
                         pitchIndex++;
                     } else {
-                        scoringMachine.setPitch(0, i);
+                        scoringMachine.setPitch(0, 0F, i);
                     }
                 }
 

@@ -1,8 +1,12 @@
 # Android TME 响应解析接入
 
+完整开发接入流程见 [Android TME 歌曲播放、歌词与内置打分接入参考](../docs/tme-android-integration-guide.md)，包含 SDK 初始化、请求与预加载、模型准备、播放门控、UI、逐句计分及生命周期。
+
 TME 音高 JSON 与本地 LRC 合并使用库内 `KaraokeView.parseTMEToneData(toneFilePath, lyricFilePath)`，然后交给 `setLyricData(model, true)`。详见 [音高接入说明](../karaoke_view_ex/TME_TONE_DATA.md)。
 
-实现位于歌词库 `karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme`，公开包名为 `io.agora.karaoke_view_ex.tme`，与 iOS 的 TME 响应契约一致。Demo 通过已有的 `implementation project(':karaoke_view_ex')` 引用，不再包含解析器源码或直接依赖 Gson。当前 Demo 没有 TME 选歌页面，以下示例说明如何在已有 MCC 业务中使用库接口；这些组件不创建 RTC/MCC，不改变原有播放路径。
+实现位于歌词库 `karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme`，公开包名为 `io.agora.karaoke_view_ex.tme`，与 iOS 的 TME 响应契约一致。Demo 通过已有的 `implementation project(':karaoke_view_ex')` 引用。启动后先选择曲库：TME 进入歌曲列表，点击歌曲即进入独立演唱页；音集协进入原有 MCC 歌词与计分页面。选择页不创建 SDK 对象，本次选择在 RTC/MCC 初始化前生效；公共准备组件也不创建 RTC/MCC 或播放器。
+
+演唱页返回 TME 列表时保留 RTC/MCC；曲库页面返回选择页时释放当前 RTC/MCC，再选择另一曲库会重新初始化。每次重新启动均显示选择页，旧设置不会覆盖本次入口选择。原有设置与其他服务兼容路径仍可使用。
 
 本地 Demo 使用 `gradle.properties` 中的 `isSdkMode=false`。已发布的 3.0.4 不含本次新增接口；新版本发布后，才可切换到 Maven 依赖模式。库已启用 Kotlin 1.8，JSON 解码复用库现有 Gson 2.10.1；关闭接口使用 `Closeable`，兼容库的 Android API 17 下限。
 
@@ -94,9 +98,27 @@ fun onMccExtResponse(requestId: String, jsonOption: String, httpCode: Int, respo
 
 ```bash
 bash scripts/tests/run_tme_tests.sh
-./gradlew :karaoke_view_ex:testDebugUnitTest :app:assembleDebug --no-daemon
-./gradlew :app:connectedDebugAndroidTest \
+bash scripts/tests/run_tme_controller_tests.sh
+# 使用 Gradle 8.7（当前 wrapper 9 milestone 与 AGP 7.3.1 不兼容）：
+gradle :karaoke_view_ex:assembleDebug :karaoke_view_ex:testDebugUnitTest --configure-on-demand --no-daemon
+# 配套本地 RTC SDK 放好后：
+gradle :app:assembleDebug :app:testDebugUnitTest --no-daemon
+gradle :app:connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=io.agora.examples.karaoke_view_ex.agora.tme.TMEParserInstrumentedTest
 ```
 
 独立脚本先单独编译库，再以 friend 模块方式编译库的 JUnit 测试，避免把生产与测试源码合并编译而漏掉模块边界问题；不依赖 Agora 凭证或服务。它优先使用系统 Kotlin 编译器，macOS 上可使用 Android Studio 的编译器；依赖从 Gradle 缓存和 Android SDK 发现，也可通过 `KOTLINC`、`GSON_JAR`、`JUNIT_JAR`、`HAMCREST_JAR`、`ANDROID_JAR` 指定。脚本注入回调队列以检验真实后台解码和确定的异步顺序；真实 Android 主线程行为由 Demo 仪器测试验证。
+
+主机脚本编译实际模型和 TMEToneParser，并通过一个静态 KaraokeView 主机入口转交真实解析器，避免创建 Android View；实际公开组件类还由 Gradle AAR 构建检查。`TmeSingingScreenInstrumentedTest` 使用模拟媒体/准备接口检查成功或降级的 UI 安装顺序、独立下载状态、暂停继续和中断重建，运行它仍需先构建包含配套 RTC SDK 的测试 APK。
+
+## Demo 演唱流程
+
+`ServiceManager` 持有单曲控制器，`MccManager` 保留现有 RTC engine 初始化的 MCC。列表与资料使用独立请求管理器；预加载以 requestId、内部 songCode 和 sessionId 关联。每首歌的 player/observer 单独创建和释放，旧播放器排队的回调不能开始新歌。
+
+预加载完成后并行打开播放器和 `TMEScoringPreparation.prepare`。准备成功时，演唱页先安装模型，再确认页面就绪；资料失败时先隐藏整个歌词、音准和得分区域，再允许无计分播放。预加载、打开和播放失败作为播放错误处理。详情见 [公共准备接口](../karaoke_view_ex/TME_TONE_DATA.md#自动准备计分资料)。
+
+TME 每 20ms 读取实际播放器位置；本地麦克风 `uid == 0` 的 voicePitch 提交前再次更新位置，然后 `setPitch(pitch, 0F, 0)`。逐句和累计分来自内部 `KaraokeEvent.onLineFinished`，满分为可计分句数 ×100；不会用显示行数、外部 onLineScore 或补造末句音高计算。
+
+演唱页退到后台会暂停，回前台需要手动继续；普通旋转保留原视图。其他重建或进程恢复显示中断并从头开始。返回列表释放当前 player、准备任务和评分视图，保留 RTC/MCC；退出功能由原管理层销毁 SDK。TME 不提供 seek、跳前奏或计分参数入口。
+
+Demo 构建要求配套 `app/libs/agora-rtc-sdk.jar` 和 `app/src/main/jniLibs/arm64-v8a/libagora-rtc-sdk.so` 及其他 SDK 原生库。旧 Maven RTC 包不能验证这里新增的 TME SDK 接口。SDK、签名 URL、凭据和构建产物不提交。

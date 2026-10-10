@@ -33,6 +33,7 @@ object RtcManager : IAudioFrameObserver {
     fun initRtcEngine(context: Context, rtcCallback: RtcCallback) {
         mApplication = context.applicationContext as Application
         mCallback = rtcCallback
+        if (mRtcEngine != null) return
         try {
             Log.d(TAG, "RtcEngine version:" + RtcEngine.getSdkVersion())
             val rtcEngineConfig = RtcEngineConfig()
@@ -272,6 +273,8 @@ object RtcManager : IAudioFrameObserver {
     fun destroy() {
         Log.d(TAG, "RtcManager destroy")
         RtcEngine.destroy()
+        mRtcEngine = null
+        mCallback = null
     }
 
 

@@ -2,6 +2,8 @@
 
 > Build KTV app effortlessly with KaraokeView
 
+TME 完整调用流程见 [Android TME 歌曲播放、歌词与内置打分接入参考](docs/tme-android-integration-guide.md)。
+
 ## 目录
 
 - [简介](#简介)

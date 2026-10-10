@@ -41,8 +41,22 @@ while IFS= read -r task_source; do
 done < <(rg --files \
   "$task_root/karaoke_view_ex/src/test/java/io/agora/karaoke_view_ex/tme" -g '*.kt')
 task_output="$(mktemp -d "${TMPDIR:-/tmp}/lyricsview-tme-tests.XXXXXX")"
-trap 'rm -f "$task_output/library.jar" "$task_output/tests.jar"; rmdir "$task_output"' EXIT
+trap 'rm -r "$task_output"' EXIT
 task_classpath="$task_gson:$task_junit:$task_hamcrest:$task_android"
+# Compile the real models/file parser so scoring preparation can be tested without a View.
+# The host KaraokeView facade delegates its static entry point to that production parser.
+bash "$task_kotlinc" -language-version 1.8 -api-version 1.8 -jvm-target 1.8 \
+  "$task_root/karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEStrictJson.kt" \
+  -include-runtime -d "$task_output/strict-json.jar"
+task_main="$task_root/karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex"
+task_stub_sources=()
+while IFS= read -r task_source; do task_stub_sources+=("$task_source"); done < <(rg --files "$task_root/scripts/tests/jvm-stubs" -g '*.java')
+javac --release 8 -encoding UTF-8 -cp "$task_output/strict-json.jar:$task_classpath" -d "$task_output/classes" \
+  "${task_stub_sources[@]}" "$task_main/internal/constants/LyricType.java" \
+  "$task_main/internal/model/LyricsLineModel.java" "$task_main/internal/model/PitchData.java" \
+  "$task_main/internal/model/LyricsPitchLineModel.java" "$task_main/model/LyricModel.java" \
+  "$task_main/internal/model/TMELyricModel.java" "$task_main/internal/lyric/parse/TMEToneParser.java"
+task_classpath="$task_output/classes:$task_classpath"
 bash "$task_kotlinc" -language-version 1.8 -api-version 1.8 -jvm-target 1.8 \
   -classpath "$task_classpath" "${task_library_sources[@]}" -d "$task_output/library.jar"
 bash "$task_kotlinc" -language-version 1.8 -api-version 1.8 -jvm-target 1.8 \
