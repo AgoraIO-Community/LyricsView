@@ -8,6 +8,7 @@ import java.util.Objects;
 import io.agora.karaoke_view_ex.internal.LyricMachine;
 import io.agora.karaoke_view_ex.internal.ScoringMachine;
 import io.agora.karaoke_view_ex.internal.lyric.parse.LyricPitchParser;
+import io.agora.karaoke_view_ex.internal.lyric.parse.TMEToneParser;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
@@ -184,6 +185,18 @@ public class KaraokeView {
     public static LyricModel parseLyricData(File lyricFile, File pitchFile) {
         LogUtils.d("KaraokeView:parseLyricData lyricFile:" + lyricFile + ",pitchFile:" + pitchFile);
         return LyricPitchParser.parseFile(lyricFile, pitchFile, true, 0);
+    }
+
+    /**
+     * Synchronously merges local TME tone JSON and LRC files for internal scoring.
+     * Run file parsing on a worker thread, then call setLyricData(model, true).
+     *
+     * @param toneFilePath Full path to the TME st/d/p JSON array
+     * @param lyricFilePath Full path to the LRC lyrics file
+     * @return LRC model with scoring notes, or null for unreadable/invalid/no-score input
+     */
+    public static LyricModel parseTMEToneData(String toneFilePath, String lyricFilePath) {
+        return TMEToneParser.parse(toneFilePath, lyricFilePath);
     }
 
     /**

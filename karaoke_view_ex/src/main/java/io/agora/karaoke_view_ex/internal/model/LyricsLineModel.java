@@ -16,7 +16,7 @@ public class LyricsLineModel {
      * Enumeration for language types supported in lyrics
      */
     public enum Lang {
-        Chinese, English
+        Chinese, English, Unknown
     }
 
     /**

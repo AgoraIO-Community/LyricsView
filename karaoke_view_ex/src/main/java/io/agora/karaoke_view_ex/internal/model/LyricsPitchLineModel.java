@@ -34,6 +34,10 @@ public class LyricsPitchLineModel {
          */
         public int pitch = 0;
 
+        public float getFrequency() {
+            return pitch;
+        }
+
         /**
          * Map of highlighted parts within this pitch segment
          * Key: Timestamp, Value: Pair of (start time, end time) for the highlight
