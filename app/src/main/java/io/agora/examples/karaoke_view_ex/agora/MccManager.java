@@ -19,12 +19,12 @@ import org.json.JSONObject;
 import io.agora.examples.karaoke_view_ex.BuildConfig;
 import io.agora.examples.utils.KeyCenter;
 import io.agora.karaoke_view_ex.constants.Constants;
-import io.agora.mccex.constants.MusicPlayMode;
 import io.agora.mediaplayer.IMediaPlayerObserver;
 import io.agora.mediaplayer.data.PlayerUpdatedInfo;
 import io.agora.mediaplayer.data.SrcInfo;
 import io.agora.musiccontentcenter.IAgoraMusicContentCenter;
 import io.agora.musiccontentcenter.IAgoraMusicPlayer;
+import io.agora.musiccontentcenter.IAgoraMusicPlayer.MusicPlayMode;
 import io.agora.musiccontentcenter.IMusicContentCenterEventHandler;
 import io.agora.musiccontentcenter.Music;
 import io.agora.musiccontentcenter.MusicCacheInfo;
@@ -405,7 +405,12 @@ public class MccManager {
             return mAgoraMusicPlayer.open(songCode, 0);
         } catch (Exception e) { return -1; }
     }
-    public int playTme() { return mAgoraMusicPlayer == null ? -1 : mAgoraMusicPlayer.play(); }
+    public int playTme() {
+        if (mAgoraMusicPlayer == null) return -1;
+        // Called once per session; resume must preserve the user's selected mode.
+        int ret = setPlayMode(MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL);
+        return ret == 0 ? mAgoraMusicPlayer.play() : ret;
+    }
     public int pauseTme() { return mAgoraMusicPlayer == null ? -1 : mAgoraMusicPlayer.pause(); }
     public int resumeTme() { return mAgoraMusicPlayer == null ? -1 : mAgoraMusicPlayer.resume(); }
     public int seekTme(long positionMs) { return mAgoraMusicPlayer == null ? -1 : mAgoraMusicPlayer.seek(positionMs); }
@@ -572,26 +577,11 @@ public class MccManager {
         }
     }
 
-    public void setPlayMode(MusicPlayMode playMode, int musicType) {
-        if (mAgoraMusicPlayer == null) return;
-//        mAgoraMusicPlayer.setPlayMode(playMode);
-        int ret = -1;
-        if (MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL == playMode) {
-            if (musicType == 1) {
-                ret = mAgoraMusicPlayer.setAudioDualMonoMode(io.agora.mediaplayer.Constants.AudioDualMonoMode.AUDIO_DUAL_MONO_R.ordinal());
-            } else if (musicType == 4 || musicType == 6) {
-                ret = mAgoraMusicPlayer.selectAudioTrack(0);
-            }
-        } else if (MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY == playMode) {
-            if (musicType == 1) {
-                //左伴右唱
-                ret = mAgoraMusicPlayer.setAudioDualMonoMode(io.agora.mediaplayer.Constants.AudioDualMonoMode.AUDIO_DUAL_MONO_L.ordinal());
-            } else if (musicType == 4 || musicType == 6) {
-                //多音轨
-                ret = mAgoraMusicPlayer.selectAudioTrack(1);
-            }
-        }
+    public int setPlayMode(MusicPlayMode playMode) {
+        if (mAgoraMusicPlayer == null) return -1;
+        int ret = mAgoraMusicPlayer.setPlayMode(playMode);
         Log.i(TAG, "setPlayMode() called with: playMode = " + playMode + " ret=" + ret);
+        return ret;
     }
 
     public void clearCache() {

@@ -19,7 +19,10 @@ class DemoServicePreferencesInstrumentedTest {
         val previousService = if (prefs.contains(serviceKey)) prefs.getInt(serviceKey, -1) else null
         val previousLyric = if (prefs.contains(lyricKey)) prefs.getInt(lyricKey, -1) else null
         try {
-            for (stored in listOf(null, ServiceType.MCC_EX.type, ServiceType.MCC.type, -99, ServiceType.TME.type)) {
+            // 1 was the removed MCCEx service; TME must retain its persisted ID 2.
+            assertEquals(0, ServiceType.MCC.type)
+            assertEquals(2, ServiceType.TME.type)
+            for (stored in listOf(null, 1, ServiceType.MCC.type, -99, ServiceType.TME.type)) {
                 val editor = prefs.edit().putInt(lyricKey, LyricType.KRC.ordinal)
                 if (stored == null) editor.remove(serviceKey) else editor.putInt(serviceKey, stored)
                 editor.commit()

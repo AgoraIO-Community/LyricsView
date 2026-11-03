@@ -1,5 +1,7 @@
 # Android TME 歌曲播放、歌词与内置打分接入参考
 
+当前 RTC SDK 的 MCC（音集协）和 TME 两条 API 集成流程见 [MCC 与 TME 接入指南](../K歌融合接入指南-MCC与TME.md)。本文补充 TME 的单曲控制器、页面生命周期与业务适配细节。
+
 本文面向在自己的 Android 应用中接入 TME 选歌、播放、歌词、音高与逐句计分的开发者。按本文接入，可以实现本仓库 TME Demo 的完整流程，并自行设计页面。
 
 接口依据：本仓库截至 2026-10-09 的源码及 `app/libs/agora-rtc-sdk.jar` 中的实际接口。结构参考 [iOS 接入文档](../../LrcView-iOS/docs/tme-ios-integration-guide.md)，代码及行为以 Android 实现为准。示例使用 Kotlin；除标为完整 XML 的示例外，代码是接入步骤片段，不是可直接运行的完整 Activity。片段中的 `mcc`、`player`、`karaoke` 等由同一个业务会话持有，页面展示函数由业务实现。
@@ -47,17 +49,14 @@ app/
 dependencies {
     api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     implementation project(':karaoke_view_ex')
-    implementation('io.github.winskyan:Agora-MccExService:2.2.0.133.8') {
-        exclude(group: 'io.agora.rtc', module: 'agora-special-full')
-    }
 }
 ```
 
-`Agora-MccExService` 保留用于兼容代码及其中的类型引用；当前 Demo 的“音集协”入口使用 RTC 原生 MCC/XML，不初始化 MCCEx，TME 也通过原生 MCC 请求和播放。只接入 TME 时不必引入插件。工程已有其他依赖间接引入 RTC 时，应避免重复打包另一份 RTC。源码接入保持 `gradle.properties` 的 `isSdkMode=false`。也可使用由当前源码构建的歌词 AAR，连同其传递依赖接入；不要把 AAR 当成包含所有依赖的独立包。
+当前 Demo 已移除 `Agora-MccExService` 及插件专用配置。“音集协”入口使用 RTC 原生 MCC/XML，TME 也通过原生 MCC 请求和播放；原唱/伴奏枚举来自 `IAgoraMusicPlayer.MusicPlayMode`。不需要另行引入 MCCEx 插件。工程已有其他依赖间接引入 RTC 时，应避免重复打包另一份 RTC。源码接入保持 `gradle.properties` 的 `isSdkMode=false`。也可使用由当前源码构建的歌词 AAR，连同其传递依赖接入；不要把 AAR 当成包含所有依赖的独立包。
 
 现有 Maven `io.github.winskyan:Agora-LyricsViewEx:3.0.4` 尚不含本次新增的 TME 接口。仓库的 `sdkVersion=3.0.4` 不能说明远端同名包具有这些 API。引入发布版本前检查是否实际包含 `TMERequestManager`、`TMEScoringPreparation` 和 `KaraokeView.parseTMEToneData`。
 
-当前工程：AGP 7.3.1、Kotlin 1.8.0、Java/Kotlin 目标 1.8、compile/target SDK 34；Demo minSdk 21，歌词库 minSdk 17。歌词库的最低版本不代表配套 RTC SDK 支持同样的最低版本。源码构建另需 NDK `28.2.13676358` 和 CMake `3.22.1`。验证此仓库使用 Gradle 8.7；当前 wrapper 的 Gradle 9 milestone 与 AGP 7.3.1 不兼容。
+当前工程：AGP 7.3.1、Kotlin 1.8.0、Java/Kotlin 目标 1.8、compile/target SDK 34；Demo minSdk 21，歌词库 minSdk 17。歌词库的最低版本不代表配套 RTC SDK 支持同样的最低版本。源码构建另需 NDK `28.2.13676358` 和 CMake `3.22.1`。项目 Wrapper 固定为 Gradle 7.4，构建使用 `./gradlew` 和 JDK 17。
 
 ### 2.2 账号和环境
 
@@ -602,7 +601,7 @@ TME 与音集协共用拖动设置、计分参数、歌词/评分开关以及全
 | 拖动/跳过前奏 | `controller.seek(positionMs)`，仅播放中或暂停且页面就绪时接受，保留暂停状态 |
 | 下一首 | 按当前 TME 选歌列表循环选择并自动播放 |
 | 停止后播放 | 结束当前单曲，再从当前歌曲开头创建新会话 |
-| 原唱/伴奏 | `ServiceManager.doPlayOriginal()`；当前 TME 按多音轨映射原唱 track 0、伴奏 track 1 |
+| 原唱/伴奏 | `ServiceManager.doPlayOriginal()`；通过 RTC `IAgoraMusicPlayer.setPlayMode` 设置原唱或伴奏 |
 | 演唱页后台 | onStop 中 foreground=false、controller.detach(this)；播放/启动中自动暂停 |
 | 回到前台 | onStart 中 foreground=true、attach(this)，重新确认 View；已暂停的歌由用户手动继续 |
 | 打开/关闭选歌面板 | 保留当前会话和播放状态；面板高为总体屏高 80%，不含设置入口 |
@@ -612,7 +611,7 @@ TME 与音集协共用拖动设置、计分参数、歌词/评分开关以及全
 | 退出主页面 | MainActivity 结束时 ServiceManager.destroy，再 RtcManager.destroy |
 | 从头开始 | end 旧单曲，重新 startTmeSong，获得新 sessionId，重置 View 和分数 |
 
-切轨底层调用 `player.selectAudioTrack(0/1)`；这是当前 Demo 对 MKV 的假定映射，业务根据服务的实际音轨契约确认。它不改变歌词/音高模型，也不重新开始评分。SDK 返回码应纳入自己的错误处理；Demo 的原唱状态标签不能替代 SDK 的切轨成功确认。
+原唱/伴奏底层调用 `player.setPlayMode(IAgoraMusicPlayer.MusicPlayMode)`，原唱为 `MUSIC_PLAY_MODE_ORIGINAL`（值 0），伴奏为 `MUSIC_PLAY_MODE_ACCOMPANY`（值 1）。SDK 根据资源处理音轨/声道；Demo 不再手动指定音轨编号或左右声道。SDK 返回 0 后才更新原唱/伴奏状态；无播放器或调用失败时保留原状态。它不改变歌词/音高模型，也不重新开始评分。接口接受不代表已验证实际听感，真实切换效果仍需使用有权限的歌曲和设备验收。
 
 当前 MainActivity 与继承它的兼容宿主 TmeSingingActivity 在 Manifest 配置 `orientation|screenSize`，普通旋转保留原页面与评分实例。TME 状态由 TmeSingingPresenter 连接至共享控件。其他 Activity 重建或进程恢复无法恢复评分器私有采样，Demo 清空旧模型、显示中断，通过播放按钮从头开始；不能只保存累计分就声称恢复了计分会话。
 
@@ -731,12 +730,12 @@ bash scripts/tests/run_tme_tone_tests.sh
 bash scripts/tests/run_tme_controller_tests.sh
 ```
 
-分别验证响应/请求/准备组件、实际 tone 解析与 native 评分、单曲门控和会话控制。使用 Gradle 8.7 且放好配套 RTC SDK 后：
+分别验证响应/请求/准备组件、实际 tone 解析与 native 评分、单曲门控和会话控制。使用项目 Wrapper（Gradle 7.4）和 JDK 17，且放好配套 RTC SDK 后：
 
 ```bash
-gradle :karaoke_view_ex:assembleDebug :karaoke_view_ex:testDebugUnitTest --configure-on-demand --no-daemon
-gradle :app:assembleDebug :app:testDebugUnitTest --no-daemon
-gradle :app:connectedDebugAndroidTest \
+./gradlew :karaoke_view_ex:assembleDebug :karaoke_view_ex:testDebugUnitTest --configure-on-demand --no-daemon
+./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
+./gradlew :app:connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=io.agora.examples.karaoke_view_ex.agora.tme.TmeSingingScreenInstrumentedTest
 ```
 

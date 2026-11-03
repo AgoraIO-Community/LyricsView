@@ -73,7 +73,6 @@ class NativeMccPlaybackInstrumentedTest {
                 lateinit var player: IAgoraMusicPlayer
                 scenario.onActivity {
                     assertEquals(ServiceType.MCC, ServiceManager.getServiceType())
-                    assertNull(field(ServiceManager, "mMccExManager"))
                     player = field(requireNotNull(field(ServiceManager, "mMccManager")), "mAgoraMusicPlayer") as IAgoraMusicPlayer
                 }
                 val pitchCallbacks = AtomicInteger()

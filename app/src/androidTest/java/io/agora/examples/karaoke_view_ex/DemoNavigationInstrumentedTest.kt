@@ -60,8 +60,9 @@ class DemoNavigationInstrumentedTest {
                 assertEquals("音集协演唱", it.title.toString())
                 assertEquals(ServiceType.MCC, ServiceManager.getServiceType())
                 assertEquals(LyricType.XML.ordinal, prefs.getInt(lyricKey, -1))
-                val plugin = ServiceManager::class.java.getDeclaredField("mMccExManager").apply { isAccessible = true }
-                assertNull("Native entry must not initialize MCCEx", plugin.get(null))
+                assertThrows(ClassNotFoundException::class.java) {
+                    Class.forName("io.agora.mccex.IMusicContentCenterEx")
+                }
             }
             onView(withText("选歌")).check(matches(isDisplayed()))
             onView(withText("设置")).check(matches(isDisplayed()))
@@ -69,7 +70,7 @@ class DemoNavigationInstrumentedTest {
     }
 
     @Test fun legacyMccExPreferenceMigratesToNativeMcc() {
-        prefs.edit().putInt(serviceKey, ServiceType.MCC_EX.type).putInt(lyricKey, LyricType.KRC.ordinal).commit()
+        prefs.edit().putInt(serviceKey, 1).putInt(lyricKey, LyricType.KRC.ordinal).commit()
         ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use { scenario ->
             scenario.onActivity {
                 assertEquals(ServiceType.MCC, ServiceManager.getServiceType())
@@ -79,8 +80,32 @@ class DemoNavigationInstrumentedTest {
         }
     }
 
+    @Test fun absentNativePlayerKeepsTheOriginalActionLabel() {
+        prefs.edit().putInt(serviceKey, ServiceType.MCC.type).commit()
+        ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use { scenario ->
+            scenario.onActivity { activity ->
+                val manager = ServiceManager::class.java.getDeclaredField("mMccManager").apply { isAccessible = true }
+                val original = ServiceManager::class.java.getDeclaredField("mIsOriginal").apply { isAccessible = true }
+                val previousManager = manager.get(null)
+                val previousOriginal = original.getBoolean(null)
+                try {
+                    manager.set(null, null)
+                    original.setBoolean(null, true)
+                    val button = activity.findViewById<android.widget.TextView>(R.id.play_original)
+                    button.setText(R.string.play_accompany)
+                    activity.onClick(button)
+                    assertTrue(ServiceManager.isOriginalPlay())
+                    assertEquals(activity.getString(R.string.play_accompany), button.text.toString())
+                } finally {
+                    manager.set(null, previousManager)
+                    original.setBoolean(null, previousOriginal)
+                }
+            }
+        }
+    }
+
     @Test fun nativeMccSheetIsEightyPercentHasNoSettingsAndSelectsActualRow() {
-        prefs.edit().putInt(serviceKey, ServiceType.MCC_EX.type).commit()
+        prefs.edit().putInt(serviceKey, 1).commit()
         ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use { scenario ->
             onView(withText("选歌")).perform(click())
             onView(withText("音集协 选歌")).inRoot(isDialog()).check(matches(isDisplayed()))
@@ -107,7 +132,7 @@ class DemoNavigationInstrumentedTest {
     }
 
     @Test fun settingsHasTwoModesAndSwitchesBetweenSingingScreensIncludingSystemBack() {
-        prefs.edit().putInt(serviceKey, ServiceType.MCC_EX.type).commit()
+        prefs.edit().putInt(serviceKey, 1).commit()
         ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use { scenario ->
             onView(withText("设置")).perform(click())
             onView(withId(R.id.service_type_radio_group)).check { view, _ ->
@@ -142,7 +167,7 @@ class DemoNavigationInstrumentedTest {
     }
 
     @Test fun openSongSheetRemainsEightyPercentAfterRotation() {
-        prefs.edit().putInt(serviceKey, ServiceType.MCC_EX.type).commit()
+        prefs.edit().putInt(serviceKey, 1).commit()
         ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)).use { scenario ->
             onView(withText("选歌")).perform(click())
             scenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }

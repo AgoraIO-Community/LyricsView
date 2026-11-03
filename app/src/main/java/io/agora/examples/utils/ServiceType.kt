@@ -2,7 +2,7 @@ package io.agora.examples.utils
 
 enum class ServiceType(val type: Int) {
     MCC(0),
-    MCC_EX(1),
+    // Keep persisted IDs stable; legacy value 1 is normalized to MCC by the Demo.
     TME(2);
 
     companion object {

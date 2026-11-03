@@ -7,7 +7,6 @@ import android.util.Log
 import io.agora.examples.karaoke_view_ex.BuildConfig
 import io.agora.examples.karaoke_view_ex.R
 import io.agora.examples.utils.KeyCenter
-import io.agora.mccex.utils.Utils
 import io.agora.rtc2.ChannelMediaOptions
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IAudioFrameObserver
@@ -18,6 +17,7 @@ import io.agora.rtc2.audio.AudioParams
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 object RtcManager : IAudioFrameObserver {
@@ -119,7 +119,8 @@ object RtcManager : IAudioFrameObserver {
                 true
             )
 
-            mChannelId = Utils.getCurrentDateStr("yyyyMMddHHmmss") + Utils.getRandomString(2)
+            val suffix = (1..2).map { "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".random() }.joinToString("")
+            mChannelId = SimpleDateFormat("yyyyMMddHHmmss", Locale.US).format(Date()) + suffix
             val ret = mRtcEngine?.joinChannel(
                 KeyCenter.getRtcToken(
                     mChannelId,
@@ -284,7 +285,7 @@ object RtcManager : IAudioFrameObserver {
 
     fun setPlayingSongCode(songCode: Long) {
         mAudioRecordFileName = if (songCode > 0L) {
-            songCode.toString() + "_" + Utils.getCurrentDateStr("yyyyMMdd_HHmmss")
+            songCode.toString() + "_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         } else {
             ""
         }

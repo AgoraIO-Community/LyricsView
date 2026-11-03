@@ -38,7 +38,7 @@ KTV 应用的完整解决方案。
 > **注意**：该版本稳定版 2.x 及后续版本 在 API 上并不兼容1.x版本，但2.1.x版本后兼容1.x版本的所有功能，建议升级到最新版本
 
 > **重要**：自 3.0 版本起，支持 K歌 融合方案（RTC 版本号：4.4.1.10）。K歌
-> 融合方案集成方案参考《[K歌融合集成文档](K歌融合集成文档.md)》，示例参考 `dev/3.0` 分支。K歌 融合方案基于
+> 当前版本集成参考《[MCC 与 TME 接入指南](K歌融合接入指南-MCC与TME.md)》，示例参考 `dev/6.0` 分支。K歌 融合方案基于
 > RTC SDK 原生支持音集协与音速达曲库，无需再使用插件方案（MccEx）。
 
 ## 方案总览
@@ -47,8 +47,8 @@ KTV 应用的完整解决方案。
 
 - **RTC K歌融合方案（推荐）**：依赖 RTC `4.4.1.10` 及后续支持音集协与音速达曲库的版本，RTC SDK
   原生支持音集协与音速达曲库，无需插件（MccEx）。
-    - 集成指引：参见《[K歌融合集成文档](K歌融合集成文档.md)》
-    - 示例工程：参见分支 `dev/3.0`
+    - 当前接口集成指引：参见《[MCC 与 TME 接入指南](K歌融合接入指南-MCC与TME.md)》
+    - 示例工程：参见分支 `dev/6.0`；旧版参考文档保留在《[K歌融合集成文档](K歌融合集成文档.md)》
 - **RTC K歌独立方案（存量兼容）**：RTC K歌 SDK只支持音集协曲库，音速达曲库需要使用MccEx方案。
     - 示例工程：参见分支 `dev/main`
 
@@ -83,8 +83,8 @@ KTV 应用的完整解决方案。
     - 使用 `KaraokeView.parseLyricData(File lyric, File pitch)` 或
       `parseLyricData(byte[] lyric, byte[] pitch)` 一次性解析歌词与可选音高数据
 - **曲库支持**：
-    - 3.0 方案：RTC SDK 原生支持音集协、音速达曲库
-    - 2.x 方案：仍可延用既有接入方式（如历史插件方案 MccEx）
+    - Demo 使用 RTC SDK 原生 MCC 接入音集协与 TME，不依赖 MCCEx 插件
+    - 原唱/伴奏通过 RTC SDK 的 `IAgoraMusicPlayer.setPlayMode` 切换
 - **播放解耦**：
     - 通过 `setProgress(position)` 与播放器解耦，适配任意播放引擎
 - **打分能力**：
@@ -101,10 +101,6 @@ APP_CERTIFICATE=XXX
 APP_ID=XXX
 # TME 测试环境
 TME_MCC_DOMAIN=api-test.agora.io
-# 音速达曲库配置
-YSD_APP_ID=XXX
-YSD_APP_KEY=XXX
-YSD_TOKEN_HOST=XXX
 ```
 
 2. 将 RTC SDK 的 `rtc/sdk/agora-rtc-sdk.jar` 复制到 `app/libs/`，将 SDK 的各 ABI 目录中的 `.so` 复制到 `app/src/main/jniLibs/<ABI>/`。这些二进制文件只保留在本机，不提交到 Git。

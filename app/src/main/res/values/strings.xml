@@ -140,7 +140,6 @@
     <string name="rtc_ains">Rtc AINS</string>
     <string name="set_no_lyric">Set No Lyric</string>
     <string name="mcc_type">音集协</string>
-    <string name="mccEx_type">音集协</string>
     <string name="tme_type">TME</string>
     <string name="clear_music_cache">Clear Music Cache</string>
     <string name="lyric_type">Lyric Type</string>

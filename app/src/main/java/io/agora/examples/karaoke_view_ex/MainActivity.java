@@ -22,7 +22,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.io.File;
 import java.util.Objects;
 
 import io.agora.examples.karaoke_view_ex.agora.RtcManager;
@@ -39,7 +38,6 @@ import io.agora.karaoke_view_ex.downloader.LyricsFileDownloaderCallback;
 import io.agora.karaoke_view_ex.internal.constants.LyricType;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.model.LyricModel;
-import io.agora.karaoke_view_ex.utils.LyricsCutter;
 import io.agora.rtc2.IRtcEngineEventHandler;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -279,11 +277,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void loadTheLyrics(String lrcUri, String pitchUri, int songOffsetBegin, int songOffsetEnd, int lyricOffset) {
+    private void loadTheLyrics(String lrcUri) {
         if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
             return;
         }
-        Log.i(TAG, "loadTheLyrics " + lrcUri + " " + pitchUri + " " + lyricOffset);
+        Log.i(TAG, "loadTheLyrics " + lrcUri);
         mKaraokeView.reset();
         mLyricsModel = null;
 
@@ -301,25 +299,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mKaraokeView.setLyricData(null, mUseInternalScoring);
             ServiceManager.INSTANCE.openMusic();
             updateLyricsDescription();
-        } else if (lrcUri.startsWith("https://") || lrcUri.startsWith("http://")) {
-            LyricsFileDownloader.getInstance(this).download(lrcUri);
         } else {
-            File lrc;
-            File pitch;
-            lrc = new File(lrcUri);
-            pitch = new File(pitchUri);
-            mLyricsModel = KaraokeView.parseLyricData(lrc, pitch, true, lyricOffset);
-            mUseInternalScoring = false;
-            if (mSetNoLyric) {
-                mKaraokeView.setLyricData(null, false);
-            } else {
-                if (BuildConfig.ENABLE_LYRIC_CUTTER && songOffsetBegin != 0) {
-                    mLyricsModel = LyricsCutter.cut(mLyricsModel, songOffsetBegin - lyricOffset, songOffsetEnd - lyricOffset);
-                }
-                mKaraokeView.setLyricData(mLyricsModel, false);
-            }
-            ServiceManager.INSTANCE.openMusic();
-            updateLyricsDescription();
+            LyricsFileDownloader.getInstance(this).download(lrcUri);
         }
     }
 
@@ -375,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             ServiceManager.INSTANCE.initService(this.getApplicationContext(), this);
         }
 
-        mUseInternalScoring = ServiceManager.INSTANCE.getServiceType() != ServiceType.MCC_EX;
+        mUseInternalScoring = true;
         int lyricType = prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
         ServiceManager.INSTANCE.setLyricType(lyricType);
         boolean isTme = ServiceManager.INSTANCE.getServiceType() == ServiceType.TME;
@@ -421,7 +402,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         binding.play.setText(this.getResources().getString(R.string.stop));
         mLyricsCurrentProgress = 0;
-        binding.playOriginal.setText(this.getResources().getString(R.string.play_accompany));
+        binding.playOriginal.setText(ServiceManager.INSTANCE.isOriginalPlay() ? R.string.play_accompany : R.string.play_original);
     }
 
     private void doStop() {
@@ -558,12 +539,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 skipTheIntro();
                 break;
             case R.id.play_original:
-                if (ServiceManager.INSTANCE.isOriginalPlay()) {
-                    binding.playOriginal.setText(this.getResources().getString(R.string.play_original));
-                } else {
-                    binding.playOriginal.setText(this.getResources().getString(R.string.play_accompany));
-                }
                 ServiceManager.INSTANCE.doPlayOriginal();
+                binding.playOriginal.setText(ServiceManager.INSTANCE.isOriginalPlay() ? R.string.play_accompany : R.string.play_original);
                 break;
             default:
                 break;
@@ -579,8 +556,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onMusicLyricRequest(long songCode, @Nullable String lyricUrl, @Nullable String pitchUrl, int songOffsetBegin, int songOffsetEnd, int lyricOffset) {
-        runOnUiThread(() -> loadTheLyrics(lyricUrl, pitchUrl, songOffsetBegin, songOffsetEnd, lyricOffset));
+    public void onMusicLyricRequest(long songCode, @Nullable String lyricUrl, @Nullable String pitchUrl) {
+        runOnUiThread(() -> loadTheLyrics(lyricUrl));
     }
 
     @Override
@@ -663,16 +640,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mState = PlayerState.IDLE;
             binding.play.setText(R.string.play);
             binding.pause.setText(R.string.pause);
-        });
-    }
-
-    @Override
-    public void onLineScore(long songCode, int score, int cumulatedScore, int lineIndex, int totalLine) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateCallback("score=" + score + ", cumulatedScore=" + cumulatedScore + ", index=" + lineIndex + ", total=" + totalLine);
-            }
         });
     }
 

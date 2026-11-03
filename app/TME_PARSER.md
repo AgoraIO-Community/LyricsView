@@ -4,7 +4,7 @@
 
 TME 音高 JSON 与本地 LRC 合并使用库内 `KaraokeView.parseTMEToneData(toneFilePath, lyricFilePath)`，然后交给 `setLyricData(model, true)`。详见 [音高接入说明](../karaoke_view_ex/TME_TONE_DATA.md)。
 
-实现位于歌词库 `karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme`，公开包名为 `io.agora.karaoke_view_ex.tme`，与 iOS 的 TME 响应契约一致。Demo 通过已有的 `implementation project(':karaoke_view_ex')` 引用。启动即进入演唱页，Service Type 仅有 TME、音集协；首次默认音集协（内部 MCC，XML），TME 使用 LRC。旧 MCC_EX 或无效偏好迁移到 MCC/XML，已有 TME 偏好保留为 TME/LRC。音集协使用 RTC 原生 MCC 与组件内置计分；MCCEx 插件代码和依赖保留作兼容，此入口不初始化插件。公共准备组件不创建 RTC/MCC 或播放器。
+实现位于歌词库 `karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme`，公开包名为 `io.agora.karaoke_view_ex.tme`，与 iOS 的 TME 响应契约一致。Demo 通过已有的 `implementation project(':karaoke_view_ex')` 引用。启动即进入演唱页，Service Type 仅有 TME、音集协；首次默认音集协（内部 MCC，XML），TME 使用 LRC。旧 MCCEx 服务值 1 或无效偏好迁移到 MCC/XML，已有 TME 偏好保留为 TME/LRC（存储值仍为 2）。音集协使用 RTC 原生 MCC 与组件内置计分；Demo 已移除 MCCEx 插件代码、依赖和专用鉴权配置。两种服务的原唱/伴奏均通过 RTC `IAgoraMusicPlayer.setPlayMode` 切换。公共准备组件不创建 RTC/MCC 或播放器。
 
 演唱页导航栏提供“选歌”“设置”。选歌以总体屏高 80% 的面板从底部展开，标题随服务显示“TME 选歌”或“音集协 选歌”，面板不含设置入口。TME 复用现有查询列表，音集协复用 `LyricsResourcePool.asMusicList()` 的《爱情转移》《说爱你》《love story》3 首原生 MCC 配置；列表保留单行样式。选中歌曲收起面板并进入原演唱流程；直接关闭不更换或暂停当前歌曲。设置改变服务会结束旧会话并进入对应演唱页，未改变服务则保留当前歌曲；TME 打开设置离开前台后仍需手动继续。主页面退出时释放 RTC/服务。
 
@@ -99,11 +99,11 @@ fun onMccExtResponse(requestId: String, jsonOption: String, httpCode: Int, respo
 ```bash
 bash scripts/tests/run_tme_tests.sh
 bash scripts/tests/run_tme_controller_tests.sh
-# 使用 Gradle 8.7（当前 wrapper 9 milestone 与 AGP 7.3.1 不兼容）：
-gradle :karaoke_view_ex:assembleDebug :karaoke_view_ex:testDebugUnitTest --configure-on-demand --no-daemon
+# 使用项目 Wrapper（Gradle 7.4）和 JDK 17：
+./gradlew :karaoke_view_ex:assembleDebug :karaoke_view_ex:testDebugUnitTest --configure-on-demand --no-daemon
 # 配套本地 RTC SDK 放好后：
-gradle :app:assembleDebug :app:testDebugUnitTest --no-daemon
-gradle :app:connectedDebugAndroidTest \
+./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
+./gradlew :app:connectedDebugAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=io.agora.examples.karaoke_view_ex.agora.tme.TMEParserInstrumentedTest
 ```
 

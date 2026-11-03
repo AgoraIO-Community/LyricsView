@@ -27,10 +27,6 @@ android {
         buildConfigField("String", "APP_ID", "\"${properties.getProperty("APP_ID", "")}\"")
         buildConfigField("String", "APP_CERTIFICATE", "\"${properties.getProperty("APP_CERTIFICATE", "")}\"")
         buildConfigField("String", "TME_MCC_DOMAIN", "\"${properties.getProperty("TME_MCC_DOMAIN", "")}\"")
-        buildConfigField("String", "YSD_APP_ID", "\"${properties.getProperty("YSD_APP_ID", properties.getProperty("VENDOR_2_APP_ID", ""))}\"")
-        buildConfigField("String", "YSD_APP_KEY", "\"${properties.getProperty("YSD_APP_KEY", properties.getProperty("VENDOR_2_APP_KEY", ""))}\"")
-        buildConfigField("String", "YSD_TOKEN_HOST", "\"${properties.getProperty("YSD_TOKEN_HOST", properties.getProperty("VENDOR_2_TOKEN_HOST", ""))}\"")
-        buildConfigField("boolean", "ENABLE_LYRIC_CUTTER", "${enableLyricCutter.toBoolean()}")
         ndk {
             abiFilters 'arm64-v8a'
         }
@@ -75,6 +71,9 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
     buildFeatures {
         buildConfig true
     }
@@ -105,9 +104,6 @@ dependencies {
     implementation 'commons-codec:commons-codec:1.16.0'
     implementation 'pub.devrel:easypermissions:3.0.0'
 
-    implementation("io.github.winskyan:Agora-MccExService:2.2.0.133.8") {
-        exclude(group: "io.agora.rtc", module: "agora-special-full")
-    }
 //    def roomVersion = "2.5.2"
 //    implementation("androidx.room:room-runtime:${roomVersion.toString()}")
 //    implementation("androidx.room:room-ktx:${roomVersion.toString()}")

@@ -4,7 +4,7 @@ import android.content.Context
 import io.agora.examples.utils.ServiceType
 import io.agora.karaoke_view_ex.internal.constants.LyricType
 
-/** Only the Demo's two supported choices; the underlying service enum remains compatible. */
+/** Keep persisted TME=2; legacy service value 1 and invalid values migrate to native MCC/XML. */
 object DemoServicePreferences {
     @JvmStatic fun normalize(context: Context): ServiceType {
         val prefs = context.getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE)

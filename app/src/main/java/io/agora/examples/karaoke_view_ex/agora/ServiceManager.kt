@@ -7,37 +7,17 @@ import io.agora.examples.karaoke_view_ex.agora.tme.TmePlaybackController
 import io.agora.karaoke_view_ex.model.LyricModel
 import io.agora.karaoke_view_ex.tme.*
 import java.util.UUID
-import android.content.SharedPreferences
 import android.util.Log
-import io.agora.examples.karaoke_view_ex.BuildConfig
 import io.agora.examples.karaoke_view_ex.agora.RtcManager.getRtcEngine
-import io.agora.examples.utils.Constants
-import io.agora.examples.utils.KeyCenter
 import io.agora.examples.utils.LyricsResourcePool
-import io.agora.examples.utils.NetworkClient.sendHttpsRequest
 import io.agora.examples.utils.ServiceType
-import io.agora.examples.utils.ToastUtils
 import io.agora.karaoke_view_ex.downloader.LyricsFileDownloader
-import io.agora.karaoke_view_ex.utils.Utils
-import io.agora.mccex.constants.MccExState
-import io.agora.mccex.constants.MccExStateReason
-import io.agora.mccex.constants.MusicPlayMode
-import io.agora.mccex.model.LineScoreData
-import io.agora.mccex.model.RawScoreData
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.Response
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.json.JSONObject
-import java.io.IOException
-import java.util.concurrent.Executors
+import io.agora.musiccontentcenter.IAgoraMusicPlayer.MusicPlayMode
 
-object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
+object ServiceManager : MccManager.MccCallback {
     private val TAG =
         io.agora.karaoke_view_ex.constants.Constants.TAG + "-" + ServiceManager::class.java.simpleName
-    private var mExecutor = Executors.newSingleThreadExecutor()
     private var mMccManager: MccManager? = null
-    private var mMccExManager: MccExManager? = null
     private var mServiceType: ServiceType? = ServiceType.MCC
     @Volatile private var mTmeSongs: List<MccManager.TmeSong> = emptyList()
     private var mCurrentSongCodeIndex = 0
@@ -151,86 +131,11 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     fun initService(context: Context, serviceCallback: ServiceCallback) {
         serviceContext = context.applicationContext
         mServiceCallback = serviceCallback
-        if (mMccManager != null || mMccExManager != null) return
+        if (mMccManager != null) return
         mCurrentSongCodeIndex = 0
         mTmeSongs = emptyList()
         mServiceCallback = serviceCallback
-        if (ServiceType.MCC_EX == mServiceType) {
-            initMccEx(context)
-        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
-            initMcc(context, ServiceType.TME == mServiceType)
-        }
-    }
-
-    private fun initMccEx(context: Context) {
-        mMccExManager = MccExManager
-
-        val prefs: SharedPreferences =
-            context.getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE)
-        val tokenTime = prefs.getLong(Constants.SP_KEY_YSD_TOKEN_TIME, 0L)
-        if (tokenTime == 0L || System.currentTimeMillis() - tokenTime > Constants.TOKEN_EXPIRE_TIME) {
-            if (BuildConfig.YSD_TOKEN_HOST.toHttpUrlOrNull() == null) {
-                Log.e(TAG, "MccEx token service URL is not configured")
-                ToastUtils.toastLong(context, "请配置音集协 token 服务地址 YSD_TOKEN_HOST")
-                return
-            }
-
-            mExecutor.execute(Runnable {
-                sendHttpsRequest(
-                    BuildConfig.YSD_TOKEN_HOST + KeyCenter.getUserUid(),
-                    HashMap<Any?, Any?>(0),
-                    "",
-                    false,
-                    object : Callback {
-                        override fun onFailure(call: Call, e: IOException) {
-                            Log.d(TAG, "initMccEx onFailure: " + e.message)
-                        }
-
-                        override fun onResponse(call: Call, response: Response) {
-                            val responseData = response.body!!.string()
-                            Log.d(TAG, "initMccEx onResponse: $responseData")
-                            try {
-                                val responseJson = JSONObject(responseData)
-                                val dataJson = responseJson.getJSONObject("data")
-                                val token = dataJson.getString("token")
-                                val userId = dataJson.getString("yinsuda_uid")
-
-                                val editor = prefs.edit()
-                                editor.putString(Constants.SP_KEY_YSD_TOKEN, token)
-                                editor.putString(Constants.SP_KEY_YSD_USER_ID, userId)
-                                editor.putLong(
-                                    Constants.SP_KEY_YSD_TOKEN_TIME,
-                                    System.currentTimeMillis()
-                                )
-                                editor.apply()
-
-
-                                mMccExManager!!.setTokenAndUserId(token, userId)
-                                mMccExManager!!.initMccExService(
-                                    getRtcEngine(), RtcManager,
-                                    context,
-                                    this@ServiceManager
-                                )
-                            } catch (e: Exception) {
-                                Log.e(TAG, "initMccEx onResponse: " + e.message)
-                                ToastUtils.toastLong(
-                                    context,
-                                    "initMccEx onResponse: " + e.message
-                                )
-                            }
-                        }
-                    })
-            })
-        } else {
-            val token = prefs.getString(Constants.SP_KEY_YSD_TOKEN, "")
-            val userId = prefs.getString(Constants.SP_KEY_YSD_USER_ID, "")
-            mMccExManager!!.setTokenAndUserId(token!!, userId!!)
-            mMccExManager!!.initMccExService(
-                getRtcEngine(), RtcManager,
-                context,
-                this
-            )
-        }
+        initMcc(context, ServiceType.TME == mServiceType)
     }
 
     private fun initMcc(context: Context, isTme: Boolean) {
@@ -252,10 +157,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     }
 
     fun seek(position: Long) {
-        if (ServiceType.MCC_EX == mServiceType) {
-            mMccExManager?.seek(position)
-            mMccExManager?.updateMusicPosition(position)
-        } else if (ServiceType.TME == mServiceType) {
+        if (ServiceType.TME == mServiceType) {
             tmeController?.seek(position)
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.seek(position)
@@ -269,23 +171,13 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         mServiceCallback = null
         serviceContext = null
         Log.i(TAG, "destroyService")
-        if (ServiceType.MCC_EX == mServiceType) {
-            mMccExManager?.destroy()
-            mMccExManager = null
-        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
-            mMccManager?.destroy()
-            mMccManager = null
-        }
+        mMccManager?.destroy()
+        mMccManager = null
     }
 
     fun openMusic() {
         Log.i(TAG, "playMusic")
-        if (ServiceType.MCC_EX == mServiceType) {
-            mMccExManager?.startScore(
-                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songId,
-                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].mediaType
-            )
-        } else if (ServiceType.TME == mServiceType) {
+        if (ServiceType.TME == mServiceType) {
             mMccManager?.currentTmeSongCode?.takeIf { it > 0 }?.let { mMccManager?.openMusic(it) }
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.openMusic(LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode)
@@ -293,12 +185,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     }
 
     fun switchMusic(): Boolean {
-        if (ServiceType.MCC_EX == mServiceType) {
-            mCurrentSongCodeIndex++
-            if (mCurrentSongCodeIndex >= LyricsResourcePool.asMusicListEx().size) {
-                mCurrentSongCodeIndex = 0
-            }
-        } else if (ServiceType.TME == mServiceType) {
+        if (ServiceType.TME == mServiceType) {
             if (mTmeSongs.isEmpty()) {
                 mServiceCallback?.onTmeError("TME song list is not ready")
                 return false
@@ -320,46 +207,31 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         return true
     }
 
-    /** The list position is used; MusicResource.index is not unique in the configured catalog. */
-    fun selectMccExSong(position: Int): Boolean {
-        if (mServiceType != ServiceType.MCC_EX || position !in LyricsResourcePool.asMusicListEx().indices) return false
-        mCurrentSongCodeIndex = position
-        return true
-    }
-
     fun play(): Boolean {
-        mIsOriginal = true
-        if (ServiceType.MCC_EX == mServiceType) {
-            mMccExManager?.setPlayMode(MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL)
-            mMccExManager?.preloadMusic(
-                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].songId,
-                LyricsResourcePool.asMusicListEx()[mCurrentSongCodeIndex].mediaType
-            )
-        } else if (ServiceType.TME == mServiceType) {
+        if (ServiceType.TME == mServiceType) {
             val song = mTmeSongs.getOrNull(mCurrentSongCodeIndex)
             if (song == null) {
                 mMccManager?.requestTmeSongs()
                 mServiceCallback?.onTmeError("Loading TME songs")
                 return false
             }
-            return mMccManager?.preloadTmeMusic(song) ?: false
+            val preloaded = mMccManager?.preloadTmeMusic(song) ?: false
+            if (preloaded) mIsOriginal = true
+            return preloaded
         } else if (ServiceType.MCC == mServiceType) {
-            mMccManager?.setPlayMode(
-                MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
-                LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
-            )
+            if (mMccManager?.setPlayMode(MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL) != 0) return false
+            mIsOriginal = true
             mMccManager?.preloadMusic(
                 LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songCode,
                 mLyricType
             )
+            return true
         }
-        return true
+        return false
     }
 
     fun stop() {
-        if (ServiceType.MCC_EX == mServiceType) {
-            mMccExManager?.stop()
-        } else if (ServiceType.TME == mServiceType) {
+        if (ServiceType.TME == mServiceType) {
             endTmeSong()
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.stop()
@@ -367,29 +239,9 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     }
 
     fun doPlayOriginal() {
-        if (ServiceType.MCC_EX == mServiceType) {
-            if (mIsOriginal) {
-                mIsOriginal = false
-                mMccExManager?.setPlayMode(MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY)
-            } else {
-                mIsOriginal = true
-                mMccExManager?.setPlayMode(MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL)
-            }
-        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
-            if (mIsOriginal) {
-                mIsOriginal = false
-                mMccManager?.setPlayMode(
-                    MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY,
-                    if (ServiceType.TME == mServiceType) 4 else LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
-                )
-            } else {
-                mIsOriginal = true
-                mMccManager?.setPlayMode(
-                    MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL,
-                    if (ServiceType.TME == mServiceType) 4 else LyricsResourcePool.asMusicList()[mCurrentSongCodeIndex].songType
-                )
-            }
-        }
+        val mode = if (mIsOriginal) MusicPlayMode.MUSIC_PLAY_MODE_ACCOMPANY
+            else MusicPlayMode.MUSIC_PLAY_MODE_ORIGINAL
+        if (mMccManager?.setPlayMode(mode) == 0) mIsOriginal = !mIsOriginal
     }
 
     fun isOriginalPlay(): Boolean {
@@ -397,9 +249,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     }
 
     fun pause() {
-        if (ServiceType.MCC_EX == mServiceType) {
-            mMccExManager?.pause()
-        } else if (ServiceType.TME == mServiceType) {
+        if (ServiceType.TME == mServiceType) {
             tmeController?.pause()
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.pause()
@@ -407,9 +257,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     }
 
     fun resume() {
-        if (ServiceType.MCC_EX == mServiceType) {
-            mMccExManager?.resume()
-        } else if (ServiceType.TME == mServiceType) {
+        if (ServiceType.TME == mServiceType) {
             tmeController?.resume()
         } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.resume()
@@ -417,12 +265,8 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     }
 
     fun clearCache(context: Context) {
-        if (ServiceType.MCC_EX == mServiceType) {
-            Utils.deleteFolder(context.externalCacheDir?.path + "/song/")
-        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
-            mMccManager?.clearCache()
-            LyricsFileDownloader.getInstance(context).cleanAll()
-        }
+        mMccManager?.clearCache()
+        LyricsFileDownloader.getInstance(context).cleanAll()
     }
 
     fun updateSpeakerPitch(speakerPitch: Double) {
@@ -431,7 +275,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
             tmeMain.post { if (current != null && tmeController === current) current.onLocalPitch(speakerPitch) }
             return
         }
-        if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
+        if (ServiceType.MCC == mServiceType) {
             mMccManager?.getPlayPosition()?.let { mServiceCallback?.onMusicPitch(speakerPitch, it) }
         }
     }
@@ -439,7 +283,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
 
     //////////////////////////// MccManager.MccCallback ////////////////////////////
     override fun onMusicLyricRequest(songCode: Long, lyricUrl: String?, pitchUrl: String?) {
-        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, pitchUrl, 0, 0, 0)
+        mServiceCallback?.onMusicLyricRequest(songCode, lyricUrl, pitchUrl)
     }
 
     override fun onTmeSongsLoaded(songs: MutableList<MccManager.TmeSong>?) {
@@ -477,116 +321,6 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         mServiceCallback?.onMusicStop()
     }
 
-    //////////////////////////// MccExManager.MccCallback ////////////////////////////
-    override fun onInitializeResult(state: MccExState, reason: MccExStateReason) {
-        super.onInitializeResult(state, reason)
-    }
-
-    override fun onPreLoadEvent(
-        requestId: String,
-        songCode: Long,
-        percent: Int,
-        lyricPath: String,
-        pitchPath: String,
-        songOffsetBegin: Int,
-        songOffsetEnd: Int,
-        lyricOffset: Int,
-        state: MccExState,
-        reason: MccExStateReason
-    ) {
-        super.onPreLoadEvent(
-            requestId,
-            songCode,
-            percent,
-            lyricPath,
-            pitchPath,
-            songOffsetBegin,
-            songOffsetEnd,
-            lyricOffset,
-            state,
-            reason
-        )
-        mServiceCallback?.onMusicPreloadResult(songCode, percent)
-        if (percent == 100 && state == MccExState.PRELOAD_STATE_COMPLETED) {
-            mServiceCallback?.onMusicLyricRequest(
-                songCode,
-                lyricPath,
-                pitchPath,
-                songOffsetBegin,
-                songOffsetEnd,
-                lyricOffset
-            )
-        }
-    }
-
-    override fun onLyricResult(
-        requestId: String,
-        songCode: Long,
-        lyricPath: String,
-        songOffsetBegin: Int,
-        songOffsetEnd: Int,
-        lyricOffset: Int,
-        reason: MccExStateReason
-    ) {
-        super.onLyricResult(
-            requestId,
-            songCode,
-            lyricPath,
-            songOffsetBegin,
-            songOffsetEnd,
-            lyricOffset,
-            reason
-        )
-    }
-
-    override fun onPitchResult(
-        requestId: String,
-        songCode: Long,
-        pitchPath: String,
-        songOffsetBegin: Int,
-        songOffsetEnd: Int,
-        reason: MccExStateReason
-    ) {
-        super.onPitchResult(requestId, songCode, pitchPath, songOffsetBegin, songOffsetEnd, reason)
-    }
-
-
-    override fun onPlayStateChange() {
-        super.onPlayStateChange()
-    }
-
-    override fun onMusicPositionChangeEx(position: Long) {
-        super.onMusicPositionChangeEx(position)
-        mServiceCallback?.onMusicPositionChange(position)
-    }
-
-    override fun onMusicPlayingEx() {
-        super.onMusicPlayingEx()
-        mServiceCallback?.onMusicPlaying()
-    }
-
-    override fun onMusicStopEx() {
-        super.onMusicStopEx()
-        mServiceCallback?.onMusicStop()
-    }
-
-    override fun onPitch(songCode: Long, data: RawScoreData) {
-        super.onPitch(songCode, data)
-        mServiceCallback?.onMusicPitch(data.speakerPitch.toDouble(), data.progressInMs.toLong())
-    }
-
-    override fun onLineScore(songCode: Long, value: LineScoreData) {
-        super.onLineScore(songCode, value)
-        mServiceCallback?.onLineScore(
-            songCode,
-            value.linePitchScore,
-            value.cumulativeTotalLinePitchScores.toInt(),
-            value.performedLineIndex,
-            value.performedTotalLines
-        )
-    }
-
-
     interface ServiceCallback {
         fun onTmeSongChanged(songName: String) {
         }
@@ -596,10 +330,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         fun onMusicLyricRequest(
             songCode: Long,
             lyricUrl: String?,
-            pitchUrl: String?,
-            songOffsetBegin: Int,
-            songOffsetEnd: Int,
-            lyricOffset: Int
+            pitchUrl: String?
         ) {
         }
 
@@ -618,14 +349,5 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         fun onMusicStop() {
         }
 
-        fun onLineScore(
-            songCode: Long,
-            score: Int,
-            cumulatedScore: Int,
-            lineIndex: Int,
-            totalLine: Int
-        ) {
-
-        }
     }
 }
