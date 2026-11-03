@@ -36,4 +36,5 @@ interface TMEScoringPreparationListener {
     fun onStage(stage: TMEScoringPreparationStage) {}
     fun onSuccess(result: TMEScoringPreparationResult) {}
     fun onFailure(error: TMEScoringPreparationError) {}
+    fun onLyricsOnly(model: LyricModel, error: TMEScoringPreparationError) { onFailure(error) }
 }

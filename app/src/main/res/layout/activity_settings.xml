@@ -155,12 +155,6 @@
                             android:text="@string/mcc_type" />
 
                         <RadioButton
-                            android:id="@+id/radio_mccEx"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/mccEx_type" />
-
-                        <RadioButton
                             android:id="@+id/radio_tme"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"

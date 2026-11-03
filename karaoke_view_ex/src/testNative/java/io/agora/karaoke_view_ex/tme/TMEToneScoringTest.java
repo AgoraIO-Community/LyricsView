@@ -111,4 +111,18 @@ public class TMEToneScoringTest extends TMEFileTestSupport {
         assertFalse(legacy.copy() instanceof TMELyricModel);
         assertEquals(100, AIAlgorithmScoreNative.calculatedScore(110, 110, 15, 0), 0);
     }
+
+    @Test public void seekingBackToFirstLineAllowsEveryLineToScoreAgain() throws Exception {
+        LyricModel model = parse("[{\"st\":1000,\"d\":1000,\"p\":44},{\"st\":2000,\"d\":1000,\"p\":56}]",
+                "[00:01.00]第一句\n[00:02.00]第二句");
+        Listener listener = new Listener();
+        ScoringMachine machine = new ScoringMachine(listener);
+        machine.prepare(model, true);
+        sing(machine, 1100); sing(machine, 2100); sing(machine, 3000);
+        machine.whenDraggingHappen(1000);
+        sing(machine, 1100); sing(machine, 2100); sing(machine, 3000);
+        assertEquals(4, listener.lines.size());
+        assertEquals(Integer.valueOf(200), listener.totals.get(3));
+        assertEquals(Integer.valueOf(0), listener.indexes.get(2));
+    }
 }

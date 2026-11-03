@@ -91,4 +91,6 @@ main.post {
 
 `TMEScoringPreparationTimeouts` 默认查询 30 秒、每份下载 60 秒、总体 120 秒。准备入口、listener 设置、回包转交、cancel、close 均在主线程；网络、文件、解析在后台，结果回主线程。cancel 不通知完成，close 幂等。错误只有类别、资源类型和必要 HTTP/业务码，不带 URL、响应正文或底层异常 message。
 
+需要在音高不可用时保留歌词，可在主线程、`prepare` 前设置 `preparation.allowLyricsOnly = true`。默认关闭，原有严格计分准备流程保持不变。启用后，缺失/无效音高、音高下载失败或超时、合并解析失败时，组件继续完成可用的 LRC，并通过 `onLyricsOnly(model, error)` 返回无音高模型及原计分错误；歌词不可用仍走 `onFailure`。此模式不会把仅歌词结果交给 `onSuccess`，调用方应显示歌词、同步进度，但不提交计分音高。不实现 `onLyricsOnly` 的 listener 默认转交 `onFailure(error)`。取消、旧回调过滤、后台解析和临时文件清理契约不变。
+
 源码引用使用 `isSdkMode=false`；现有 Maven 3.0.4 尚无此 API。验证公共组件可使用 Gradle 8.7：`gradle :karaoke_view_ex:assembleDebug :karaoke_view_ex:testDebugUnitTest --configure-on-demand --no-daemon`。

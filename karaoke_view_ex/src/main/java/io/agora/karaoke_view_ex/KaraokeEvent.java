@@ -13,6 +13,16 @@ public interface KaraokeEvent {
      */
     void onDragTo(KaraokeView view, long progress);
 
+    /**
+     * Accept a lyrics drag before the component changes its lyric/scoring position.
+     * Return false when the media player rejects the seek. Existing listeners retain
+     * their onDragTo behavior and accept the seek by default.
+     */
+    default boolean onSeekRequested(KaraokeView view, long progress) {
+        onDragTo(view, progress);
+        return true;
+    }
+
 
     /**
      * Called automatically when the line is finished

@@ -21,7 +21,7 @@
 | `TmePlaybackController` | Demo 业务代码 | 单曲状态、播放门控、超时、暂停和时间驱动 |
 | `RtcManager` / `MccManager` / `ServiceManager` | Demo 业务代码 | 适配 SDK、转发回调、持有服务和单曲会话 |
 | `KaraokeViewStyle`、共享 XML style | Demo 业务 UI | TME 与音集协共用的显示样式 |
-| `LibrarySelectionActivity` / `MainActivity` / `TmeSingingActivity` | Demo 页面 | 曲库选择、TME 列表、独立演唱页 |
+| `MainActivity` / `TmeSingingPresenter` / `SongSelectionSheet` | Demo 页面 | 音集协与 TME 共用演唱布局和控件，Presenter 连接 TME 会话，80% 屏高底部选歌面板；TmeSingingActivity 继承 MainActivity 兼容已有入口 |
 
 歌词库包名是 `io.agora.karaoke_view_ex`，TME 公共接口包名是 `io.agora.karaoke_view_ex.tme`。公共准备组件不创建、销毁或控制 RTC/MCC/player，也不生成 token。已有 RTC/MCC 的应用可直接接入第 5～10 节；不必复制 Demo 管理器。需要复用 Demo 的完整单曲状态机时，参考第 8 节，它位于 app 模块，不在歌词 AAR 内。
 
@@ -53,7 +53,7 @@ dependencies {
 }
 ```
 
-`Agora-MccExService` 是 Demo 兼容其他服务使用的依赖；只接入 TME 时不必引入它。工程已有其他依赖间接引入 RTC 时，应避免重复打包另一份 RTC。源码接入保持 `gradle.properties` 的 `isSdkMode=false`。也可使用由当前源码构建的歌词 AAR，连同其传递依赖接入；不要把 AAR 当成包含所有依赖的独立包。
+`Agora-MccExService` 保留用于兼容代码及其中的类型引用；当前 Demo 的“音集协”入口使用 RTC 原生 MCC/XML，不初始化 MCCEx，TME 也通过原生 MCC 请求和播放。只接入 TME 时不必引入插件。工程已有其他依赖间接引入 RTC 时，应避免重复打包另一份 RTC。源码接入保持 `gradle.properties` 的 `isSdkMode=false`。也可使用由当前源码构建的歌词 AAR，连同其传递依赖接入；不要把 AAR 当成包含所有依赖的独立包。
 
 现有 Maven `io.github.winskyan:Agora-LyricsViewEx:3.0.4` 尚不含本次新增的 TME 接口。仓库的 `sdkVersion=3.0.4` 不能说明远端同名包具有这些 API。引入发布版本前检查是否实际包含 `TMERequestManager`、`TMEScoringPreparation` 和 `KaraokeView.parseTMEToneData`。
 
@@ -331,6 +331,8 @@ preparation.prepare(originalSongId, TMERequestSender { option ->
 
 上例用于自己实现播放门控。使用 Demo `TmePlaybackController` 时，准备回调只通过端口交给控制器，页面从 `onState` 安装模型并 acknowledge，不能同时再用上例直接触发播放。
 
+默认准备模式仍要求 LRC 和音高均可用。Demo 在 prepare 前设置 `preparation.allowLyricsOnly = true`，并实现 `onLyricsOnly(model, error)`：音高缺失、下载失败/超时或合并解析失败时保留可用歌词，以 `PreparationListener.onUnscored(model, error.category.name)` 交给控制器。页面安装模型后调用 `acknowledgeUnscored`，允许仅歌词播放，但不提交计分音高。歌词也不可用仍走普通 `onFailure`。
+
 准备组件自动发送：
 
 ```json
@@ -551,7 +553,11 @@ import io.agora.karaoke_view_ex.internal.model.LyricsLineModel
 
 karaoke.setKaraokeEvent(object : KaraokeEvent {
     override fun onDragTo(view: KaraokeView, progress: Long) {
-        // 本 TME 流程禁用拖动，无需 seek。
+        // 若只实现旧回调，组件默认接受 seek。
+    }
+    override fun onSeekRequested(view: KaraokeView, progress: Long): Boolean {
+        // 仅播放器接受后，组件才调整歌词和跳转后的计分。
+        return controller?.seek(progress) == true
     }
     override fun onLineFinished(
         view: KaraokeView, line: LyricsLineModel, score: Int,
@@ -571,43 +577,21 @@ TME 模型的内置规则：先平均每个音符的采样分，再平均整句�
 
 ## 10. 沿用音集协的歌词/计分 UI
 
-Demo 两条曲库链路使用同一份 [karaoke_styles.xml](../app/src/main/res/values/karaoke_styles.xml) 和 [KaraokeViewStyle](../app/src/main/java/io/agora/examples/karaoke_view_ex/KaraokeViewStyle.java)。TME 演唱页的组件区域铺满可用宽度，上下排列：120dp 音准区域、20dp 间隔、200dp 歌词区域、分数摘要。
-
-下面是完整的组件区域 XML。复用 Demo 工程时可以使用现成 style；独立应用需要复制 style 中的属性及引用颜色，或定义自己的等效样式：
-
-```xml
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/scoring_area"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:visibility="gone">
-    <io.agora.karaoke_view_ex.ScoringView
-        android:id="@+id/scoring_view"
-        style="@style/KaraokeScoringView" />
-    <io.agora.karaoke_view_ex.LyricsView
-        android:id="@+id/lyrics_view"
-        style="@style/KaraokeLyricsView" />
-    <TextView android:id="@+id/score_summary"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="2dp" />
-</LinearLayout>
-```
+Demo 两条曲库链路直接使用同一份 [activity_main.xml](../app/src/main/res/layout/activity_main.xml)、[karaoke_styles.xml](../app/src/main/res/values/karaoke_styles.xml) 和 [KaraokeViewStyle](../app/src/main/java/io/agora/examples/karaoke_view_ex/KaraokeViewStyle.java)。共用歌词、音准、歌词/评分开关、描述、回调、进度和播放控制。TME 没有另外一份演唱布局；预加载、歌词/音高下载、准备状态、句分/累计分/满分和失败原因进入现有描述与回调信息区。
 
 初始化时 Demo 调用：
 
 ```kotlin
 KaraokeViewStyle.apply(context, lyricsView, scoringView)
 val karaoke = KaraokeView(lyricsView, scoringView)
-lyricsView.enableDragging(false)
+lyricsView.enableDragging(prefs.getBoolean(context.getString(R.string.prefs_key_lyrics_dragging_switch), true))
 ```
 
 共享 XML 默认音准背景为 `holo_orange_light`，歌词背景为 `purple_200`；音准移动速度 0.4 pixels/ms、指示圆半径 6dp、参考音高条高 6dp、起点横向比例 0.4、命中阈值 0.8。运行时 apply 再读取两页相同的 `karaoke_sample_app` 设置，覆盖字色、字号、行距、参考音高颜色、粒子效果等；无设置时普通字 13sp、当前行 24sp、黄色、唱过高亮红色、行距 6dp。因此最终外观以运行时设置为准，不能只比较 XML 默认值。
 
 `KaraokeViewStyle` 依赖 Demo 的资源和偏好键，不是歌词库公共类。独立应用可统一调用自己的样式函数，使用 `LyricsView.setTextSize/setCurrentLineTextSize/setCurrentLineTextColor/setCurrentLineHighlightedTextColor/setLineSpacing`、`ScoringView.setRefPitchStickHeight/setThresholdOfHitScore/enableParticleEffect` 等公开方法。字号/间距等数值方法传像素，先把 sp/dp 换算，不能直接传 24 表示 24sp。
 
-TME 禁用拖歌词，页面不暴露 seek、跳前奏或计分参数切换入口。降级无计分播放时隐藏整个 scoring_area；重新选歌或从头开始前 reset，避免展示上一首的分数。
+TME 与音集协共用拖动设置、计分参数、歌词/评分开关以及全部按钮。TME 通过控制器 seek，暂停状态跳转保持暂停；跳转后的计分遵循组件既有规则。仅歌词降级继续在共享 LyricsView 显示可用 LRC 并同步进度，音高不可用时不输入计分；歌词也不可用则清空模型。重新选歌或停止后重播前 reset，避免沿用上一首的分数。
 
 ## 11. 暂停、切轨、退出与重建
 
@@ -615,16 +599,22 @@ TME 禁用拖歌词，页面不暴露 seek、跳前奏或计分参数切换入�
 | --- | --- |
 | 暂停 | `controller.pause()`，停止进度/pitch，调用 player.pause |
 | 继续 | `controller.resume()`，等待 PLAYING 后再恢复输入 |
+| 拖动/跳过前奏 | `controller.seek(positionMs)`，仅播放中或暂停且页面就绪时接受，保留暂停状态 |
+| 下一首 | 按当前 TME 选歌列表循环选择并自动播放 |
+| 停止后播放 | 结束当前单曲，再从当前歌曲开头创建新会话 |
 | 原唱/伴奏 | `ServiceManager.doPlayOriginal()`；当前 TME 按多音轨映射原唱 track 0、伴奏 track 1 |
 | 演唱页后台 | onStop 中 foreground=false、controller.detach(this)；播放/启动中自动暂停 |
 | 回到前台 | onStart 中 foreground=true、attach(this)，重新确认 View；已暂停的歌由用户手动继续 |
-| 演唱页返回列表 | `ServiceManager.endTmeSong(sessionId)` + karaoke.reset，保留 RTC/MCC |
-| 从列表返回选择页 | MainActivity 结束时 ServiceManager.destroy，再 RtcManager.destroy |
+| 打开/关闭选歌面板 | 保留当前会话和播放状态；面板高为总体屏高 80%，不含设置入口 |
+| 面板选择新歌 | 原会话结束，创建新 session；保留 RTC/MCC |
+| 设置未切换服务 | 保留歌曲和会话；TME 按原后台规则暂停，返回后手动继续 |
+| 设置切换服务 | 结束旧歌曲并重新初始化所选服务，返回对应演唱页 |
+| 退出主页面 | MainActivity 结束时 ServiceManager.destroy，再 RtcManager.destroy |
 | 从头开始 | end 旧单曲，重新 startTmeSong，获得新 sessionId，重置 View 和分数 |
 
 切轨底层调用 `player.selectAudioTrack(0/1)`；这是当前 Demo 对 MKV 的假定映射，业务根据服务的实际音轨契约确认。它不改变歌词/音高模型，也不重新开始评分。SDK 返回码应纳入自己的错误处理；Demo 的原唱状态标签不能替代 SDK 的切轨成功确认。
 
-当前 `TmeSingingActivity` 在 Manifest 配置 `orientation|screenSize`，普通旋转保留原页面与评分实例。其他 Activity 重建或进程恢复无法恢复评分器私有采样，Demo 显示中断、隐藏评分并允许从头开始；不能只保存累计分就声称恢复了计分会话。
+当前 MainActivity 与继承它的兼容宿主 TmeSingingActivity 在 Manifest 配置 `orientation|screenSize`，普通旋转保留原页面与评分实例。TME 状态由 TmeSingingPresenter 连接至共享控件。其他 Activity 重建或进程恢复无法恢复评分器私有采样，Demo 清空旧模型、显示中断，通过播放按钮从头开始；不能只保存累计分就声称恢复了计分会话。
 
 自建单曲的清理顺序：先标记旧会话失效并停定时器、取消/关闭 preparation、注销当前 player observer、关闭媒体音轨发布、stop/destroy player、reset KaraokeView。Demo 的 `endTmeSong` 把当前引用清空后 close 控制器，再 close 准备组件；媒体释放端口里关闭发布并注销 observer。
 
@@ -722,8 +712,8 @@ MCC/RTC destroy 是共享对象级操作；不要在单曲返回列表时执行�
 | 单曲端口、回包和 pitch 路由、清理 | [ServiceManager.kt](../app/src/main/java/io/agora/examples/karaoke_view_ex/agora/ServiceManager.kt) |
 | 四条件门控、定时、暂停、超时 | [TmePlaybackController.kt](../app/src/main/java/io/agora/examples/karaoke_view_ex/agora/tme/TmePlaybackController.kt) |
 | 歌曲选择、启动演唱页、RTC pitch 接收 | [MainActivity.java](../app/src/main/java/io/agora/examples/karaoke_view_ex/MainActivity.java) |
-| 安装模型、acknowledge、评分回调、页面生命周期 | [TmeSingingActivity.kt](../app/src/main/java/io/agora/examples/karaoke_view_ex/TmeSingingActivity.kt) |
-| 演唱页布局 | [activity_tme_singing.xml](../app/src/main/res/layout/activity_tme_singing.xml) |
+| 安装模型、acknowledge、评分回调、页面生命周期 | [TmeSingingPresenter.kt](../app/src/main/java/io/agora/examples/karaoke_view_ex/TmeSingingPresenter.kt) |
+| 两种服务共用的演唱页布局 | [activity_main.xml](../app/src/main/res/layout/activity_main.xml) |
 | 当前请求管理 | [TMERequestManager.kt](../karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMERequestManager.kt) |
 | 准备组件及资源选择 | [TMEScoringPreparation.kt](../karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEScoringPreparation.kt) |
 | 准备结果、阶段、错误及超时 | [TMEScoringPreparationModels.kt](../karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEScoringPreparationModels.kt) |

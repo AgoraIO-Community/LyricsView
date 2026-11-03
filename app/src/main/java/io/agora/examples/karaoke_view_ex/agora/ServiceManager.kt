@@ -27,6 +27,7 @@ import io.agora.mccex.model.RawScoreData
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Response
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.Executors
@@ -79,8 +80,10 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         val manager = mMccManager ?: return null
         if (mServiceType != ServiceType.TME) return null
         endTmeSong()
+        mTmeSongs.indexOfFirst { it.songId == songId }.takeIf { it >= 0 }?.let { mCurrentSongCodeIndex = it }
         mIsOriginal = true
         val preparation = TMEScoringPreparation(context.applicationContext.cacheDir)
+        preparation.allowLyricsOnly = true
         tmePreparation = preparation
         val media = object : TmePlaybackController.MediaPort {
             override fun preload(sessionId: String, songId: String) = manager.preloadTmeSession(sessionId, songId)
@@ -88,6 +91,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
             override fun play() = manager.playTme()
             override fun pause() = manager.pauseTme()
             override fun resume() = manager.resumeTme()
+            override fun seek(positionMs: Long) = manager.seekTme(positionMs)
             override fun position() = manager.tmePlayPosition
             override fun release() { manager.releaseTmePlayer() }
         }
@@ -101,6 +105,9 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
                         listener.onReady(result.lyricModel, result.scorableLineCount)
                     }
                     override fun onFailure(error: TMEScoringPreparationError) { listener.onFailure(error.category.name) }
+                    override fun onLyricsOnly(model: LyricModel, error: TMEScoringPreparationError) {
+                        listener.onUnscored(model, error.category.name)
+                    }
                 }
                 preparation.prepare(songId, TMERequestSender { manager.sendTmeRequest(it) })
             }
@@ -126,6 +133,8 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         old?.close()
         tmePreparation?.close(); tmePreparation = null
     }
+
+    fun currentTmeSong(): MccManager.TmeSong? = mTmeSongs.getOrNull(mCurrentSongCodeIndex)
 
     fun setServiceType(serviceType: ServiceType) {
         mServiceType = serviceType
@@ -160,6 +169,11 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
             context.getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE)
         val tokenTime = prefs.getLong(Constants.SP_KEY_YSD_TOKEN_TIME, 0L)
         if (tokenTime == 0L || System.currentTimeMillis() - tokenTime > Constants.TOKEN_EXPIRE_TIME) {
+            if (BuildConfig.YSD_TOKEN_HOST.toHttpUrlOrNull() == null) {
+                Log.e(TAG, "MccEx token service URL is not configured")
+                ToastUtils.toastLong(context, "请配置音集协 token 服务地址 YSD_TOKEN_HOST")
+                return
+            }
 
             mExecutor.execute(Runnable {
                 sendHttpsRequest(
@@ -241,7 +255,9 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.seek(position)
             mMccExManager?.updateMusicPosition(position)
-        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
+        } else if (ServiceType.TME == mServiceType) {
+            tmeController?.seek(position)
+        } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.seek(position)
             mMccManager?.updateMusicPosition(position)
         }
@@ -298,6 +314,19 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
         return true
     }
 
+    fun selectMccSong(position: Int): Boolean {
+        if (mServiceType != ServiceType.MCC || position !in LyricsResourcePool.asMusicList().indices) return false
+        mCurrentSongCodeIndex = position
+        return true
+    }
+
+    /** The list position is used; MusicResource.index is not unique in the configured catalog. */
+    fun selectMccExSong(position: Int): Boolean {
+        if (mServiceType != ServiceType.MCC_EX || position !in LyricsResourcePool.asMusicListEx().indices) return false
+        mCurrentSongCodeIndex = position
+        return true
+    }
+
     fun play(): Boolean {
         mIsOriginal = true
         if (ServiceType.MCC_EX == mServiceType) {
@@ -330,7 +359,9 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     fun stop() {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.stop()
-        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
+        } else if (ServiceType.TME == mServiceType) {
+            endTmeSong()
+        } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.stop()
         }
     }
@@ -368,7 +399,9 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     fun pause() {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.pause()
-        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
+        } else if (ServiceType.TME == mServiceType) {
+            tmeController?.pause()
+        } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.pause()
         }
     }
@@ -376,7 +409,9 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     fun resume() {
         if (ServiceType.MCC_EX == mServiceType) {
             mMccExManager?.resume()
-        } else if (ServiceType.MCC == mServiceType || ServiceType.TME == mServiceType) {
+        } else if (ServiceType.TME == mServiceType) {
+            tmeController?.resume()
+        } else if (ServiceType.MCC == mServiceType) {
             mMccManager?.resume()
         }
     }
@@ -410,7 +445,7 @@ object ServiceManager : MccManager.MccCallback, MccExManager.MccExCallback {
     override fun onTmeSongsLoaded(songs: MutableList<MccManager.TmeSong>?) {
         if (ServiceType.TME != mServiceType || songs.isNullOrEmpty()) return
         mTmeSongs = songs.toList()
-        mCurrentSongCodeIndex = 0
+        mCurrentSongCodeIndex = songs.indexOfFirst { it.songId == tmeController?.songId }.coerceAtLeast(0)
         tmeListLoading = false; tmeListError = null; publishTmeList()
         mServiceCallback?.onTmeSongChanged("${mTmeSongs[mCurrentSongCodeIndex].name} (${mCurrentSongCodeIndex + 1}/${mTmeSongs.size})")
     }

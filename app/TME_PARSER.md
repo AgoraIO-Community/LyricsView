@@ -4,9 +4,9 @@
 
 TME 音高 JSON 与本地 LRC 合并使用库内 `KaraokeView.parseTMEToneData(toneFilePath, lyricFilePath)`，然后交给 `setLyricData(model, true)`。详见 [音高接入说明](../karaoke_view_ex/TME_TONE_DATA.md)。
 
-实现位于歌词库 `karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme`，公开包名为 `io.agora.karaoke_view_ex.tme`，与 iOS 的 TME 响应契约一致。Demo 通过已有的 `implementation project(':karaoke_view_ex')` 引用。启动后先选择曲库：TME 进入歌曲列表，点击歌曲即进入独立演唱页；音集协进入原有 MCC 歌词与计分页面。选择页不创建 SDK 对象，本次选择在 RTC/MCC 初始化前生效；公共准备组件也不创建 RTC/MCC 或播放器。
+实现位于歌词库 `karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme`，公开包名为 `io.agora.karaoke_view_ex.tme`，与 iOS 的 TME 响应契约一致。Demo 通过已有的 `implementation project(':karaoke_view_ex')` 引用。启动即进入演唱页，Service Type 仅有 TME、音集协；首次默认音集协（内部 MCC，XML），TME 使用 LRC。旧 MCC_EX 或无效偏好迁移到 MCC/XML，已有 TME 偏好保留为 TME/LRC。音集协使用 RTC 原生 MCC 与组件内置计分；MCCEx 插件代码和依赖保留作兼容，此入口不初始化插件。公共准备组件不创建 RTC/MCC 或播放器。
 
-演唱页返回 TME 列表时保留 RTC/MCC；曲库页面返回选择页时释放当前 RTC/MCC，再选择另一曲库会重新初始化。每次重新启动均显示选择页，旧设置不会覆盖本次入口选择。原有设置与其他服务兼容路径仍可使用。
+演唱页导航栏提供“选歌”“设置”。选歌以总体屏高 80% 的面板从底部展开，标题随服务显示“TME 选歌”或“音集协 选歌”，面板不含设置入口。TME 复用现有查询列表，音集协复用 `LyricsResourcePool.asMusicList()` 的《爱情转移》《说爱你》《love story》3 首原生 MCC 配置；列表保留单行样式。选中歌曲收起面板并进入原演唱流程；直接关闭不更换或暂停当前歌曲。设置改变服务会结束旧会话并进入对应演唱页，未改变服务则保留当前歌曲；TME 打开设置离开前台后仍需手动继续。主页面退出时释放 RTC/服务。
 
 本地 Demo 使用 `gradle.properties` 中的 `isSdkMode=false`。已发布的 3.0.4 不含本次新增接口；新版本发布后，才可切换到 Maven 依赖模式。库已启用 Kotlin 1.8，JSON 解码复用库现有 Gson 2.10.1；关闭接口使用 `Closeable`，兼容库的 Android API 17 下限。
 
@@ -115,10 +115,12 @@ gradle :app:connectedDebugAndroidTest \
 
 `ServiceManager` 持有单曲控制器，`MccManager` 保留现有 RTC engine 初始化的 MCC。列表与资料使用独立请求管理器；预加载以 requestId、内部 songCode 和 sessionId 关联。每首歌的 player/observer 单独创建和释放，旧播放器排队的回调不能开始新歌。
 
-预加载完成后并行打开播放器和 `TMEScoringPreparation.prepare`。准备成功时，演唱页先安装模型，再确认页面就绪；资料失败时先隐藏整个歌词、音准和得分区域，再允许无计分播放。预加载、打开和播放失败作为播放错误处理。详情见 [公共准备接口](../karaoke_view_ex/TME_TONE_DATA.md#自动准备计分资料)。
+预加载完成后并行打开播放器和 `TMEScoringPreparation.prepare`。准备成功时，演唱页先安装模型，再确认页面就绪。Demo 显式启用 `allowLyricsOnly`：音高缺失、无效或下载失败时保留可用 LRC；歌词也不可用时清空模型，仍允许无计分播放。预加载、打开和播放失败作为播放错误处理。详情见 [公共准备接口](../karaoke_view_ex/TME_TONE_DATA.md#自动准备计分资料)。
 
 TME 每 20ms 读取实际播放器位置；本地麦克风 `uid == 0` 的 voicePitch 提交前再次更新位置，然后 `setPitch(pitch, 0F, 0)`。逐句和累计分来自内部 `KaraokeEvent.onLineFinished`，满分为可计分句数 ×100；不会用显示行数、外部 onLineScore 或补造末句音高计算。
 
-演唱页退到后台会暂停，回前台需要手动继续；普通旋转保留原视图。其他重建或进程恢复显示中断并从头开始。返回列表释放当前 player、准备任务和评分视图，保留 RTC/MCC；退出功能由原管理层销毁 SDK。TME 不提供 seek、跳前奏或计分参数入口。
+TME 与音集协直接共用 `MainActivity`、`activity_main.xml` 及同一个 KaraokeView。`TmeSingingPresenter` 将 TME 会话连接到原有描述、回调、进度和控件；TmeSingingActivity 继承 MainActivity，仅兼容已有单曲入口。两种服务共用歌词/评分开关、外观和计分参数设置；TME 支持歌词拖动、跳过前奏、播放/停止、暂停/继续、原伴唱切换和列表循环下一首，暂停时跳转保持暂停。停止后播放从当前歌曲开头重启。准备状态及失败原因进入原有信息区。
+
+演唱页退到后台会暂停，回前台需要手动继续；普通旋转保留原视图。其他重建或进程恢复显示中断，通过播放按钮从头开始。打开选歌面板不停止当前会话；选择新歌时释放旧 player、准备任务和评分视图，保留 RTC/MCC。退出功能由原管理层销毁 SDK。
 
 Demo 构建要求配套 `app/libs/agora-rtc-sdk.jar` 和 `app/src/main/jniLibs/arm64-v8a/libagora-rtc-sdk.so` 及其他 SDK 原生库。旧 Maven RTC 包不能验证这里新增的 TME SDK 接口。SDK、签名 URL、凭据和构建产物不提交。

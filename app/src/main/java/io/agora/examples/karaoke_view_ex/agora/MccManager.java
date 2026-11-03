@@ -408,6 +408,7 @@ public class MccManager {
     public int playTme() { return mAgoraMusicPlayer == null ? -1 : mAgoraMusicPlayer.play(); }
     public int pauseTme() { return mAgoraMusicPlayer == null ? -1 : mAgoraMusicPlayer.pause(); }
     public int resumeTme() { return mAgoraMusicPlayer == null ? -1 : mAgoraMusicPlayer.resume(); }
+    public int seekTme(long positionMs) { return mAgoraMusicPlayer == null ? -1 : mAgoraMusicPlayer.seek(positionMs); }
     public long getTmePlayPosition() { return mAgoraMusicPlayer == null ? 0 : mAgoraMusicPlayer.getPlayPosition(); }
     public void releaseTmePlayer() {
         mTmeSessionId = null;

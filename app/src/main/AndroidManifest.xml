@@ -16,8 +16,8 @@
         android:theme="@style/Theme.LyricsViewExample">
 
         <activity
-            android:name=".LibrarySelectionActivity"
-            android:label="@string/library_selection_title"
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,20 +27,14 @@
         </activity>
 
         <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".TmeSingingActivity"
             android:exported="false"
-            android:configChanges="orientation|screenSize"
-            android:theme="@style/Theme.LyricsViewExample.NoActionBar" />
+            android:configChanges="orientation|screenSize" />
 
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:label="@string/title_activity_settings"
-            android:theme="@style/Theme.LyricsViewExample.NoActionBar" />
+            android:label="@string/settings" />
 
     </application>
 

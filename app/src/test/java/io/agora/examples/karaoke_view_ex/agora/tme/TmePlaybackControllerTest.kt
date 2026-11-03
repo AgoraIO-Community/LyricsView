@@ -24,13 +24,15 @@ class TmePlaybackControllerTest {
     private class Media : TmePlaybackController.MediaPort {
         var plays = 0; var opens = 0; var pauses = 0; var resumes = 0; var releases = 0
         var position = 0L; var playResult = 0; var openResult = 0
-        var pauseResult = 0
+        var pauseResult = 0; var seekResult = 0
+        val seeks = mutableListOf<Long>()
         var positionHook: (() -> Unit)? = null
         override fun preload(sessionId: String, songId: String) = TmePlaybackController.PreloadRequest(42, "preload")
         override fun open(sessionId: String, songCode: Long): Int { opens++; return openResult }
         override fun play(): Int { plays++; return playResult }
         override fun pause(): Int { pauses++; return pauseResult }
         override fun resume(): Int { resumes++; return 0 }
+        override fun seek(positionMs: Long): Int { seeks += positionMs; return seekResult }
         override fun position(): Long { positionHook?.invoke(); return position }
         override fun release() { releases++ }
     }
@@ -201,5 +203,44 @@ class TmePlaybackControllerTest {
         assertEquals(listOf("position:1500:true", "pitch:0.0"), f.page.inputs)
         f.page.inputs.clear(); f.controller.onLocalPitch(Double.NaN); f.controller.onLocalPitch(-1.0)
         assertTrue(f.page.inputs.isEmpty())
+    }
+
+    @Test fun seekKeepsPlaybackPhaseAndUsesAcknowledgedPage() {
+        val f = Fixture()
+        assertFalse(f.controller.seek(1000))
+        f.preload(); f.ready(); f.opened(); f.playing(); f.page.inputs.clear()
+        assertTrue(f.controller.seek(1234))
+        assertEquals(listOf(1234L), f.media.seeks)
+        assertEquals(listOf("position:1234:true"), f.page.inputs)
+        assertEquals(TmePlaybackController.Phase.PLAYING, f.controller.state.phase)
+        f.controller.pause()
+        assertTrue(f.controller.seek(800))
+        assertEquals(TmePlaybackController.Phase.PAUSED, f.controller.state.phase)
+        f.controller.detach(f.page)
+        assertFalse(f.controller.seek(100))
+        f.controller.close()
+        assertFalse(f.controller.seek(100))
+    }
+
+    @Test fun rejectedOrNegativeSeekCannotMoveThePage() {
+        val f = Fixture(); f.preload(); f.ready(); f.opened(); f.playing()
+        f.page.inputs.clear(); f.media.seekResult = -1
+        assertFalse(f.controller.seek(4000))
+        assertFalse(f.controller.seek(-1))
+        assertTrue(f.page.inputs.isEmpty())
+        assertEquals(0L, f.controller.state.positionMs)
+        assertEquals(TmePlaybackController.Phase.PLAYING, f.controller.state.phase)
+    }
+
+    @Test fun lyricsOnlyModelIsAcknowledgedWithoutEnablingScoring() {
+        val f = Fixture(); f.preload(); f.opened()
+        f.preparation.callback.onUnscored("lyrics", "MISSING_RESOURCE")
+        assertEquals("lyrics", f.page.state.model)
+        assertFalse(f.page.state.scoring)
+        assertEquals(0, f.media.plays)
+        f.controller.acknowledgeUnscored(f.page); f.playing()
+        assertEquals(1, f.media.plays)
+        f.controller.onLocalPitch(220.0)
+        assertFalse(f.page.inputs.any { it.startsWith("pitch") })
     }
 }

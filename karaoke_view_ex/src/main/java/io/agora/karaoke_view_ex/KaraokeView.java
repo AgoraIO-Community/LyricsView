@@ -390,8 +390,11 @@ public class KaraokeView {
             mLyricsView.setSeekListener(new LyricsView.OnLyricsSeekListener() {
                 @Override
                 public void onProgressChanged(long progress) {
-                    if (mKaraokeEvent != null) {
-                        mKaraokeEvent.onDragTo(KaraokeView.this, progress);
+                    if (mKaraokeEvent != null && !mKaraokeEvent.onSeekRequested(KaraokeView.this, progress)) {
+                        // LyricsView has previewed the target. Refresh from the actual
+                        // position without clearing earned scores for a rejected seek.
+                        mLyricMachine.setProgress(mLyricMachine.getCurrentLyricProgress());
+                        return;
                     }
                     mLyricMachine.whenDraggingHappen(progress);
                     mScoringMachine.whenDraggingHappen(progress);

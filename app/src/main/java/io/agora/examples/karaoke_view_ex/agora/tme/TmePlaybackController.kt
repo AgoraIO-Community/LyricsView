@@ -23,6 +23,7 @@ class TmePlaybackController<M : Any>(
         fun play(): Int
         fun pause(): Int
         fun resume(): Int
+        fun seek(positionMs: Long): Int = -1
         fun position(): Long
         fun release()
     }
@@ -34,6 +35,7 @@ class TmePlaybackController<M : Any>(
         fun onStage(stage: Stage)
         fun onReady(model: M, scorableLineCount: Int)
         fun onFailure(category: String)
+        fun onUnscored(model: M, category: String) { onFailure(category) }
     }
     enum class Stage { QUERYING, LYRIC_DOWNLOADING, LYRIC_DOWNLOADED, PITCH_DOWNLOADING, PITCH_DOWNLOADED, PARSING }
     enum class ResourceState { WAITING, DOWNLOADING, DOWNLOADED }
@@ -94,6 +96,13 @@ class TmePlaybackController<M : Any>(
             state = state.copy(model = null, scoring = false, preparationError = category,
                 phase = Phase.WAITING_FOR_PAGE)
             preparation.cancel()
+            publish(); tryPlay()
+        }
+        override fun onUnscored(model: M, category: String) {
+            if (!active() || preparationFinished) return
+            preparationFinished = true
+            state = state.copy(model = model, scoring = false, preparationError = category,
+                phase = Phase.WAITING_FOR_PAGE)
             publish(); tryPlay()
         }
     }
@@ -233,6 +242,16 @@ class TmePlaybackController<M : Any>(
         if (!active() || controlGeneration != operation || page == null || state.phase != Phase.STARTING) return
         timer = scheduler.schedule(timeouts.playingMs) { if (active() && awaitingPlaying) fail("PLAYING_TIMEOUT") }
         if (media.resume() != 0) fail("RESUME_REJECTED")
+    }
+    fun seek(positionMs: Long): Boolean {
+        if (positionMs < 0 || !active() || page == null || !pageApplied ||
+            (state.phase != Phase.PLAYING && state.phase != Phase.PAUSED)) return false
+        val listener = page
+        val operation = ++controlGeneration
+        if (media.seek(positionMs) != 0 || !active() || page !== listener || controlGeneration != operation) return false
+        state = state.copy(positionMs = positionMs)
+        listener?.onPosition(positionMs, state.scoring)
+        return true
     }
     private fun inputsEnabled() = active() && page != null && pageApplied && state.phase == Phase.PLAYING
     private fun active() = !closed && state.phase != Phase.FAILED && state.phase != Phase.COMPLETED && state.phase != Phase.CANCELLED

@@ -30,6 +30,25 @@ public final class TMEToneParser {
 
     private TMEToneParser() {}
 
+    /** Read TME LRC without pitch data, retaining timed display lines for unscored playback. */
+    public static LyricModel parseLyrics(String lyricFilePath) {
+        if (lyricFilePath == null) return null;
+        try {
+            TMELyricModel model = readLyrics(readFile(lyricFilePath));
+            if (model.lines.isEmpty()) return null;
+            for (int i = 0; i < model.lines.size(); i++) {
+                LyricsLineModel line = model.lines.get(i);
+                long end = i + 1 < model.lines.size() ? model.lines.get(i + 1).getStartTime()
+                        : line.getStartTime() + 5000;
+                line.tones.get(0).end = end;
+                line.duration = end - line.getStartTime();
+            }
+            model.preludeEndPosition = model.lines.get(0).getStartTime();
+            model.duration = model.lines.get(model.lines.size() - 1).getEndTime();
+            return model;
+        } catch (Exception failure) { return null; }
+    }
+
     public static LyricModel parse(String toneFilePath, String lyricFilePath) {
         if (toneFilePath == null || lyricFilePath == null) return null;
         try {

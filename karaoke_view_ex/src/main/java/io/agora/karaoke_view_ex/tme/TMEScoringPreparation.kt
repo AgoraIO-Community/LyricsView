@@ -5,6 +5,7 @@ import android.os.Looper
 import com.google.gson.JsonObject
 import io.agora.karaoke_view_ex.KaraokeView
 import io.agora.karaoke_view_ex.internal.model.TMELyricModel
+import io.agora.karaoke_view_ex.internal.lyric.parse.TMEToneParser
 import io.agora.karaoke_view_ex.model.LyricModel
 import java.io.Closeable
 import java.io.File
@@ -39,7 +40,7 @@ class TMEScoringPreparation internal constructor(
         ownsDownloader = downloader == null
     }
 
-    private class Session(val songId: String, val sender: TMERequestSender, val directory: File) {
+    private class Session(val songId: String, val sender: TMERequestSender, val directory: File, val allowLyricsOnly: Boolean) {
         @Volatile var terminal = false
         var requestId: String? = null
         var option = ""
@@ -48,6 +49,8 @@ class TMEScoringPreparation internal constructor(
         var ioCount = 0
         var cleanupSubmitted = false
         var cleanupAttempts = 0
+        var fallbackError: TMEScoringPreparationError? = null
+        var parsingFallback = false
         val tasks = mutableMapOf<TMEScoringResource, TMEResourceDownloadTask>()
         val settled = mutableSetOf<TMEScoringResource>()
         val ready = mutableSetOf<TMEScoringResource>()
@@ -65,6 +68,9 @@ class TMEScoringPreparation internal constructor(
     private val pendingCleanupDirectories = mutableSetOf<File>()
     private var closed = false
     private var ownsDownloader = false
+    /** Opt in before prepare: retain usable LRC when pitch resources cannot provide scoring. */
+    var allowLyricsOnly = false
+        set(value) { requireMainThread(); check(!closed); field = value }
 
     var listener: TMEScoringPreparationListener? = null
         set(value) { requireMainThread(); check(!closed || value == null) { "Preparation is closed" }; field = value }
@@ -74,7 +80,7 @@ class TMEScoringPreparation internal constructor(
         requireMainThread()
         check(!closed) { "Preparation is closed" }
         cancel()
-        val session = Session(songId, sender, File(File(cacheRoot, "tme-scoring"), UUID.randomUUID().toString()))
+        val session = Session(songId, sender, File(File(cacheRoot, "tme-scoring"), UUID.randomUUID().toString()), allowLyricsOnly)
         current = session
         ownedSessions.add(session)
         val manager = TMERequestManager(sender, parserFactory(), requireMainThread)
@@ -174,17 +180,22 @@ class TMEScoringPreparation internal constructor(
             ?: return fail(session, TMEScoringPreparationError(TMEScoringPreparationErrorCategory.SONG_NOT_FOUND))
         val pitch = song.pitchUrl?.takeIf { it.isNotBlank() }
         val lyric = song.lrcList?.firstOrNull { it.type == "lrc" && it.url.isNotBlank() }?.url
-        if (pitch == null || lyric == null) return fail(session, TMEScoringPreparationError(TMEScoringPreparationErrorCategory.MISSING_RESOURCE))
-        for ((resource, url) in listOf(TMEScoringResource.LYRIC to lyric, TMEScoringResource.PITCH to pitch)) {
-            if (!validUrl(url)) return fail(session, TMEScoringPreparationError(TMEScoringPreparationErrorCategory.INVALID_URL, resource))
+        if (lyric == null || (pitch == null && !session.allowLyricsOnly)) return fail(session, TMEScoringPreparationError(TMEScoringPreparationErrorCategory.MISSING_RESOURCE))
+        if (!validUrl(lyric)) return fail(session, TMEScoringPreparationError(TMEScoringPreparationErrorCategory.INVALID_URL, TMEScoringResource.LYRIC))
+        val pitchError = when {
+            pitch == null -> TMEScoringPreparationError(TMEScoringPreparationErrorCategory.MISSING_RESOURCE, TMEScoringResource.PITCH)
+            !validUrl(pitch) -> TMEScoringPreparationError(TMEScoringPreparationErrorCategory.INVALID_URL, TMEScoringResource.PITCH)
+            else -> null
         }
+        if (pitchError != null && !session.allowLyricsOnly) return fail(session, pitchError)
+        session.fallbackError = pitchError
         io(session, { if (active(session) && !session.directory.mkdirs() && !session.directory.isDirectory) throw java.io.IOException() }) { error ->
             if (!active(session)) return@io
             if (error != null) { fail(session, TMEScoringPreparationError(TMEScoringPreparationErrorCategory.FILE_IO)); return@io }
             if (!stage(session, TMEScoringPreparationStage.LYRIC_DOWNLOADING)) return@io
-            if (!stage(session, TMEScoringPreparationStage.PITCH_DOWNLOADING)) return@io
+            if (pitchError == null && !stage(session, TMEScoringPreparationStage.PITCH_DOWNLOADING)) return@io
             startDownload(session, TMEScoringResource.LYRIC, lyric)
-            if (active(session)) startDownload(session, TMEScoringResource.PITCH, pitch)
+            if (active(session) && pitchError == null) startDownload(session, TMEScoringResource.PITCH, requireNotNull(pitch))
         }
     }
 
@@ -196,7 +207,7 @@ class TMEScoringPreparation internal constructor(
             if (session.settled.add(resource)) {
                 timeout.cancel()
                 session.ioCount--
-                if (active(session)) {
+                if (active(session) && !(resource == TMEScoringResource.PITCH && session.fallbackError != null)) {
                     when (result) {
                         is TMEResourceDownloadResult.Failure -> fail(session, downloadError(resource, result))
                         TMEResourceDownloadResult.Success -> validateFile(session, resource)
@@ -226,7 +237,10 @@ class TMEScoringPreparation internal constructor(
             }
             session.ready.add(resource)
             val completedStage = if (resource == TMEScoringResource.LYRIC) TMEScoringPreparationStage.LYRIC_DOWNLOADED else TMEScoringPreparationStage.PITCH_DOWNLOADED
-            if (stage(session, completedStage) && session.ready.size == 2) parse(session)
+            if (stage(session, completedStage)) {
+                if (session.fallbackError != null && TMEScoringResource.LYRIC in session.ready) parseFallback(session)
+                else if (session.ready.size == 2) parse(session)
+            }
         }
     }
 
@@ -267,8 +281,29 @@ class TMEScoringPreparation internal constructor(
 
     private fun fail(session: Session, error: TMEScoringPreparationError) {
         if (!active(session)) return
+        val lyricPending = TMEScoringResource.LYRIC in session.tasks || TMEScoringResource.LYRIC in session.ready
+        if (session.allowLyricsOnly && error.resource != TMEScoringResource.LYRIC && lyricPending &&
+            error.category != TMEScoringPreparationErrorCategory.OVERALL_TIMEOUT) {
+            session.fallbackError = session.fallbackError ?: error
+            try { session.tasks[TMEScoringResource.PITCH]?.cancel() } catch (_: Exception) { /* Retain the usable lyric task. */ }
+            if (TMEScoringResource.LYRIC in session.ready) parseFallback(session)
+            return
+        }
         terminate(session)
         listener?.onFailure(error)
+    }
+
+    private fun parseFallback(session: Session) {
+        if (!active(session) || session.parsingFallback) return
+        session.parsingFallback = true
+        var model: LyricModel? = null
+        io(session, { if (active(session)) model = TMEToneParser.parseLyrics(session.file(TMEScoringResource.LYRIC).path) }) { _ ->
+            if (!active(session)) return@io
+            val error = requireNotNull(session.fallbackError)
+            val lyrics = model
+            terminate(session)
+            if (lyrics != null) listener?.onLyricsOnly(lyrics, error) else listener?.onFailure(error)
+        }
     }
 
     private fun terminate(session: Session) {

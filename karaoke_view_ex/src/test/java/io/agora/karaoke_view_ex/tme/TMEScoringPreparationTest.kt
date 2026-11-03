@@ -13,6 +13,62 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.CountDownLatch
 
 class TMEScoringPreparationTest {
+    @Test fun optionalLyricsOnlyModeDownloadsLyricsWhenPitchIsMissing() = Fixture().use { f ->
+        f.preparation.allowLyricsOnly = true
+        f.prepare(); f.response(song("s", pitch = ""))
+        f.until { f.downloader.pending.size == 1 }
+        f.downloader.complete(0, "[00:01.00]第一句\n[00:03.00]第二句")
+        f.until { f.lyricsOnly.size == 1 }
+        assertEquals(2, f.lyricsOnly.single().lines.size)
+        assertFalse(f.lyricsOnly.single().hasPitch)
+        assertEquals(TMEScoringPreparationErrorCategory.MISSING_RESOURCE, f.lyricsOnlyErrors.single().category)
+        assertTrue(f.results.isEmpty()); assertTrue(f.errors.isEmpty())
+    }
+
+    @Test fun optionalLyricsOnlyModeWaitsForLyricsAfterPitchFailure() = Fixture().use { f ->
+        f.preparation.allowLyricsOnly = true
+        f.prepare(); f.response(song("s")); f.until { f.downloader.pending.size == 2 }
+        f.downloader.fail(1); f.drain()
+        assertFalse(f.downloader.pending[0].cancelled)
+        f.downloader.complete(0, "[00:01.00]保留的歌词")
+        f.until { f.lyricsOnly.size == 1 }
+        assertEquals(TMEScoringPreparationErrorCategory.DOWNLOAD, f.lyricsOnlyErrors.single().category)
+        assertTrue(f.errors.isEmpty())
+    }
+
+    @Test fun optionalLyricsOnlyModeRetainsLyricsOnPitchTimeoutOrInvalidTone() {
+        for (timeout in listOf(true, false)) Fixture().use { f ->
+            f.preparation.allowLyricsOnly = true
+            f.parseResult = null
+            f.prepare(); f.response(song("s")); f.until { f.downloader.pending.size == 2 }
+            f.downloader.complete(0, "[00:01.00]歌词")
+            f.until { f.stages.contains(TMEScoringPreparationStage.LYRIC_DOWNLOADED) }
+            if (timeout) f.clock.fire(60) else f.downloader.complete(1)
+            f.until { f.lyricsOnly.size == 1 }
+            assertFalse(f.lyricsOnly.single().hasPitch)
+            assertEquals(if (timeout) TMEScoringPreparationErrorCategory.DOWNLOAD_TIMEOUT else TMEScoringPreparationErrorCategory.PARSE,
+                f.lyricsOnlyErrors.single().category)
+        }
+    }
+
+    @Test fun cancellingLyricsOnlyFallbackRejectsLateLyrics() = Fixture().use { f ->
+        f.preparation.allowLyricsOnly = true
+        f.prepare(); f.response(song("s", pitch = "")); f.until { f.downloader.pending.size == 1 }
+        f.preparation.cancel()
+        f.downloader.complete(0, "[00:01.00]迟到歌词"); f.drain()
+        assertTrue(f.lyricsOnly.isEmpty()); assertTrue(f.errors.isEmpty())
+    }
+
+    @Test fun throwingPitchCancellationCannotDiscardUsableLyrics() = Fixture().use { f ->
+        f.preparation.allowLyricsOnly = true
+        f.downloader.throwOnCancel = true
+        f.prepare(); f.response(song("s")); f.until { f.downloader.pending.size == 2 }
+        f.downloader.fail(1)
+        f.downloader.complete(0, "[00:01.00]歌词")
+        f.until { f.lyricsOnly.size == 1 }
+        assertTrue(f.errors.isEmpty())
+    }
+
     @Test fun originalIdIsStructuredAndRealParserStartsBothExactResources() = Fixture().use { f ->
         val id = "001\"\\\n曲"
         f.prepare(id)
@@ -288,6 +344,8 @@ class TMEScoringPreparationTest {
         val stages = mutableListOf<TMEScoringPreparationStage>()
         val errors = mutableListOf<TMEScoringPreparationError>()
         val results = mutableListOf<TMEScoringPreparationResult>()
+        val lyricsOnly = mutableListOf<LyricModel>()
+        val lyricsOnlyErrors = mutableListOf<TMEScoringPreparationError>()
         val callbackThreads = mutableListOf<Thread>()
         var stageHook: ((TMEScoringPreparationStage) -> Unit)? = null
         var successHook: (() -> Unit)? = null
@@ -300,6 +358,9 @@ class TMEScoringPreparationTest {
                 override fun onStage(stage: TMEScoringPreparationStage) { callbackThreads.add(Thread.currentThread()); stages.add(stage); stageHook?.invoke(stage) }
                 override fun onSuccess(result: TMEScoringPreparationResult) { callbackThreads.add(Thread.currentThread()); results.add(result); successHook?.invoke() }
                 override fun onFailure(error: TMEScoringPreparationError) { callbackThreads.add(Thread.currentThread()); errors.add(error); failureHook?.invoke() }
+                override fun onLyricsOnly(model: LyricModel, error: TMEScoringPreparationError) {
+                    assertEquals(main, Thread.currentThread()); lyricsOnly.add(model); lyricsOnlyErrors.add(error)
+                }
             }
         }
         fun prepare(id: String = "s") = preparation.prepare(id, TMERequestSender { option = it; "req" })
@@ -334,9 +395,10 @@ class TMEScoringPreparationTest {
         data class Pending(val url: String, val file: File, val callback: (TMEResourceDownloadResult) -> Unit, var cancelled: Boolean = false, var completed: Boolean = false)
         val pending = mutableListOf<Pending>()
         var closed = false
+        var throwOnCancel = false
         override fun download(url: String, destination: File, callback: (TMEResourceDownloadResult) -> Unit): TMEResourceDownloadTask {
             val task = Pending(url, destination, callback); pending.add(task)
-            return TMEResourceDownloadTask { task.cancelled = true }
+            return TMEResourceDownloadTask { task.cancelled = true; if (throwOnCancel) throw IllegalStateException("cancel rejected") }
         }
         fun complete(index: Int, content: String = "data") {
             val task = pending[index]; if (!task.completed) task.file.writeText(content); task.completed = true

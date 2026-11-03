@@ -6,7 +6,13 @@
     <string name="library_mcc">音集协</string>
     <string name="library_tme_description">选择歌曲，进入演唱与计分页</string>
     <string name="library_mcc_description">进入现有歌词与计分示例</string>
-    <string name="tme_song_selection_title">TME · 选歌</string>
+    <string name="tme_song_selection_title">TME 选歌</string>
+    <string name="mcc_song_selection_title">音集协 选歌</string>
+    <string name="tme_singing_title">TME 演唱</string>
+    <string name="mcc_singing_title">音集协演唱</string>
+    <string name="choose_song">选歌</string>
+    <string name="close_song_selection">关闭</string>
+    <string name="choose_song_prompt">请选择歌曲</string>
 
     <string name="prefs_key_scoring_level" translatable="false">prefs_key_scoring_level</string>
     <string name="prefs_key_scoring_compensation_offset" translatable="false">
@@ -133,8 +139,8 @@
     <string name="rtc_audio_dump">Rtc Audio Dump</string>
     <string name="rtc_ains">Rtc AINS</string>
     <string name="set_no_lyric">Set No Lyric</string>
-    <string name="mcc_type">Mcc</string>
-    <string name="mccEx_type">MccEx</string>
+    <string name="mcc_type">音集协</string>
+    <string name="mccEx_type">音集协</string>
     <string name="tme_type">TME</string>
     <string name="clear_music_cache">Clear Music Cache</string>
     <string name="lyric_type">Lyric Type</string>

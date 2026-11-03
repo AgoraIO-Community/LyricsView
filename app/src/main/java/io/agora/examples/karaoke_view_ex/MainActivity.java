@@ -8,10 +8,11 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ArrayAdapter;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -23,8 +24,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 import java.util.Objects;
-import java.util.ArrayList;
-import java.util.List;
 
 import io.agora.examples.karaoke_view_ex.agora.RtcManager;
 import io.agora.examples.karaoke_view_ex.agora.ServiceManager;
@@ -44,32 +43,20 @@ import io.agora.karaoke_view_ex.utils.LyricsCutter;
 import io.agora.rtc2.IRtcEngineEventHandler;
 import pub.devrel.easypermissions.EasyPermissions;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceManager.ServiceCallback {
-    public static final String EXTRA_SERVICE_TYPE = "serviceType";
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceManager.ServiceCallback, SongSelectionSheet.Host {
     private static final String TAG = Constants.TAG + "-Main";
     private ActivityMainBinding binding;
     private KaraokeView mKaraokeView;
+    private TmeSingingPresenter mTmeSinging;
     private LyricModel mLyricsModel;
-    private ActivityResultLauncher mLauncher;
+    private ActivityResultLauncher<Intent> mLauncher;
     private long mLyricsCurrentProgress = 0;
     private boolean mSetNoLyric = false;
-    private boolean mUseInternalScoring = false;
+    private boolean mUseInternalScoring = true;
     private int mTmeResourceRequestId = 0;
     private String mTmeSongName = "";
     private boolean mSwitchingMusic = false;
     private PlayerState mState = PlayerState.UNINITIALIZED;
-    private List<MccManager.TmeSong> mSongList = new ArrayList<>();
-    private final ServiceManager.TmeListListener mListListener = (songs, loading, error) -> {
-        if (binding == null || ServiceManager.INSTANCE.getServiceType() != ServiceType.TME) return;
-        mSongList = new ArrayList<>(songs);
-        List<String> titles = new ArrayList<>();
-        for (MccManager.TmeSong song : songs) titles.add(song.name);
-        binding.tmeSongList.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, titles));
-        binding.tmeListStatus.setText(loading ? getString(R.string.tme_loading_songs)
-                : error != null ? error : getString(R.string.tme_choose_song));
-        binding.tmeListRetry.setEnabled(!loading);
-        binding.tmeSongList.setEnabled(!loading);
-    };
 
     private enum PlayerState {
         UNINITIALIZED(-1),
@@ -113,25 +100,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.pause.setOnClickListener(this);
         binding.skipTheIntro.setOnClickListener(this);
         binding.playOriginal.setOnClickListener(this);
-        binding.settings.setOnClickListener(this);
-        binding.tmeListRetry.setOnClickListener(view -> ServiceManager.INSTANCE.retryTmeSongs());
-        binding.tmeSongList.setOnItemClickListener((parent, view, position, id) -> {
-            if (position >= mSongList.size()) return;
-            MccManager.TmeSong song = mSongList.get(position);
-            String session = ServiceManager.INSTANCE.startTmeSong(getApplicationContext(), song.songId, song.name);
-            if (session == null) return;
-            Intent intent = new Intent(this, TmeSingingActivity.class);
-            intent.putExtra("sessionId", session);
-            intent.putExtra("songId", song.songId);
-            intent.putExtra("songName", song.name);
-            startActivity(intent);
-        });
 
         mKaraokeView = new KaraokeView(binding.enableLyrics.isChecked() ? binding.lyricsView : null, binding.enableScoring.isChecked() ? binding.scoringView : null);
 
         mKaraokeView.setKaraokeEvent(new KaraokeEvent() {
+            @Override public boolean onSeekRequested(KaraokeView view, long position) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return mTmeSinging.seek(position);
+                onDragTo(view, position);
+                return true;
+            }
+
             @Override
             public void onDragTo(KaraokeView view, long position) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                    mTmeSinging.seek(position);
+                    return;
+                }
                 mKaraokeView.setProgress(position);
                 mLyricsCurrentProgress = position;
                 updateCallback("Dragging, new progress " + position);
@@ -140,6 +124,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulativeScore, int index, int lineCount) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                    mTmeSinging.lineFinished(score, cumulativeScore, lineCount);
+                    return;
+                }
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -153,6 +141,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.enableLyrics.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                    mTmeSinging.attachUi();
+                    return;
+                }
                 if (mLyricsCurrentProgress <= 0) {
                     return;
                 }
@@ -164,6 +156,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.enableScoring.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                    mTmeSinging.attachUi();
+                    return;
+                }
                 if (mLyricsCurrentProgress <= 0) {
                     return;
                 }
@@ -181,32 +177,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+        mTmeSinging = new TmeSingingPresenter(this, binding, mKaraokeView, savedInstanceState, getIntent().getExtras());
         loadPreferences();
         initDownloader();
     }
 
-    private void applyInitialServiceSelection(Bundle savedInstanceState) {
-        SharedPreferences prefs = getSharedPreferences("karaoke_sample_app", Context.MODE_PRIVATE);
-        if (savedInstanceState == null && getIntent().hasExtra(EXTRA_SERVICE_TYPE)) {
-            ServiceType selected = ServiceType.Companion.fromType(getIntent().getIntExtra(EXTRA_SERVICE_TYPE, -1));
-            if (selected == ServiceType.MCC || selected == ServiceType.TME) {
-                prefs.edit()
-                        .putInt(getString(R.string.prefs_key_service_type), selected.getType())
-                        .putInt(getString(R.string.prefs_key_lyric_type),
-                                selected == ServiceType.TME ? LyricType.LRC.ordinal() : LyricType.XML.ordinal())
-                        .apply();
-            }
-        }
-        ServiceType initial = ServiceType.Companion.fromType(
-                prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType()));
-        if (initial == null) {
-            initial = ServiceType.MCC;
-            prefs.edit().putInt(getString(R.string.prefs_key_service_type), initial.getType()).apply();
-        }
+    protected void applyInitialServiceSelection(Bundle savedInstanceState) {
+        ServiceType initial = DemoServicePreferences.normalize(this);
         if (ServiceManager.INSTANCE.getServiceType() != initial) {
             ServiceManager.INSTANCE.destroy();
             ServiceManager.INSTANCE.setServiceType(initial);
         }
+    }
+
+    @Override protected void onStart() {
+        super.onStart();
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) mTmeSinging.start();
+    }
+
+    @Override protected void onStop() {
+        if (mTmeSinging != null && ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) mTmeSinging.background();
+        super.onStop();
+    }
+
+    @Override protected void onSaveInstanceState(@NonNull Bundle outState) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) mTmeSinging.save(outState);
+        super.onSaveInstanceState(outState);
     }
 
     private void initRtc() {
@@ -356,45 +352,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mKaraokeView.setScoringCompensationOffset(scoringOffset);
 
         mSetNoLyric = prefs.getBoolean(getString(R.string.prefs_key_set_no_lyric), false);
-        if (mSetNoLyric) {
-            mKaraokeView.setLyricData(null, mUseInternalScoring);
-        } else {
-            mKaraokeView.setLyricData(mLyricsModel, mUseInternalScoring);
-        }
-
-        int serviceType = prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType());
+        int serviceType = DemoServicePreferences.normalize(this).getType();
         Log.i(TAG, "loadPreferences serviceType: " + serviceType);
         if (serviceType != Objects.requireNonNull(ServiceManager.INSTANCE.getServiceType()).getType()) {
-            if (mState == PlayerState.PLAYING) {
-                updateCallback("停止");
-                doStop();
-            }
+            mTmeSinging.clear();
+            doStop();
             mKaraokeView.setLyricData(null, mUseInternalScoring);
             mKaraokeView.reset();
             mTmeResourceRequestId++;
             mTmeSongName = "";
+            mLyricsModel = null;
+            mLyricsCurrentProgress = 0;
+            mSwitchingMusic = false;
+            mState = PlayerState.IDLE;
+            binding.pause.setText(R.string.pause);
+            binding.play.setText(R.string.play);
+            binding.lyricsDescription.setText(R.string.choose_song_prompt);
+            binding.callBack.setText("");
+            binding.playingProgress.setText("");
             ServiceManager.INSTANCE.destroy();
             ServiceManager.INSTANCE.setServiceType(Objects.requireNonNull(ServiceType.Companion.fromType(serviceType)));
             ServiceManager.INSTANCE.initService(this.getApplicationContext(), this);
         }
 
+        mUseInternalScoring = ServiceManager.INSTANCE.getServiceType() != ServiceType.MCC_EX;
         int lyricType = prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
         ServiceManager.INSTANCE.setLyricType(lyricType);
         boolean isTme = ServiceManager.INSTANCE.getServiceType() == ServiceType.TME;
-        setTitle(isTme ? R.string.tme_song_selection_title
-                : ServiceManager.INSTANCE.getServiceType() == ServiceType.MCC ? R.string.library_mcc : R.string.app_name);
-        for (int i = 0; i < binding.getRoot().getChildCount(); i++) {
-            View child = binding.getRoot().getChildAt(i);
-            if (child == binding.settings || child == binding.tmeListContainer) continue;
-            child.setVisibility(isTme ? View.GONE : View.VISIBLE);
+        setTitle(isTme ? R.string.tme_singing_title : R.string.mcc_singing_title);
+        if (isTme) {
+            mTmeSinging.applyPreferences(mSetNoLyric);
+            if (getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) mTmeSinging.start();
+        } else {
+            mKaraokeView.setLyricData(mSetNoLyric ? null : mLyricsModel, mUseInternalScoring);
+            enableView(true);
         }
-        binding.tmeListContainer.setVisibility(isTme ? View.VISIBLE : View.GONE);
-        if (isTme) ServiceManager.INSTANCE.attachTmeList(mListListener);
-        else ServiceManager.INSTANCE.detachTmeList(mListListener);
 
         KaraokeViewStyle.apply(this, binding.lyricsView, binding.scoringView);
         boolean lyricsDraggingOn = prefs.getBoolean(getString(R.string.prefs_key_lyrics_dragging_switch), true);
-        binding.lyricsView.enableDragging(lyricsDraggingOn);
+        if (isTme) mTmeSinging.updateDragging();
+        else binding.lyricsView.enableDragging(lyricsDraggingOn);
     }
 
     private void switchMusic() {
@@ -440,6 +437,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mLauncher.launch(intent);
     }
 
+    @Override public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.singing_navigation, menu);
+        return true;
+    }
+
+    @Override public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_choose_song) {
+            SongSelectionSheet.show(getSupportFragmentManager(), Objects.requireNonNull(ServiceManager.INSTANCE.getServiceType()));
+            return true;
+        }
+        if (item.getItemId() == R.id.action_settings) {
+            forwardToSettings();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override public boolean onTmeSongSelected(@NonNull MccManager.TmeSong song) {
+        return ServiceManager.INSTANCE.getServiceType() == ServiceType.TME && mTmeSinging.selectSong(song.songId, song.name);
+    }
+
+    @Override public boolean onMccSongSelected(int position) {
+        if (!ServiceManager.INSTANCE.selectMccSong(position)) return false;
+        mSwitchingMusic = true;
+        ServiceManager.INSTANCE.stop();
+        doPlay();
+        return true;
+    }
+
     private void skipTheIntro() {
         if (mLyricsModel == null || mLyricsCurrentProgress <= 0 || mLyricsCurrentProgress > mLyricsModel.lines.get(mLyricsModel.lines.size() - 1).getEndTime()) {
             Toast.makeText(getBaseContext(), "Not READY for SKIP INTRO, please Play first or no lyrics content", Toast.LENGTH_LONG).show();
@@ -462,6 +488,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mTmeSinging != null) mTmeSinging.destroy();
         mLyricsCurrentProgress = 0;
         mState = PlayerState.UNINITIALIZED;
 
@@ -479,18 +506,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mTmeResourceRequestId++;
     }
 
-    @Override protected void onStart() {
-        super.onStart();
-        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) ServiceManager.INSTANCE.attachTmeList(mListListener);
-    }
-
-    @Override protected void onStop() {
-        ServiceManager.INSTANCE.detachTmeList(mListListener);
-        super.onStop();
-    }
-
     @Override
     public void onClick(View view) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+            switch (view.getId()) {
+                case R.id.play: mTmeSinging.togglePlay(); break;
+                case R.id.pause: mTmeSinging.pauseResume(); break;
+                case R.id.switch_to_next: mTmeSinging.next(); break;
+                case R.id.skip_the_intro: mTmeSinging.skipIntro(); break;
+                case R.id.play_original:
+                    ServiceManager.INSTANCE.doPlayOriginal();
+                    binding.playOriginal.setText(ServiceManager.INSTANCE.isOriginalPlay() ? R.string.play_accompany : R.string.play_original);
+                    break;
+                default: break;
+            }
+            return;
+        }
         switch (view.getId()) {
             case R.id.play:
                 if (mState == PlayerState.PLAYING) {
@@ -534,9 +565,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 ServiceManager.INSTANCE.doPlayOriginal();
                 break;
-            case R.id.settings:
-                forwardToSettings();
-                break;
             default:
                 break;
         }
@@ -548,7 +576,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.skipTheIntro.setEnabled(enable);
         binding.switchToNext.setEnabled(enable);
         binding.playOriginal.setEnabled(enable);
-        binding.settings.setEnabled(enable);
     }
 
     @Override
@@ -558,20 +585,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicPreloadResult(long songCode, int percent) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
         runOnUiThread(() -> updateCallback("Preload: " + songCode + "  " + percent + "%"));
     }
 
     @Override
     public void onTmeSongChanged(@NonNull String songName) {
-        runOnUiThread(() -> {
-            mTmeSongName = songName;
-            updateCallback("TME: " + songName);
-        });
+        // The shared presenter owns TME song/session messages.
     }
 
     @Override
     public void onTmeError(@NonNull String message) {
         runOnUiThread(() -> {
+            if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                updateCallback(message);
+                return;
+            }
             mSwitchingMusic = false;
             mState = PlayerState.IDLE;
             binding.play.setText(R.string.play);
@@ -581,6 +610,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicPositionChange(long position) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
         mLyricsCurrentProgress = position;
         runOnUiThread(new Runnable() {
             @Override
@@ -600,6 +630,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicPitch(double speakerPitch, long progressInMs) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
         if (mState == PlayerState.PLAYING && mLyricsModel != null && mLyricsModel.hasPitch) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -612,6 +643,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicPlaying() {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
         runOnUiThread(() -> {
             updateCallback("Playing");
             mState = PlayerState.PLAYING;
@@ -622,6 +654,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicStop() {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
         runOnUiThread(() -> {
             if (mSwitchingMusic) {
                 return;
