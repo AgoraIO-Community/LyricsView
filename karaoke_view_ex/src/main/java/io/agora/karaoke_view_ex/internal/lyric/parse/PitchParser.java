@@ -3,11 +3,15 @@ package io.agora.karaoke_view_ex.internal.lyric.parse;
 import androidx.annotation.NonNull;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +27,30 @@ import io.agora.karaoke_view_ex.internal.utils.LogUtils;
  * and convert them into standardized data structures for use in karaoke applications.
  */
 public class PitchParser {
+    public static List<PitchData> doParseTme(byte[] fileData) {
+        List<PitchData> pitches = new ArrayList<>();
+        if (fileData == null) {
+            return pitches;
+        }
+        try {
+            JsonArray values = JsonParser.parseString(new String(fileData, Charset.forName("UTF-8"))).getAsJsonArray();
+            for (int i = 0; i < values.size(); i++) {
+                JsonObject value = values.get(i).getAsJsonObject();
+                PitchData pitch = new PitchData();
+                pitch.startTime = value.get("st").getAsInt();
+                pitch.duration = value.get("d").getAsInt();
+                pitch.pitch = value.get("p").getAsFloat();
+                if (pitch.startTime >= 0 && pitch.duration > 0 && pitch.pitch > 0) {
+                    pitches.add(pitch);
+                }
+            }
+        } catch (Exception e) {
+            LogUtils.e("Invalid TME pitch data: " + e.getMessage());
+            pitches.clear();
+        }
+        return pitches;
+    }
+
     /**
      * Parses XML format pitch data
      *

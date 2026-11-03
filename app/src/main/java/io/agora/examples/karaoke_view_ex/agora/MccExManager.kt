@@ -68,7 +68,7 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
     private val mMediaPlayerObserver: IMediaPlayerObserver = object : IMediaPlayerObserver {
         override fun onPlayerStateChanged(
             state: Constants.MediaPlayerState,
-            error: Constants.MediaPlayerError
+            error: Constants.MediaPlayerReason
         ) {
             Log.d(TAG, "onPlayerStateChanged: $state $error")
 
@@ -107,6 +107,8 @@ object MccExManager : IMusicContentCenterExEventHandler, IMusicContentCenterExSc
         override fun onAgoraCDNTokenWillExpire() {}
         override fun onPlayerSrcInfoChanged(from: SrcInfo, to: SrcInfo) {}
         override fun onPlayerInfoUpdated(info: PlayerUpdatedInfo) {}
+        override fun onPlayerCacheStats(stats: io.agora.mediaplayer.data.CacheStatistics) {}
+        override fun onPlayerPlaybackStats(stats: io.agora.mediaplayer.data.PlayerPlaybackStats) {}
         override fun onAudioVolumeIndication(volume: Int) {}
     }
 

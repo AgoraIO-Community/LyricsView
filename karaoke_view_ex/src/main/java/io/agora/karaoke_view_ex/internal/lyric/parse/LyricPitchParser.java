@@ -3,6 +3,7 @@ package io.agora.karaoke_view_ex.internal.lyric.parse;
 import android.text.TextUtils;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.regex.Pattern;
@@ -34,6 +35,7 @@ public class LyricPitchParser {
      * Regular expression pattern for matching KRC format lines
      */
     public static final Pattern KRC_PATTERN_LINE = Pattern.compile("\\[(\\w+):([^]]*)]");
+    private static final Pattern KRC_PATTERN_TIMED_LINE = Pattern.compile("\\[\\d+,\\d+].*");
 
     /**
      * Validates file parameters for parsing
@@ -91,18 +93,15 @@ public class LyricPitchParser {
         try {
             String fileContent = new String(lyricData, Constants.UTF_8);
             String[] lines = fileContent.split("\\n|\\r\\n");
-            if (lines.length > 0) {
-                String firstLine = lines[0].trim();
-                if (!TextUtils.isEmpty(firstLine)) {
-                    firstLine = Utils.removeStringBom(firstLine);
-                    if (firstLine.contains(Constants.FILE_EXTENSION_XML) || firstLine.contains("<song>")) {
-                        type = LyricType.XML;
-                    } else if (LRC_PATTERN_LINE.matcher(firstLine).matches()) {
+            for (String rawLine : lines) {
+                String line = Utils.removeStringBom(rawLine.trim());
+                if (!TextUtils.isEmpty(line)) {
+                    if (line.contains(Constants.FILE_EXTENSION_XML) || line.contains("<song>")) {
+                        return LyricType.XML;
+                    } else if (LRC_PATTERN_LINE.matcher(line).matches()) {
                         return LyricType.LRC;
-                    } else if (KRC_PATTERN_LINE.matcher(firstLine).matches()) {
-                        type = LyricType.KRC;
-                    } else {
-                        LogUtils.i("probeLyricsFileType unknown lyric type");
+                    } else if (KRC_PATTERN_TIMED_LINE.matcher(line).matches()) {
+                        return LyricType.KRC;
                     }
                 }
             }
@@ -171,7 +170,9 @@ public class LyricPitchParser {
      */
     public static LyricModel parseKrcLyricData(byte[] krcData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         LyricModel lyricsModel = LyricParser.doParseKrc(krcData, lyricOffset);
-        List<PitchData> pitchDataList = PitchParser.doParseKrc(pitchData);
+        List<PitchData> pitchDataList = pitchData != null
+                && new String(pitchData, Charset.forName("UTF-8")).trim().startsWith("[")
+                ? PitchParser.doParseTme(pitchData) : PitchParser.doParseKrc(pitchData);
         lyricsModel.pitchDataList = pitchDataList;
         lyricsModel.hasPitch = pitchDataList != null && !pitchDataList.isEmpty();
         if (lyricsModel.hasPitch) {
@@ -206,15 +207,26 @@ public class LyricPitchParser {
      */
     private static LyricModel parseLrcLyricData(byte[] lyricData, byte[] pitchData, boolean includeCopyrightSentence, int lyricOffset) {
         XmlPitchData pitchesModel = null;
+        List<PitchData> tmePitches = null;
         if (pitchData != null) {
-            pitchesModel = PitchParser.doParseXml(pitchData);
+            if (new String(pitchData, Charset.forName("UTF-8")).trim().startsWith("[")) {
+                tmePitches = PitchParser.doParseTme(pitchData);
+            } else {
+                pitchesModel = PitchParser.doParseXml(pitchData);
+            }
         }
 
         LyricModel model = LyricParser.doParseLrc(lyricData);
         if (model == null) {
             return null;
         }
-        model.hasPitch = pitchesModel != null && !pitchesModel.pitches.isEmpty();
+        model.pitchDataList = tmePitches;
+        model.hasPitch = (tmePitches != null && !tmePitches.isEmpty())
+                || (pitchesModel != null && !pitchesModel.pitches.isEmpty());
+        if (tmePitches != null && !tmePitches.isEmpty()) {
+            model.preludeEndPosition = tmePitches.get(0).startTime;
+            return model;
+        }
 
         // Replace tones and set the pitch value
         // Each tone lasts for 100ms

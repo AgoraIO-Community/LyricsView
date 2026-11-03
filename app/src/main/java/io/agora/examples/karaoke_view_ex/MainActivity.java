@@ -4,12 +4,12 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,9 +27,9 @@ import java.util.Objects;
 
 import io.agora.examples.karaoke_view_ex.agora.RtcManager;
 import io.agora.examples.karaoke_view_ex.agora.ServiceManager;
+import io.agora.examples.karaoke_view_ex.agora.MccManager;
 import io.agora.examples.karaoke_view_ex.databinding.ActivityMainBinding;
 import io.agora.examples.utils.ServiceType;
-import io.agora.examples.utils.Utils;
 import io.agora.karaoke_view_ex.KaraokeEvent;
 import io.agora.karaoke_view_ex.KaraokeView;
 import io.agora.karaoke_view_ex.constants.Constants;
@@ -43,15 +43,19 @@ import io.agora.karaoke_view_ex.utils.LyricsCutter;
 import io.agora.rtc2.IRtcEngineEventHandler;
 import pub.devrel.easypermissions.EasyPermissions;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceManager.ServiceCallback {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceManager.ServiceCallback, SongSelectionSheet.Host {
     private static final String TAG = Constants.TAG + "-Main";
     private ActivityMainBinding binding;
     private KaraokeView mKaraokeView;
+    private TmeSingingPresenter mTmeSinging;
     private LyricModel mLyricsModel;
-    private ActivityResultLauncher mLauncher;
+    private ActivityResultLauncher<Intent> mLauncher;
     private long mLyricsCurrentProgress = 0;
     private boolean mSetNoLyric = false;
-    private boolean mUseInternalScoring = false;
+    private boolean mUseInternalScoring = true;
+    private int mTmeResourceRequestId = 0;
+    private String mTmeSongName = "";
+    private boolean mSwitchingMusic = false;
     private PlayerState mState = PlayerState.UNINITIALIZED;
 
     private enum PlayerState {
@@ -80,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        applyInitialServiceSelection(savedInstanceState);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -95,13 +100,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.pause.setOnClickListener(this);
         binding.skipTheIntro.setOnClickListener(this);
         binding.playOriginal.setOnClickListener(this);
-        binding.settings.setOnClickListener(this);
 
         mKaraokeView = new KaraokeView(binding.enableLyrics.isChecked() ? binding.lyricsView : null, binding.enableScoring.isChecked() ? binding.scoringView : null);
 
         mKaraokeView.setKaraokeEvent(new KaraokeEvent() {
+            @Override public boolean onSeekRequested(KaraokeView view, long position) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return mTmeSinging.seek(position);
+                onDragTo(view, position);
+                return true;
+            }
+
             @Override
             public void onDragTo(KaraokeView view, long position) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                    mTmeSinging.seek(position);
+                    return;
+                }
                 mKaraokeView.setProgress(position);
                 mLyricsCurrentProgress = position;
                 updateCallback("Dragging, new progress " + position);
@@ -110,6 +124,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onLineFinished(KaraokeView view, LyricsLineModel line, int score, int cumulativeScore, int index, int lineCount) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                    mTmeSinging.lineFinished(score, cumulativeScore, lineCount);
+                    return;
+                }
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -123,6 +141,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.enableLyrics.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                    mTmeSinging.attachUi();
+                    return;
+                }
                 if (mLyricsCurrentProgress <= 0) {
                     return;
                 }
@@ -134,6 +156,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.enableScoring.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                    mTmeSinging.attachUi();
+                    return;
+                }
                 if (mLyricsCurrentProgress <= 0) {
                     return;
                 }
@@ -151,8 +177,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+        mTmeSinging = new TmeSingingPresenter(this, binding, mKaraokeView, savedInstanceState, getIntent().getExtras());
         loadPreferences();
         initDownloader();
+    }
+
+    protected void applyInitialServiceSelection(Bundle savedInstanceState) {
+        ServiceType initial = DemoServicePreferences.normalize(this);
+        if (ServiceManager.INSTANCE.getServiceType() != initial) {
+            ServiceManager.INSTANCE.destroy();
+            ServiceManager.INSTANCE.setServiceType(initial);
+        }
+    }
+
+    @Override protected void onStart() {
+        super.onStart();
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) mTmeSinging.start();
+    }
+
+    @Override protected void onStop() {
+        if (mTmeSinging != null && ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) mTmeSinging.background();
+        super.onStop();
+    }
+
+    @Override protected void onSaveInstanceState(@NonNull Bundle outState) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) mTmeSinging.save(outState);
+        super.onSaveInstanceState(outState);
     }
 
     private void initRtc() {
@@ -160,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onAudioVolumeIndication(@Nullable IRtcEngineEventHandler.AudioVolumeInfo[] speakers, int totalVolume) {
-                if (null != speakers && mState == PlayerState.PLAYING) {
+                if (null != speakers && (mState == PlayerState.PLAYING || ServiceManager.INSTANCE.getServiceType() == ServiceType.TME)) {
                     for (IRtcEngineEventHandler.AudioVolumeInfo audioVolumeInfo : speakers) {
                         if (audioVolumeInfo.uid == 0) {
                             ServiceManager.INSTANCE.updateSpeakerPitch(audioVolumeInfo.voicePitch);
@@ -230,6 +280,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void loadTheLyrics(String lrcUri, String pitchUri, int songOffsetBegin, int songOffsetEnd, int lyricOffset) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+            return;
+        }
         Log.i(TAG, "loadTheLyrics " + lrcUri + " " + pitchUri + " " + lyricOffset);
         mKaraokeView.reset();
         mLyricsModel = null;
@@ -270,10 +323,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
     private void updateLyricsDescription() {
-        String lyricsSummary = mLyricsModel != null ? (mLyricsModel.name + ": " + mLyricsModel.singer + " " + mLyricsModel.preludeEndPosition + " " + mLyricsModel.lines.size() + " " + mLyricsModel.duration) : "Invalid lyrics";
+        String lyricsSummary = mLyricsModel != null
+                ? ((mLyricsModel.name == null ? "" : mLyricsModel.name)
+                + (mLyricsModel.singer == null ? "" : ": " + mLyricsModel.singer)
+                + " " + mLyricsModel.preludeEndPosition + " " + mLyricsModel.lines.size() + " " + mLyricsModel.duration)
+                : "Invalid lyrics";
         Log.d(TAG, "lyricsSummary: " + lyricsSummary);
-        final String finalDescription = "[" + ServiceManager.INSTANCE.getServiceType() + "]" + lyricsSummary + "\n";
+        final String finalDescription = ServiceManager.INSTANCE.getServiceType() == ServiceType.TME
+                ? "[TME] " + mTmeSongName + ((mLyricsModel == null || mLyricsModel.lines == null || mLyricsModel.lines.isEmpty()) ? "\nNo Lyrics Available" : "")
+                : "[" + ServiceManager.INSTANCE.getServiceType() + "] " + lyricsSummary + "\n";
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -292,102 +352,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mKaraokeView.setScoringCompensationOffset(scoringOffset);
 
         mSetNoLyric = prefs.getBoolean(getString(R.string.prefs_key_set_no_lyric), false);
-        if (mSetNoLyric) {
-            mKaraokeView.setLyricData(null, mUseInternalScoring);
-        } else {
-            mKaraokeView.setLyricData(mLyricsModel, mUseInternalScoring);
-        }
-
-        int serviceType = prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType());
+        int serviceType = DemoServicePreferences.normalize(this).getType();
         Log.i(TAG, "loadPreferences serviceType: " + serviceType);
         if (serviceType != Objects.requireNonNull(ServiceManager.INSTANCE.getServiceType()).getType()) {
-            if (mState == PlayerState.PLAYING) {
-                updateCallback("停止");
-                doStop();
-            }
+            mTmeSinging.clear();
+            doStop();
             mKaraokeView.setLyricData(null, mUseInternalScoring);
             mKaraokeView.reset();
+            mTmeResourceRequestId++;
+            mTmeSongName = "";
+            mLyricsModel = null;
+            mLyricsCurrentProgress = 0;
+            mSwitchingMusic = false;
+            mState = PlayerState.IDLE;
+            binding.pause.setText(R.string.pause);
+            binding.play.setText(R.string.play);
+            binding.lyricsDescription.setText(R.string.choose_song_prompt);
+            binding.callBack.setText("");
+            binding.playingProgress.setText("");
             ServiceManager.INSTANCE.destroy();
             ServiceManager.INSTANCE.setServiceType(Objects.requireNonNull(ServiceType.Companion.fromType(serviceType)));
             ServiceManager.INSTANCE.initService(this.getApplicationContext(), this);
         }
 
+        mUseInternalScoring = ServiceManager.INSTANCE.getServiceType() != ServiceType.MCC_EX;
         int lyricType = prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
         ServiceManager.INSTANCE.setLyricType(lyricType);
-
-        boolean indicatorOn = prefs.getBoolean(getString(R.string.prefs_key_start_of_verse_indicator_switch), true);
-        binding.lyricsView.enablePreludeEndPositionIndicator(indicatorOn);
-        String indicatorColor = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_color), "Default");
-        binding.lyricsView.setPreludeEndPositionIndicatorColor(Utils.colorInStringToDex(indicatorColor));
-        String indicatorRadius = prefs.getString(getString(R.string.prefs_key_start_of_verse_indicator_radius), "6dp");
-        binding.lyricsView.setPreludeEndPositionIndicatorRadius(Utils.dp2pix(this.getApplicationContext(), Float.parseFloat(indicatorRadius.replace("dp", ""))));
-        int indicatorPaddingTop = prefs.getInt(getString(R.string.prefs_key_start_of_verse_indicator_padding_top), 6);
-        binding.lyricsView.setPreludeEndPositionIndicatorPaddingTop(Utils.dp2pix(this.getApplicationContext(), indicatorPaddingTop));
-
-        String defaultTextColor = prefs.getString(getString(R.string.prefs_key_normal_line_text_color), "Default");
-        binding.lyricsView.setPreviousLineTextColor(Utils.colorInStringToDex(defaultTextColor));
-        binding.lyricsView.setUpcomingLineTextColor(Utils.colorInStringToDex(defaultTextColor));
-
-        int defaultTextSize = prefs.getInt(getString(R.string.prefs_key_normal_line_text_size), 13);
-        binding.lyricsView.setTextSize(Utils.sp2pix(this.getApplicationContext(), defaultTextSize));
-
-        String currentTextColor = prefs.getString(getString(R.string.prefs_key_current_line_text_color), "Yellow");
-        binding.lyricsView.setCurrentLineTextColor(Utils.colorInStringToDex(currentTextColor));
-
-        String highlightedTextColor = prefs.getString(getString(R.string.prefs_key_current_line_highlighted_text_color), "Red");
-        binding.lyricsView.setCurrentLineHighlightedTextColor(Utils.colorInStringToDex(highlightedTextColor));
-
-        int currentTextSize = prefs.getInt(getString(R.string.prefs_key_current_line_text_size), 24);
-        binding.lyricsView.setCurrentLineTextSize(Utils.sp2pix(this.getApplicationContext(), currentTextSize));
-
-        String lineSpacing = prefs.getString(getString(R.string.prefs_key_line_spacing), "6dp");
-        binding.lyricsView.setLineSpacing(Utils.dp2pix(this.getApplicationContext(), Float.parseFloat(lineSpacing.replace("dp", ""))));
-
-        boolean lyricsDraggingOn = prefs.getBoolean(getString(R.string.prefs_key_lyrics_dragging_switch), true);
-        binding.lyricsView.enableDragging(lyricsDraggingOn);
-
-        boolean lyricsLineWrapOn = prefs.getBoolean(getString(R.string.prefs_key_lyrics_line_wrap_switch), false);
-        binding.lyricsView.enableLineWrap(lyricsLineWrapOn);
-
-        String labelWhenNoLyrics = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text), getString(R.string.no_lyrics_label));
-        binding.lyricsView.setLabelShownWhenNoLyrics(labelWhenNoLyrics);
-
-        String labelWhenNoLyricsTextColor = prefs.getString(getString(R.string.prefs_key_lyrics_not_available_text_color), "Red");
-        binding.lyricsView.setLabelShownWhenNoLyricsTextColor(Utils.colorInStringToDex(labelWhenNoLyricsTextColor));
-
-        int labelWhenNoLyricsTextSize = prefs.getInt(getString(R.string.prefs_key_lyrics_not_available_text_size), 26);
-        binding.lyricsView.setLabelShownWhenNoLyricsTextSize(Utils.sp2pix(this.getApplicationContext(), labelWhenNoLyricsTextSize));
-
-        String heightOfRefPitch = prefs.getString(getString(R.string.prefs_key_ref_pitch_stick_height), "6dp");
-        binding.scoringView.setRefPitchStickHeight(Utils.dp2pix(this.getApplicationContext(), Float.parseFloat(heightOfRefPitch.replace("dp", ""))));
-
-        String defaultRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_default_ref_pitch_stick_color), "Default");
-        binding.scoringView.setRefPitchStickDefaultColor(Utils.colorInStringToDex(defaultRefPitchStickColor));
-
-        String highlightedRefPitchStickColor = prefs.getString(getString(R.string.prefs_key_highlighted_ref_pitch_stick_color), "Default");
-        binding.scoringView.setRefPitchStickHighlightedColor(Utils.colorInStringToDex(highlightedRefPitchStickColor));
-
-        Drawable[] drawables = null;
-        boolean customizedIndicatorAndParticleOn = prefs.getBoolean(getString(R.string.prefs_key_customized_indicator_and_particle_switch), false);
-        if (customizedIndicatorAndParticleOn) {
-            Bitmap bitmap = Utils.drawableToBitmap(getDrawable(R.drawable.pitch_indicator));
-            binding.scoringView.setLocalPitchIndicator(bitmap);
-            drawables = new Drawable[]{getDrawable(R.drawable.pitch_indicator), getDrawable(R.drawable.pitch_indicator_yellow), getDrawable(R.drawable.ic_launcher_background), getDrawable(R.drawable.star7), getDrawable(R.drawable.star8)};
+        boolean isTme = ServiceManager.INSTANCE.getServiceType() == ServiceType.TME;
+        setTitle(isTme ? R.string.tme_singing_title : R.string.mcc_singing_title);
+        if (isTme) {
+            mTmeSinging.applyPreferences(mSetNoLyric);
+            if (getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) mTmeSinging.start();
         } else {
-            binding.scoringView.setLocalPitchIndicator(null);
+            mKaraokeView.setLyricData(mSetNoLyric ? null : mLyricsModel, mUseInternalScoring);
+            enableView(true);
         }
 
-        boolean particleEffectOn = prefs.getBoolean(getString(R.string.prefs_key_particle_effect_switch), true);
-        binding.scoringView.enableParticleEffect(particleEffectOn, drawables);
-
-
-        float particleHitOnThreshold = prefs.getFloat(getString(R.string.prefs_key_hit_score_threshold), 0.8f);
-        binding.scoringView.setThresholdOfHitScore(particleHitOnThreshold);
+        KaraokeViewStyle.apply(this, binding.lyricsView, binding.scoringView);
+        boolean lyricsDraggingOn = prefs.getBoolean(getString(R.string.prefs_key_lyrics_dragging_switch), true);
+        if (isTme) mTmeSinging.updateDragging();
+        else binding.lyricsView.enableDragging(lyricsDraggingOn);
     }
 
     private void switchMusic() {
+        if (!ServiceManager.INSTANCE.switchMusic()) {
+            return;
+        }
+        mSwitchingMusic = true;
         ServiceManager.INSTANCE.stop();
-        ServiceManager.INSTANCE.switchMusic();
         doPlay();
     }
 
@@ -401,13 +413,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void doPlay() {
+        if (!ServiceManager.INSTANCE.play()) {
+            mSwitchingMusic = false;
+            mState = PlayerState.IDLE;
+            binding.play.setText(R.string.play);
+            return;
+        }
         binding.play.setText(this.getResources().getString(R.string.stop));
         mLyricsCurrentProgress = 0;
         binding.playOriginal.setText(this.getResources().getString(R.string.play_accompany));
-        ServiceManager.INSTANCE.play();
     }
 
     private void doStop() {
+        mTmeResourceRequestId++;
         binding.play.setText(this.getResources().getString(R.string.play));
         mLyricsCurrentProgress = 0;
         ServiceManager.INSTANCE.stop();
@@ -417,6 +435,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void forwardToSettings() {
         Intent intent = new Intent(this, SettingsActivity.class);
         mLauncher.launch(intent);
+    }
+
+    @Override public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.singing_navigation, menu);
+        return true;
+    }
+
+    @Override public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_choose_song) {
+            SongSelectionSheet.show(getSupportFragmentManager(), Objects.requireNonNull(ServiceManager.INSTANCE.getServiceType()));
+            return true;
+        }
+        if (item.getItemId() == R.id.action_settings) {
+            forwardToSettings();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override public boolean onTmeSongSelected(@NonNull MccManager.TmeSong song) {
+        return ServiceManager.INSTANCE.getServiceType() == ServiceType.TME && mTmeSinging.selectSong(song.songId, song.name);
+    }
+
+    @Override public boolean onMccSongSelected(int position) {
+        if (!ServiceManager.INSTANCE.selectMccSong(position)) return false;
+        mSwitchingMusic = true;
+        ServiceManager.INSTANCE.stop();
+        doPlay();
+        return true;
     }
 
     private void skipTheIntro() {
@@ -441,6 +488,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mTmeSinging != null) mTmeSinging.destroy();
         mLyricsCurrentProgress = 0;
         mState = PlayerState.UNINITIALIZED;
 
@@ -451,11 +499,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mKaraokeView = null;
         }
 
-        ServiceManager.INSTANCE.destroy();
+        if (isFinishing()) {
+            ServiceManager.INSTANCE.destroy();
+            RtcManager.INSTANCE.destroy();
+        }
+        mTmeResourceRequestId++;
     }
 
     @Override
     public void onClick(View view) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+            switch (view.getId()) {
+                case R.id.play: mTmeSinging.togglePlay(); break;
+                case R.id.pause: mTmeSinging.pauseResume(); break;
+                case R.id.switch_to_next: mTmeSinging.next(); break;
+                case R.id.skip_the_intro: mTmeSinging.skipIntro(); break;
+                case R.id.play_original:
+                    ServiceManager.INSTANCE.doPlayOriginal();
+                    binding.playOriginal.setText(ServiceManager.INSTANCE.isOriginalPlay() ? R.string.play_accompany : R.string.play_original);
+                    break;
+                default: break;
+            }
+            return;
+        }
         switch (view.getId()) {
             case R.id.play:
                 if (mState == PlayerState.PLAYING) {
@@ -483,9 +549,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 doPauseOrResume();
                 break;
             case R.id.switch_to_next:
-                updateCallback("Next");
                 mLyricsCurrentProgress = 0; // Replay if already playing
-                mState = PlayerState.PLAYING;
                 switchMusic();
                 break;
 
@@ -501,9 +565,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 ServiceManager.INSTANCE.doPlayOriginal();
                 break;
-            case R.id.settings:
-                forwardToSettings();
-                break;
             default:
                 break;
         }
@@ -515,21 +576,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding.skipTheIntro.setEnabled(enable);
         binding.switchToNext.setEnabled(enable);
         binding.playOriginal.setEnabled(enable);
-        binding.settings.setEnabled(enable);
     }
 
     @Override
     public void onMusicLyricRequest(long songCode, @Nullable String lyricUrl, @Nullable String pitchUrl, int songOffsetBegin, int songOffsetEnd, int lyricOffset) {
-        loadTheLyrics(lyricUrl, pitchUrl, songOffsetBegin, songOffsetEnd, lyricOffset);
+        runOnUiThread(() -> loadTheLyrics(lyricUrl, pitchUrl, songOffsetBegin, songOffsetEnd, lyricOffset));
     }
 
     @Override
     public void onMusicPreloadResult(long songCode, int percent) {
-        updateCallback("Preload: " + songCode + "  " + percent + "%");
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
+        runOnUiThread(() -> updateCallback("Preload: " + songCode + "  " + percent + "%"));
+    }
+
+    @Override
+    public void onTmeSongChanged(@NonNull String songName) {
+        // The shared presenter owns TME song/session messages.
+    }
+
+    @Override
+    public void onTmeError(@NonNull String message) {
+        runOnUiThread(() -> {
+            if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) {
+                updateCallback(message);
+                return;
+            }
+            mSwitchingMusic = false;
+            mState = PlayerState.IDLE;
+            binding.play.setText(R.string.play);
+            updateCallback(message);
+        });
     }
 
     @Override
     public void onMusicPositionChange(long position) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
         mLyricsCurrentProgress = position;
         runOnUiThread(new Runnable() {
             @Override
@@ -549,7 +630,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicPitch(double speakerPitch, long progressInMs) {
-        if (mState == PlayerState.PLAYING) {
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
+        if (mState == PlayerState.PLAYING && mLyricsModel != null && mLyricsModel.hasPitch) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -561,14 +643,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onMusicPlaying() {
-        updateCallback("Playing");
-        mState = PlayerState.PLAYING;
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
+        runOnUiThread(() -> {
+            updateCallback("Playing");
+            mState = PlayerState.PLAYING;
+            mSwitchingMusic = false;
+            binding.play.setText(R.string.stop);
+        });
     }
 
     @Override
     public void onMusicStop() {
-        updateCallback("Stop");
-        mState = PlayerState.IDLE;
+        if (ServiceManager.INSTANCE.getServiceType() == ServiceType.TME) return;
+        runOnUiThread(() -> {
+            if (mSwitchingMusic) {
+                return;
+            }
+            updateCallback("Stop");
+            mState = PlayerState.IDLE;
+            binding.play.setText(R.string.play);
+            binding.pause.setText(R.string.pause);
+        });
     }
 
     @Override

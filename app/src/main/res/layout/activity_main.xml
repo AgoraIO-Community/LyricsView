@@ -9,27 +9,24 @@
 
     <TextView
         android:id="@+id/lyrics_description"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="2dp"
+        android:layout_marginEnd="2dp"
         android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:text="@string/choose_song_prompt"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <io.agora.karaoke_view_ex.ScoringView
         android:id="@+id/scoring_view"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:layout_marginBottom="20dp"
-        android:background="@android:color/holo_orange_light"
-        app:hitScoreThreshold="0.8"
+        style="@style/KaraokeScoringView"
         app:layout_constraintBottom_toTopOf="@id/lyrics_view"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:movingPixelsPerMs="0.4"
-        app:pitchIndicatorRadius="6dp"
-        app:pitchStickHeight="6dp"
-        app:startPointHorizontalBias="0.4" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.appcompat.widget.AppCompatCheckBox
         android:id="@+id/enable_scoring"
@@ -41,23 +38,9 @@
 
     <io.agora.karaoke_view_ex.LyricsView
         android:id="@+id/lyrics_view"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:background="@color/purple_200"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:paddingBottom="10dp"
-        app:currentLineHighlightedTextColor="#FFF44336"
-        app:currentLineTextColor="#FFFFFF"
-        app:currentLineTextSize="20sp"
-        app:enableLineWrap="false"
-        app:labelWhenNoLyrics=""
+        style="@style/KaraokeLyricsView"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:lineSpacing="6dp"
-        app:paddingTop="4dp"
-        app:textGravity="center"
-        app:textSize="12sp" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatCheckBox
         android:id="@+id/enable_lyrics"
@@ -132,15 +115,5 @@
         android:text="@string/play_accompany"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/skip_the_intro" />
-
-    <Button
-        android:id="@+id/settings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="30dp"
-        android:text="@string/settings"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/play_original" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

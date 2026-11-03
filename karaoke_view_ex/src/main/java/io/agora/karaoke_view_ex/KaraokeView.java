@@ -8,6 +8,7 @@ import java.util.Objects;
 import io.agora.karaoke_view_ex.internal.LyricMachine;
 import io.agora.karaoke_view_ex.internal.ScoringMachine;
 import io.agora.karaoke_view_ex.internal.lyric.parse.LyricPitchParser;
+import io.agora.karaoke_view_ex.internal.lyric.parse.TMEToneParser;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
 import io.agora.karaoke_view_ex.internal.utils.LogUtils;
 import io.agora.karaoke_view_ex.model.LyricModel;
@@ -184,6 +185,18 @@ public class KaraokeView {
     public static LyricModel parseLyricData(File lyricFile, File pitchFile) {
         LogUtils.d("KaraokeView:parseLyricData lyricFile:" + lyricFile + ",pitchFile:" + pitchFile);
         return LyricPitchParser.parseFile(lyricFile, pitchFile, true, 0);
+    }
+
+    /**
+     * Synchronously merges local TME tone JSON and LRC files for internal scoring.
+     * Run file parsing on a worker thread, then call setLyricData(model, true).
+     *
+     * @param toneFilePath Full path to the TME st/d/p JSON array
+     * @param lyricFilePath Full path to the LRC lyrics file
+     * @return LRC model with scoring notes, or null for unreadable/invalid/no-score input
+     */
+    public static LyricModel parseTMEToneData(String toneFilePath, String lyricFilePath) {
+        return TMEToneParser.parse(toneFilePath, lyricFilePath);
     }
 
     /**
@@ -377,8 +390,11 @@ public class KaraokeView {
             mLyricsView.setSeekListener(new LyricsView.OnLyricsSeekListener() {
                 @Override
                 public void onProgressChanged(long progress) {
-                    if (mKaraokeEvent != null) {
-                        mKaraokeEvent.onDragTo(KaraokeView.this, progress);
+                    if (mKaraokeEvent != null && !mKaraokeEvent.onSeekRequested(KaraokeView.this, progress)) {
+                        // LyricsView has previewed the target. Refresh from the actual
+                        // position without clearing earned scores for a rejected seek.
+                        mLyricMachine.setProgress(mLyricMachine.getCurrentLyricProgress());
+                        return;
                     }
                     mLyricMachine.whenDraggingHappen(progress);
                     mScoringMachine.whenDraggingHappen(progress);

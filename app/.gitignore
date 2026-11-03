@@ -1,1 +1,3 @@
 /build
+/libs/agora-rtc-sdk.jar
+/src/main/jniLibs/

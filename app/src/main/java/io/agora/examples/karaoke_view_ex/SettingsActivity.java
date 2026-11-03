@@ -26,6 +26,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         binding = ActivitySettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        setResult(RESULT_OK); // Preferences are written immediately, including when system Back is used.
+        if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        DemoServicePreferences.normalize(this);
 
         loadPreferences();
 
@@ -49,6 +52,11 @@ public class SettingsActivity extends AppCompatActivity {
         loadPreferencesScoringUI(prefs, editor);
 
         loadPreferencesOtherSettingsUI(prefs, editor);
+    }
+
+    @Override public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 
     private void loadPreferencesKaraoke(SharedPreferences prefs, SharedPreferences.Editor editor) {
@@ -110,7 +118,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         binding.radioMcc.setChecked(prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType()) == ServiceType.MCC.getType());
-        binding.radioMccEx.setChecked(prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType()) == ServiceType.MCC_EX.getType());
+        binding.radioTme.setChecked(prefs.getInt(getString(R.string.prefs_key_service_type), ServiceType.MCC.getType()) == ServiceType.TME.getType());
 
         binding.radioMcc.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
@@ -120,20 +128,18 @@ public class SettingsActivity extends AppCompatActivity {
                 editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal());
                 editor.apply();
             }
+
             updateLyricType(prefs);
+
         });
 
-        binding.radioMccEx.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        binding.radioTme.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.MCC_EX.getType());
-                editor.apply();
-
-                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.KRC.ordinal());
+                editor.putInt(getString(R.string.prefs_key_service_type), ServiceType.TME.getType());
+                editor.putInt(getString(R.string.prefs_key_lyric_type), LyricType.LRC.ordinal());
                 editor.apply();
             }
-
             updateLyricType(prefs);
-
         });
 
 
@@ -171,8 +177,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void updateLyricType(SharedPreferences prefs) {
         binding.radioLyricXml.setEnabled(binding.radioMcc.isChecked());
-        binding.radioLyricLrc.setEnabled(binding.radioMcc.isChecked());
-        binding.radioLyricKrc.setEnabled(binding.radioMccEx.isChecked());
+        binding.radioLyricLrc.setEnabled(binding.radioTme.isChecked());
+        binding.radioLyricKrc.setEnabled(false);
 
         binding.radioLyricXml.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.XML.ordinal());
         binding.radioLyricLrc.setChecked(prefs.getInt(getString(R.string.prefs_key_lyric_type), LyricType.XML.ordinal()) == LyricType.LRC.ordinal());

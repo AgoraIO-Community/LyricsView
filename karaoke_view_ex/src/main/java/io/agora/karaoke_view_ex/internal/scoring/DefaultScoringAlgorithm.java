@@ -11,6 +11,7 @@ import io.agora.karaoke_view_ex.constants.Constants;
 import io.agora.karaoke_view_ex.internal.ai.AIAlgorithmScoreNative;
 import io.agora.karaoke_view_ex.internal.config.Config;
 import io.agora.karaoke_view_ex.internal.model.LyricsLineModel;
+import io.agora.karaoke_view_ex.internal.model.TMELyricModel;
 import io.agora.logging.LogManager;
 
 /**
@@ -71,6 +72,9 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
      */
     @Override
     public int getLineScore(final LinkedHashMap<Long, Float> pitchesForLine, final int indexOfLineJustFinished, final LyricsLineModel lineJustFinished) {
+        if (lineJustFinished instanceof TMELyricModel.ScoringLine) {
+            return getTMELineScore(pitchesForLine, lineJustFinished.tones);
+        }
         if (Config.DEBUG) {
             debugScoringAlgo(pitchesForLine, indexOfLineJustFinished);
         }
@@ -133,6 +137,24 @@ public class DefaultScoringAlgorithm implements IScoringAlgorithm {
         }
 
         return 0;
+    }
+
+    private int getTMELineScore(LinkedHashMap<Long, Float> samples, List<LyricsLineModel.Tone> notes) {
+        float total = 0;
+        for (LyricsLineModel.Tone note : notes) {
+            float noteTotal = 0;
+            int count = 0;
+            for (Map.Entry<Long, Float> sample : samples.entrySet()) {
+                if (sample.getKey() >= note.begin && sample.getKey() < note.end
+                        && sample.getValue() != null && sample.getValue() != -1f) {
+                    noteTotal += sample.getValue();
+                    count++;
+                }
+            }
+            if (count > 0) total += noteTotal / count;
+        }
+        samples.clear();
+        return notes.isEmpty() ? 0 : (int) (total / notes.size());
     }
 
     /**

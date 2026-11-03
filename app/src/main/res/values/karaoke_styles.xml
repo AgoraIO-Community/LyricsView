@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="KaraokeScoringView">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">120dp</item>
+        <item name="android:layout_marginBottom">20dp</item>
+        <item name="android:background">@android:color/holo_orange_light</item>
+        <item name="hitScoreThreshold">0.8</item>
+        <item name="movingPixelsPerMs">0.4</item>
+        <item name="pitchIndicatorRadius">6dp</item>
+        <item name="pitchStickHeight">6dp</item>
+        <item name="startPointHorizontalBias">0.4</item>
+    </style>
+
+    <style name="KaraokeLyricsView">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">200dp</item>
+        <item name="android:background">@color/purple_200</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="currentLineHighlightedTextColor">#FFF44336</item>
+        <item name="currentLineTextColor">#FFFFFF</item>
+        <item name="currentLineTextSize">20sp</item>
+        <item name="enableLineWrap">false</item>
+        <item name="labelWhenNoLyrics"></item>
+        <item name="lineSpacing">6dp</item>
+        <item name="paddingTop">4dp</item>
+        <item name="textGravity">center</item>
+        <item name="textSize">12sp</item>
+    </style>
+</resources>

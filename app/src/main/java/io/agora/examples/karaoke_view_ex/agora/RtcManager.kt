@@ -33,6 +33,7 @@ object RtcManager : IAudioFrameObserver {
     fun initRtcEngine(context: Context, rtcCallback: RtcCallback) {
         mApplication = context.applicationContext as Application
         mCallback = rtcCallback
+        if (mRtcEngine != null) return
         try {
             Log.d(TAG, "RtcEngine version:" + RtcEngine.getSdkVersion())
             val rtcEngineConfig = RtcEngineConfig()
@@ -225,21 +226,9 @@ object RtcManager : IAudioFrameObserver {
         samplesPerSec: Int,
         buffer: ByteBuffer?,
         renderTimeMs: Long,
-        avsync_type: Int
-    ): Boolean {
-        return true
-    }
-
-    override fun onPublishAudioFrame(
-        channelId: String?,
-        type: Int,
-        samplesPerChannel: Int,
-        bytesPerSample: Int,
-        channels: Int,
-        samplesPerSec: Int,
-        buffer: ByteBuffer?,
-        renderTimeMs: Long,
-        avsync_type: Int
+        avsync_type: Int,
+        rtpTimestamp: Int,
+        presentationMs: Long
     ): Boolean {
         return true
     }
@@ -265,10 +254,6 @@ object RtcManager : IAudioFrameObserver {
         TODO("Not yet implemented")
     }
 
-    override fun getPublishAudioParams(): AudioParams {
-        TODO("Not yet implemented")
-    }
-
     fun mute(enable: Boolean) {
         val ret = mRtcEngine?.enableLocalAudio(!enable)
         Log.d(TAG, "mute enable:$enable ret:$ret")
@@ -288,6 +273,8 @@ object RtcManager : IAudioFrameObserver {
     fun destroy() {
         Log.d(TAG, "RtcManager destroy")
         RtcEngine.destroy()
+        mRtcEngine = null
+        mCallback = null
     }
 
 

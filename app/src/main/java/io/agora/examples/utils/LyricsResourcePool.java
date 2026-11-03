@@ -66,8 +66,6 @@ public class LyricsResourcePool {
         list.add(new MusicResource(0, 7162848775797850L, "爱情转移", 4));
         list.add(new MusicResource(1, 7104926139658410L, "说爱你", 4));
         list.add(new MusicResource(2, 7162848696618210L, "love story", 4));
-        //海外曲库
-        list.add(new MusicResource(3, 6800601815479800L, "趁着你", 4));
 
         //test domain mccDomain = "api-test.agora.io";
 //        list.add(new MusicResource(0, 6625526604952630L, "日不落"));
