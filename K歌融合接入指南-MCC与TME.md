@@ -2,7 +2,7 @@
 
 本文面向在自己的 Android 工程中接入 RTC SDK 和 KaraokeView 的开发者，分别说明两条曲库从选歌、资源获取到播放、内部评分的完整流程。
 
-接口基线为本仓库 `dev/6.0` 当前使用的 `app/libs/agora-rtc-sdk.jar` 及配套原生库，按 2026-11-03 的 Java 接口和歌词组件源码核对。SDK JAR 的 Manifest 没有产品版本号；请以交付 SDK 的完整包为版本单位，运行时可用 `RtcEngine.getSdkVersion()` 记录实际版本。不要将本文接口直接套用到旧 SDK 或旧 Maven 包。
+接口基线为本仓库 `dev/6.1` 使用的 `app/libs/agora-rtc-sdk.jar` 及配套原生库，RTC Java 接口沿用 2026-11-03 的核对结果；组件模块和包名已于 2026-11-20 统一迁移，详见 [AgoraLyricsScore 迁移说明](docs/agora-lyrics-score-migration.md)。SDK JAR 的 Manifest 没有产品版本号；请以交付 SDK 的完整包为版本单位，运行时可用 `RtcEngine.getSdkVersion()` 记录实际版本。不要将本文接口直接套用到旧 SDK 或旧 Maven 包。
 
 本文参考 [原集成文档](K歌融合集成文档.md) 重新编写。原文中的 `addVendor`、`startScore`、`scoreEventHandler` 不属于当前 JAR 的 API；当前使用 `MusicContentCenterConfiguration` 初始化、RTC 播放器播放、KaraokeView 内部评分，不需要 MCCEx 插件。
 
@@ -38,13 +38,13 @@ SDK vendor ID 与 Demo 的页面偏好值不同：Demo 的 MCC 服务存储值�
 ```text
 app/libs/agora-rtc-sdk.jar
 app/src/main/jniLibs/arm64-v8a/  # 同一交付 SDK 的完整原生库
-karaoke_view_ex/               # 当前歌词组件源码
+AgoraLyricsScore/               # 当前歌词组件源码
 ```
 
 ```groovy
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-    implementation project(':karaoke_view_ex')
+    implementation project(':AgoraLyricsScore')
 }
 ```
 
@@ -90,11 +90,11 @@ import io.agora.musiccontentcenter.IMusicContentCenterEventHandler
 import io.agora.musiccontentcenter.Music
 import io.agora.musiccontentcenter.MusicChartInfo
 import io.agora.musiccontentcenter.MusicContentCenterConfiguration
-import io.agora.karaoke_view_ex.KaraokeView
-import io.agora.karaoke_view_ex.KaraokeEvent
-import io.agora.karaoke_view_ex.model.LyricModel
-import io.agora.karaoke_view_ex.internal.model.LyricsLineModel
-import io.agora.karaoke_view_ex.tme.*
+import io.agora.lyricsscore.KaraokeView
+import io.agora.lyricsscore.KaraokeEvent
+import io.agora.lyricsscore.model.LyricModel
+import io.agora.lyricsscore.internal.model.LyricsLineModel
+import io.agora.lyricsscore.tme.*
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -666,7 +666,7 @@ fun openMusicPlayer(
 
 `publishMicrophoneTrack` 发布麦克风；`publishMediaPlayerAudioTrack/publishMediaPlayerId` 发布歌曲音轨。两个用途不同；只在本机听见歌曲不能证明远端也收到伴奏。
 
-`IMediaPlayerObserver` 是完整接口，独立应用应实现全部方法，完整方法列表可参考 [MccManager.java](app/src/main/java/io/agora/examples/karaoke_view_ex/agora/MccManager.java) 的 observer。关键状态处理如下：
+`IMediaPlayerObserver` 是完整接口，独立应用应实现全部方法，完整方法列表可参考 [MccManager.java](app/src/main/java/io/agora/examples/lyricsscore/agora/MccManager.java) 的 observer。关键状态处理如下：
 
 | `onPlayerStateChanged` 状态 | 动作 |
 | --- | --- |
@@ -849,7 +849,7 @@ TME 内部算法先平均每个音符的有效采样分，再平均句内音符�
 6. 资料成功在主线程安装 `result.lyricModel` 并保存 `result.scorableLineCount`。媒体打开、资料完成、前台页面确认后首次播放。
 7. 同样通过 `ScoreFeed` 输入真实位置及本地音高，以组件回调的句分／累计分更新 UI。
 
-两条流程均由业务建立“当前会话”引用或递增代次。列表请求、资料准备、媒体 observer 和麦克风回调应在交付前核对仍属于当前会话，切歌时先使旧会话失效再清理资源。本文的分步函数展示 API 衔接；需要完整超时、页面 attach/detach 和降级门控实现时，可参考 Demo 的 [TmePlaybackController.kt](app/src/main/java/io/agora/examples/karaoke_view_ex/agora/tme/TmePlaybackController.kt)，但它不是 RTC SDK 或歌词 AAR 的公开 API。
+两条流程均由业务建立“当前会话”引用或递增代次。列表请求、资料准备、媒体 observer 和麦克风回调应在交付前核对仍属于当前会话，切歌时先使旧会话失效再清理资源。本文的分步函数展示 API 衔接；需要完整超时、页面 attach/detach 和降级门控实现时，可参考 Demo 的 [TmePlaybackController.kt](app/src/main/java/io/agora/examples/lyricsscore/agora/tme/TmePlaybackController.kt)，但它不是 RTC SDK 或歌词 AAR 的公开 API。
 
 ## 12. 退出、错误处理和验收
 
@@ -897,8 +897,8 @@ TME preparation 的结构化错误含类别和可选资源、HTTP／业务码。
 当前仓库构建和单元测试命令：
 
 ```bash
-./gradlew :app:testDebugUnitTest :karaoke_view_ex:testDebugUnitTest \
+./gradlew :app:testDebugUnitTest :AgoraLyricsScore:testDebugUnitTest \
   :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon
 ```
 
-文档示例的 API／类型检查不替代线上账号和真机演唱验收。实现索引：[MCC/播放器适配](app/src/main/java/io/agora/examples/karaoke_view_ex/agora/MccManager.java)、[RTC 适配](app/src/main/java/io/agora/examples/karaoke_view_ex/agora/RtcManager.kt)、[TME 响应模型](karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEParserModels.kt)、[资料准备](karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEScoringPreparation.kt)、[KaraokeView API](karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/KaraokeView.java)。TME 的完整控制器／页面集成补充见 [TME 专项文档](docs/tme-android-integration-guide.md)。
+文档示例的 API／类型检查不替代线上账号和真机演唱验收。实现索引：[MCC/播放器适配](app/src/main/java/io/agora/examples/lyricsscore/agora/MccManager.java)、[RTC 适配](app/src/main/java/io/agora/examples/lyricsscore/agora/RtcManager.kt)、[TME 响应模型](AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme/TMEParserModels.kt)、[资料准备](AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme/TMEScoringPreparation.kt)、[KaraokeView API](AgoraLyricsScore/src/main/java/io/agora/lyricsscore/KaraokeView.java)。TME 的完整控制器／页面集成补充见 [TME 专项文档](docs/tme-android-integration-guide.md)。

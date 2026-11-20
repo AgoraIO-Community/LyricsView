@@ -1,6 +1,9 @@
-# KaraokeView for Android
+# AgoraLyricsScore for Android
 
 > Build KTV app effortlessly with KaraokeView
+
+`dev/6.1` 已完成组件、包名与发布名称的统一更名。升级前请阅读
+[AgoraLyricsScore 迁移说明](docs/agora-lyrics-score-migration.md)。
 
 TME 完整调用流程见 [Android TME 歌曲播放、歌词与内置打分接入参考](docs/tme-android-integration-guide.md)。
 
@@ -38,7 +41,7 @@ KTV 应用的完整解决方案。
 > **注意**：该版本稳定版 2.x 及后续版本 在 API 上并不兼容1.x版本，但2.1.x版本后兼容1.x版本的所有功能，建议升级到最新版本
 
 > **重要**：自 3.0 版本起，支持 K歌 融合方案（RTC 版本号：4.4.1.10）。K歌
-> 当前版本集成参考《[MCC 与 TME 接入指南](K歌融合接入指南-MCC与TME.md)》，示例参考 `dev/6.0` 分支。K歌 融合方案基于
+> 当前版本集成参考《[MCC 与 TME 接入指南](K歌融合接入指南-MCC与TME.md)》，示例参考 `dev/6.1` 分支。K歌 融合方案基于
 > RTC SDK 原生支持音集协与音速达曲库，无需再使用插件方案（MccEx）。
 
 ## 方案总览
@@ -48,7 +51,7 @@ KTV 应用的完整解决方案。
 - **RTC K歌融合方案（推荐）**：依赖 RTC `4.4.1.10` 及后续支持音集协与音速达曲库的版本，RTC SDK
   原生支持音集协与音速达曲库，无需插件（MccEx）。
     - 当前接口集成指引：参见《[MCC 与 TME 接入指南](K歌融合接入指南-MCC与TME.md)》
-    - 示例工程：参见分支 `dev/6.0`；旧版参考文档保留在《[K歌融合集成文档](K歌融合集成文档.md)》
+    - 示例工程：参见分支 `dev/6.1`；旧版参考文档保留在《[K歌融合集成文档](K歌融合集成文档.md)》
 - **RTC K歌独立方案（存量兼容）**：RTC K歌 SDK只支持音集协曲库，音速达曲库需要使用MccEx方案。
     - 示例工程：参见分支 `dev/main`
 
@@ -113,29 +116,31 @@ TME_MCC_DOMAIN=api-test.agora.io
 
 ### 方式一：Maven 集成
 
+新坐标须由维护者发布后才能从远端下载；当前源码验证默认使用 `isSdkMode=false`。
+
 在项目的 `build.gradle` 文件中添加依赖：
 
 ```gradle
 dependencies {
-    implementation("io.github.winskyan:Agora-LyricsViewEx:3.0.4")
+    implementation("io.github.winskyan:AgoraLyricsScore:3.0.4")
 }
 ```
 
 ### 方式二：源代码集成
 
-1. 将该项目下的 `karaoke_view_ex` 文件夹拷贝至你的项目文件夹下
+1. 将该项目下的 `AgoraLyricsScore` 文件夹拷贝至你的项目文件夹下
 
 2. 在项目的 `settings.gradle` 文件中添加：
 
 ```gradle
-include ':karaoke_view_ex'
+include ':AgoraLyricsScore'
 ```
 
 3. 在应用模块的 `build.gradle` 文件中添加依赖：
 
 ```gradle
 dependencies {
-    implementation project(':karaoke_view_ex')
+    implementation project(':AgoraLyricsScore')
 }
 ```
 
@@ -230,7 +235,7 @@ public interface KaraokeEvent {
 
 ```xml
 
-<io.agora.karaoke_view_ex.LyricsView android:id="@+id/lyrics_view"
+<io.agora.lyricsscore.LyricsView android:id="@+id/lyrics_view"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:paddingStart="10dp" android:paddingTop="20dp" android:paddingEnd="10dp"
 
@@ -252,7 +257,7 @@ public interface KaraokeEvent {
 
 ```xml
 
-<io.agora.karaoke_view_ex.ScoringView android:id="@+id/scoring_view"
+<io.agora.lyricsscore.ScoringView android:id="@+id/scoring_view"
     android:layout_width="match_parent" android:layout_height="wrap_content"
     app:pitchStickHeight="4dp"                                 <!-- 基准音条高度 -->
     app:pitchStickHighlightedColor="@color/pink_b4" />         <!-- 基准音条高亮状态颜色 -->
@@ -405,7 +410,7 @@ public class MyScoringAlgorithm implements IScoringAlgorithm {
 - R8/ProGuard：默认无需额外配置。若业务侧严格混淆，建议保留公开 API 与日志库：
 
 ```proguard
--keep class io.agora.karaoke_view_ex.** { *; }
+-keep class io.agora.lyricsscore.** { *; }
 -keep class io.agora.logging.** { *; }
 ```
 

@@ -8,12 +8,12 @@ task_kotlinc="${KOTLINC:-$(command -v kotlinc || true)}"
 if [[ -z "$task_kotlinc" ]]; then
   task_kotlinc='/Applications/Android Studio.app/Contents/plugins/Kotlin/kotlinc.ide/bin/kotlinc'
 fi
-task_output="$(mktemp -d "${TMPDIR:-/tmp}/lyricsview-controller-tests.XXXXXX")"
+task_output="$(mktemp -d "${TMPDIR:-/tmp}/agora-lyrics-score-controller-tests.XXXXXX")"
 trap 'rm -f "$task_output/tests.jar"; rmdir "$task_output"' EXIT
 bash "$task_kotlinc" -language-version 1.8 -api-version 1.8 -jvm-target 1.8 \
   -classpath "$task_junit:$task_hamcrest" \
-  "$task_root/app/src/main/java/io/agora/examples/karaoke_view_ex/agora/tme/TmePlaybackController.kt" \
-  "$task_root/app/src/test/java/io/agora/examples/karaoke_view_ex/agora/tme/TmePlaybackControllerTest.kt" \
+  "$task_root/app/src/main/java/io/agora/examples/lyricsscore/agora/tme/TmePlaybackController.kt" \
+  "$task_root/app/src/test/java/io/agora/examples/lyricsscore/agora/tme/TmePlaybackControllerTest.kt" \
   -include-runtime -d "$task_output/tests.jar"
 java -cp "$task_output/tests.jar:$task_junit:$task_hamcrest" org.junit.runner.JUnitCore \
-  io.agora.examples.karaoke_view_ex.agora.tme.TmePlaybackControllerTest
+  io.agora.examples.lyricsscore.agora.tme.TmePlaybackControllerTest

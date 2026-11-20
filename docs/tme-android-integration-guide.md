@@ -25,7 +25,7 @@
 | `KaraokeViewStyle`、共享 XML style | Demo 业务 UI | TME 与音集协共用的显示样式 |
 | `MainActivity` / `TmeSingingPresenter` / `SongSelectionSheet` | Demo 页面 | 音集协与 TME 共用演唱布局和控件，Presenter 连接 TME 会话，80% 屏高底部选歌面板；TmeSingingActivity 继承 MainActivity 兼容已有入口 |
 
-歌词库包名是 `io.agora.karaoke_view_ex`，TME 公共接口包名是 `io.agora.karaoke_view_ex.tme`。公共准备组件不创建、销毁或控制 RTC/MCC/player，也不生成 token。已有 RTC/MCC 的应用可直接接入第 5～10 节；不必复制 Demo 管理器。需要复用 Demo 的完整单曲状态机时，参考第 8 节，它位于 app 模块，不在歌词 AAR 内。
+歌词库包名是 `io.agora.lyricsscore`，TME 公共接口包名是 `io.agora.lyricsscore.tme`。公共准备组件不创建、销毁或控制 RTC/MCC/player，也不生成 token。已有 RTC/MCC 的应用可直接接入第 5～10 节；不必复制 Demo 管理器。需要复用 Demo 的完整单曲状态机时，参考第 8 节，它位于 app 模块，不在歌词 AAR 内。
 
 ## 2. 依赖、账号与权限
 
@@ -48,13 +48,13 @@ app/
 ```groovy
 dependencies {
     api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-    implementation project(':karaoke_view_ex')
+    implementation project(':AgoraLyricsScore')
 }
 ```
 
 当前 Demo 已移除 `Agora-MccExService` 及插件专用配置。“音集协”入口使用 RTC 原生 MCC/XML，TME 也通过原生 MCC 请求和播放；原唱/伴奏枚举来自 `IAgoraMusicPlayer.MusicPlayMode`。不需要另行引入 MCCEx 插件。工程已有其他依赖间接引入 RTC 时，应避免重复打包另一份 RTC。源码接入保持 `gradle.properties` 的 `isSdkMode=false`。也可使用由当前源码构建的歌词 AAR，连同其传递依赖接入；不要把 AAR 当成包含所有依赖的独立包。
 
-现有 Maven `io.github.winskyan:Agora-LyricsViewEx:3.0.4` 尚不含本次新增的 TME 接口。仓库的 `sdkVersion=3.0.4` 不能说明远端同名包具有这些 API。引入发布版本前检查是否实际包含 `TMERequestManager`、`TMEScoringPreparation` 和 `KaraokeView.parseTMEToneData`。
+新坐标 `io.github.winskyan:AgoraLyricsScore:3.0.4` 须发布后才可从远端仓库解析，不能用旧坐标下的同版本 AAR 替代；详见 [迁移说明](agora-lyrics-score-migration.md)。仓库的 `sdkVersion=3.0.4` 不表示新坐标已经发布。引入发布版本前检查是否实际包含 `TMERequestManager`、`TMEScoringPreparation` 和 `KaraokeView.parseTMEToneData`。
 
 当前工程：AGP 7.3.1、Kotlin 1.8.0、Java/Kotlin 目标 1.8、compile/target SDK 34；Demo minSdk 21，歌词库 minSdk 17。歌词库的最低版本不代表配套 RTC SDK 支持同样的最低版本。源码构建另需 NDK `28.2.13676358` 和 CMake `3.22.1`。项目 Wrapper 固定为 Gradle 7.4，构建使用 `./gradlew` 和 JDK 17。
 
@@ -201,7 +201,7 @@ check(mcc.initialize(config) == 0)
 `vendorId` 对应 `IAgoraMusicContentCenter.MUSIC_CONTENT_CENTER_VENDOR_ID_TME`。`queryInfo=""` 请求首页；组件保留 `nextQueryInfo`，需要翻页时根据服务的分页契约发送下一请求。Demo 只取首页。保留 `songId` 的原始字符串，包括前导零；不要提前转成数字。
 
 ```kotlin
-import io.agora.karaoke_view_ex.tme.*
+import io.agora.lyricsscore.tme.*
 
 // 这些对象是业务会话的字段；delegate 必须被强持有。
 val listRequests = TMERequestManager { option -> mcc.sendExtRequest(option) }
@@ -305,7 +305,7 @@ check(!preloadRequestId.isNullOrEmpty())
 ### 7.1 推荐公共入口：TMEScoringPreparation
 
 ```kotlin
-import io.agora.karaoke_view_ex.tme.*
+import io.agora.lyricsscore.tme.*
 
 val preparation = TMEScoringPreparation(context.applicationContext.cacheDir)
 preparation.listener = object : TMEScoringPreparationListener {
@@ -377,7 +377,7 @@ fun download(
 ): TMEResourceDownloadTask
 ```
 
-实现必须在写入停止后恰好回调一次，包括取消；返回任务提供 `cancel()`。默认 `TMEHttpResourceDownloader` 流式写临时文件后重命名，连接/读取各限 30 秒。注入的下载器由调用方持有和关闭，preparation.close 不关闭共享下载器。详细契约见 [音高与准备组件说明](../karaoke_view_ex/TME_TONE_DATA.md)。
+实现必须在写入停止后恰好回调一次，包括取消；返回任务提供 `cancel()`。默认 `TMEHttpResourceDownloader` 流式写临时文件后重命名，连接/读取各限 30 秒。注入的下载器由调用方持有和关闭，preparation.close 不关闭共享下载器。详细契约见 [音高与准备组件说明](../AgoraLyricsScore/TME_TONE_DATA.md)。
 
 ### 7.3 已有本地文件时
 
@@ -408,7 +408,7 @@ check(player.open(internalSongCode, 0L) == 0)
 // 并行调用 preparation.prepare(originalSongId, sender)。
 ```
 
-`open` 返回 0 只是接受请求，等待 `onPlayerStateChanged`。`IMediaPlayerObserver` 是接口，除主要回调外，其余方法也需实现；可直接参照 [MccManager 的完整 observer](../app/src/main/java/io/agora/examples/karaoke_view_ex/agora/MccManager.java)。不要把不完整的匿名对象当作完整实现。
+`open` 返回 0 只是接受请求，等待 `onPlayerStateChanged`。`IMediaPlayerObserver` 是接口，除主要回调外，其余方法也需实现；可直接参照 [MccManager 的完整 observer](../app/src/main/java/io/agora/examples/lyricsscore/agora/MccManager.java)。不要把不完整的匿名对象当作完整实现。
 
 | SDK MediaPlayerState | Demo PlayerEvent | 控制器行为 |
 | --- | --- | --- |
@@ -439,7 +439,7 @@ fun tryStartPlayback() {
 
 页面进入时设置 pageAttached=true；若是新 View，先清除 pageApplied，再根据保存的结果安装模型或隐藏计分区域，确认后设置 pageApplied=true 并再次调用 tryStartPlayback。这样媒体和资料先于页面就绪时也能开始播放。退出时设置 pageAttached=false，已开始播放的会话退后台应暂停。这段只展示首次播放资格，仍需实现超时、异步 PLAYING 确认、暂停/继续与旧会话过滤；下面的控制器已包含这些逻辑。
 
-业务可以实现这些状态，也可参考/移植 [TmePlaybackController](../app/src/main/java/io/agora/examples/karaoke_view_ex/agora/tme/TmePlaybackController.kt)。它是 Kotlin 单曲业务类，未随歌词 AAR 发布。全部调用及端口回调由拥有者串行化到 UI 线程：
+业务可以实现这些状态，也可参考/移植 [TmePlaybackController](../app/src/main/java/io/agora/examples/lyricsscore/agora/tme/TmePlaybackController.kt)。它是 Kotlin 单曲业务类，未随歌词 AAR 发布。全部调用及端口回调由拥有者串行化到 UI 线程：
 
 | 接口 | 需要适配到的 API |
 | --- | --- |
@@ -452,7 +452,7 @@ fun tryStartPlayback() {
 | `PreparationPort.cancel()` | preparation.cancel；拥有者结束后还要 preparation.close |
 | `Scheduler.schedule(delayMs, action)` | Handler.postDelayed；返回可 removeCallbacks 的 Cancel |
 
-端口返回失败码而不抛出异常；媒体适配层捕获 SDK 异常并返回失败，由控制器统一处理。完整可参考 [ServiceManager.startTmeSong](../app/src/main/java/io/agora/examples/karaoke_view_ex/agora/ServiceManager.kt)。
+端口返回失败码而不抛出异常；媒体适配层捕获 SDK 异常并返回失败，由控制器统一处理。完整可参考 [ServiceManager.startTmeSong](../app/src/main/java/io/agora/examples/lyricsscore/agora/ServiceManager.kt)。
 
 ### 8.3 复用现有 Demo 流程
 
@@ -500,7 +500,7 @@ override fun onState(state: TmePlaybackController.State<LyricModel>) {
 ### 9.1 连接显示组件
 
 ```kotlin
-import io.agora.karaoke_view_ex.KaraokeView
+import io.agora.lyricsscore.KaraokeView
 
 val karaoke = KaraokeView(lyricsView, scoringView)
 lyricsView.enableDragging(false)
@@ -547,8 +547,8 @@ override fun onAudioVolumeIndication(
 ### 9.3 接收句分、累计分与满分
 
 ```kotlin
-import io.agora.karaoke_view_ex.KaraokeEvent
-import io.agora.karaoke_view_ex.internal.model.LyricsLineModel
+import io.agora.lyricsscore.KaraokeEvent
+import io.agora.lyricsscore.internal.model.LyricsLineModel
 
 karaoke.setKaraokeEvent(object : KaraokeEvent {
     override fun onDragTo(view: KaraokeView, progress: Long) {
@@ -576,7 +576,7 @@ TME 模型的内置规则：先平均每个音符的采样分，再平均整句�
 
 ## 10. 沿用音集协的歌词/计分 UI
 
-Demo 两条曲库链路直接使用同一份 [activity_main.xml](../app/src/main/res/layout/activity_main.xml)、[karaoke_styles.xml](../app/src/main/res/values/karaoke_styles.xml) 和 [KaraokeViewStyle](../app/src/main/java/io/agora/examples/karaoke_view_ex/KaraokeViewStyle.java)。共用歌词、音准、歌词/评分开关、描述、回调、进度和播放控制。TME 没有另外一份演唱布局；预加载、歌词/音高下载、准备状态、句分/累计分/满分和失败原因进入现有描述与回调信息区。
+Demo 两条曲库链路直接使用同一份 [activity_main.xml](../app/src/main/res/layout/activity_main.xml)、[karaoke_styles.xml](../app/src/main/res/values/karaoke_styles.xml) 和 [KaraokeViewStyle](../app/src/main/java/io/agora/examples/lyricsscore/KaraokeViewStyle.java)。共用歌词、音准、歌词/评分开关、描述、回调、进度和播放控制。TME 没有另外一份演唱布局；预加载、歌词/音高下载、准备状态、句分/累计分/满分和失败原因进入现有描述与回调信息区。
 
 初始化时 Demo 调用：
 
@@ -706,19 +706,19 @@ MCC/RTC destroy 是共享对象级操作；不要在单曲返回列表时执行�
 
 | 需要实现的部分 | 可参考文件 |
 | --- | --- |
-| RTC 入会、音量回调、媒体发布 | [RtcManager.kt](../app/src/main/java/io/agora/examples/karaoke_view_ex/agora/RtcManager.kt) |
-| MCC 初始化、列表、预加载、完整 SDK observer | [MccManager.java](../app/src/main/java/io/agora/examples/karaoke_view_ex/agora/MccManager.java) |
-| 单曲端口、回包和 pitch 路由、清理 | [ServiceManager.kt](../app/src/main/java/io/agora/examples/karaoke_view_ex/agora/ServiceManager.kt) |
-| 四条件门控、定时、暂停、超时 | [TmePlaybackController.kt](../app/src/main/java/io/agora/examples/karaoke_view_ex/agora/tme/TmePlaybackController.kt) |
-| 歌曲选择、启动演唱页、RTC pitch 接收 | [MainActivity.java](../app/src/main/java/io/agora/examples/karaoke_view_ex/MainActivity.java) |
-| 安装模型、acknowledge、评分回调、页面生命周期 | [TmeSingingPresenter.kt](../app/src/main/java/io/agora/examples/karaoke_view_ex/TmeSingingPresenter.kt) |
+| RTC 入会、音量回调、媒体发布 | [RtcManager.kt](../app/src/main/java/io/agora/examples/lyricsscore/agora/RtcManager.kt) |
+| MCC 初始化、列表、预加载、完整 SDK observer | [MccManager.java](../app/src/main/java/io/agora/examples/lyricsscore/agora/MccManager.java) |
+| 单曲端口、回包和 pitch 路由、清理 | [ServiceManager.kt](../app/src/main/java/io/agora/examples/lyricsscore/agora/ServiceManager.kt) |
+| 四条件门控、定时、暂停、超时 | [TmePlaybackController.kt](../app/src/main/java/io/agora/examples/lyricsscore/agora/tme/TmePlaybackController.kt) |
+| 歌曲选择、启动演唱页、RTC pitch 接收 | [MainActivity.java](../app/src/main/java/io/agora/examples/lyricsscore/MainActivity.java) |
+| 安装模型、acknowledge、评分回调、页面生命周期 | [TmeSingingPresenter.kt](../app/src/main/java/io/agora/examples/lyricsscore/TmeSingingPresenter.kt) |
 | 两种服务共用的演唱页布局 | [activity_main.xml](../app/src/main/res/layout/activity_main.xml) |
-| 当前请求管理 | [TMERequestManager.kt](../karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMERequestManager.kt) |
-| 准备组件及资源选择 | [TMEScoringPreparation.kt](../karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEScoringPreparation.kt) |
-| 准备结果、阶段、错误及超时 | [TMEScoringPreparationModels.kt](../karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEScoringPreparationModels.kt) |
-| 资源下载接口 | [TMEResourceDownloader.kt](../karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEResourceDownloader.kt) |
-| 歌词/音准协调公开 API | [KaraokeView.java](../karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/KaraokeView.java) |
-| 歌曲与响应模型字段 | [TMEParserModels.kt](../karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEParserModels.kt) |
+| 当前请求管理 | [TMERequestManager.kt](../AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme/TMERequestManager.kt) |
+| 准备组件及资源选择 | [TMEScoringPreparation.kt](../AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme/TMEScoringPreparation.kt) |
+| 准备结果、阶段、错误及超时 | [TMEScoringPreparationModels.kt](../AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme/TMEScoringPreparationModels.kt) |
+| 资源下载接口 | [TMEResourceDownloader.kt](../AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme/TMEResourceDownloader.kt) |
+| 歌词/音准协调公开 API | [KaraokeView.java](../AgoraLyricsScore/src/main/java/io/agora/lyricsscore/KaraokeView.java) |
+| 歌曲与响应模型字段 | [TMEParserModels.kt](../AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme/TMEParserModels.kt) |
 
 建议接入验收：首屏列表及重试正常；可用歌曲能够预加载和播放；两份资料各自有下载状态；歌词和音准时间跟随真实媒体位置；句分、累计分与满分来源正确；资料缺失时能够无计分播放；媒体失败不误开始；快速切歌、退出、重试没有旧回包污染；后台暂停、手动继续、重建中断和重新开始符合产品预期。
 
@@ -733,10 +733,10 @@ bash scripts/tests/run_tme_controller_tests.sh
 分别验证响应/请求/准备组件、实际 tone 解析与 native 评分、单曲门控和会话控制。使用项目 Wrapper（Gradle 7.4）和 JDK 17，且放好配套 RTC SDK 后：
 
 ```bash
-./gradlew :karaoke_view_ex:assembleDebug :karaoke_view_ex:testDebugUnitTest --configure-on-demand --no-daemon
+./gradlew :AgoraLyricsScore:assembleDebug :AgoraLyricsScore:testDebugUnitTest --configure-on-demand --no-daemon
 ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
 ./gradlew :app:connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=io.agora.examples.karaoke_view_ex.agora.tme.TmeSingingScreenInstrumentedTest
+  -Pandroid.testInstrumentationRunnerArguments.class=io.agora.examples.lyricsscore.agora.tme.TmeSingingScreenInstrumentedTest
 ```
 
 最后一项需要 Android 设备，验证演唱页成功/降级模型安装、下载状态、暂停和中断重建。主机/模拟接口测试不能证明线上账号、服务环境、资源 URL 或手机麦克风正常，交付前还需使用自己的账号和真实设备完成选歌、播放、演唱及退出链路验证。

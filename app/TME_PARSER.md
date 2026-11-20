@@ -2,23 +2,23 @@
 
 完整开发接入流程见 [Android TME 歌曲播放、歌词与内置打分接入参考](../docs/tme-android-integration-guide.md)，包含 SDK 初始化、请求与预加载、模型准备、播放门控、UI、逐句计分及生命周期。
 
-TME 音高 JSON 与本地 LRC 合并使用库内 `KaraokeView.parseTMEToneData(toneFilePath, lyricFilePath)`，然后交给 `setLyricData(model, true)`。详见 [音高接入说明](../karaoke_view_ex/TME_TONE_DATA.md)。
+TME 音高 JSON 与本地 LRC 合并使用库内 `KaraokeView.parseTMEToneData(toneFilePath, lyricFilePath)`，然后交给 `setLyricData(model, true)`。详见 [音高接入说明](../AgoraLyricsScore/TME_TONE_DATA.md)。
 
-实现位于歌词库 `karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme`，公开包名为 `io.agora.karaoke_view_ex.tme`，与 iOS 的 TME 响应契约一致。Demo 通过已有的 `implementation project(':karaoke_view_ex')` 引用。启动即进入演唱页，Service Type 仅有 TME、音集协；首次默认音集协（内部 MCC，XML），TME 使用 LRC。旧 MCCEx 服务值 1 或无效偏好迁移到 MCC/XML，已有 TME 偏好保留为 TME/LRC（存储值仍为 2）。音集协使用 RTC 原生 MCC 与组件内置计分；Demo 已移除 MCCEx 插件代码、依赖和专用鉴权配置。两种服务的原唱/伴奏均通过 RTC `IAgoraMusicPlayer.setPlayMode` 切换。公共准备组件不创建 RTC/MCC 或播放器。
+实现位于歌词库 `AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme`，公开包名为 `io.agora.lyricsscore.tme`，与 iOS 的 TME 响应契约一致。Demo 通过已有的 `implementation project(':AgoraLyricsScore')` 引用。启动即进入演唱页，Service Type 仅有 TME、音集协；首次默认音集协（内部 MCC，XML），TME 使用 LRC。旧 MCCEx 服务值 1 或无效偏好迁移到 MCC/XML，已有 TME 偏好保留为 TME/LRC（存储值仍为 2）。音集协使用 RTC 原生 MCC 与组件内置计分；Demo 已移除 MCCEx 插件代码、依赖和专用鉴权配置。两种服务的原唱/伴奏均通过 RTC `IAgoraMusicPlayer.setPlayMode` 切换。公共准备组件不创建 RTC/MCC 或播放器。
 
 演唱页导航栏提供“选歌”“设置”。选歌以总体屏高 80% 的面板从底部展开，标题随服务显示“TME 选歌”或“音集协 选歌”，面板不含设置入口。TME 复用现有查询列表，音集协复用 `LyricsResourcePool.asMusicList()` 的《爱情转移》《说爱你》《love story》3 首原生 MCC 配置；列表保留单行样式。选中歌曲收起面板并进入原演唱流程；直接关闭不更换或暂停当前歌曲。设置改变服务会结束旧会话并进入对应演唱页，未改变服务则保留当前歌曲；TME 打开设置离开前台后仍需手动继续。主页面退出时释放 RTC/服务。
 
-本地 Demo 使用 `gradle.properties` 中的 `isSdkMode=false`。已发布的 3.0.4 不含本次新增接口；新版本发布后，才可切换到 Maven 依赖模式。库已启用 Kotlin 1.8，JSON 解码复用库现有 Gson 2.10.1；关闭接口使用 `Closeable`，兼容库的 Android API 17 下限。
+本地 Demo 使用 `gradle.properties` 中的 `isSdkMode=false`。新坐标 `io.github.winskyan:AgoraLyricsScore:3.0.4` 须发布后才可从远端仓库解析，不能用旧坐标下的同版本 AAR 替代；详见 [迁移说明](../docs/agora-lyrics-score-migration.md)。库已启用 Kotlin 1.8，JSON 解码复用库现有 Gson 2.10.1；关闭接口使用 `Closeable`，兼容库的 Android API 17 下限。
 
 ## 直接解析 SDK 回包
 
 页面自行持有解析器和委托；解析器只弱引用委托。不要仅把一个没有其他持有者的匿名对象赋给 `delegate`。
 
 ```kotlin
-import io.agora.karaoke_view_ex.tme.TMEParser
-import io.agora.karaoke_view_ex.tme.TMEParserDelegate
-import io.agora.karaoke_view_ex.tme.TMEParseError
-import io.agora.karaoke_view_ex.tme.TMESongsResult
+import io.agora.lyricsscore.tme.TMEParser
+import io.agora.lyricsscore.tme.TMEParserDelegate
+import io.agora.lyricsscore.tme.TMEParseError
+import io.agora.lyricsscore.tme.TMESongsResult
 
 private val parser = TMEParser()
 private val listener = object : TMEParserDelegate {
@@ -61,9 +61,9 @@ parser.parse(requestId, jsonOption, httpCode, responseBody)
 在支持 TME `sendExtRequest` / `onExtResponse` 的 MCC SDK 中，把调用方已初始化的 MCC 绑定到发送接口。`TMERequestManager` 不持有 SDK 类型，也不使用 HTTP 替代 SDK 请求。
 
 ```kotlin
-import io.agora.karaoke_view_ex.tme.TMERequestManager
-import io.agora.karaoke_view_ex.tme.TMEParserDelegate
-import io.agora.karaoke_view_ex.tme.TMESongsResult
+import io.agora.lyricsscore.tme.TMERequestManager
+import io.agora.lyricsscore.tme.TMEParserDelegate
+import io.agora.lyricsscore.tme.TMESongsResult
 
 // mcc 是业务已有的 MCC 对象。
 private val requests = TMERequestManager { jsonOption ->
@@ -100,11 +100,11 @@ fun onMccExtResponse(requestId: String, jsonOption: String, httpCode: Int, respo
 bash scripts/tests/run_tme_tests.sh
 bash scripts/tests/run_tme_controller_tests.sh
 # 使用项目 Wrapper（Gradle 7.4）和 JDK 17：
-./gradlew :karaoke_view_ex:assembleDebug :karaoke_view_ex:testDebugUnitTest --configure-on-demand --no-daemon
+./gradlew :AgoraLyricsScore:assembleDebug :AgoraLyricsScore:testDebugUnitTest --configure-on-demand --no-daemon
 # 配套本地 RTC SDK 放好后：
 ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon
 ./gradlew :app:connectedDebugAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=io.agora.examples.karaoke_view_ex.agora.tme.TMEParserInstrumentedTest
+  -Pandroid.testInstrumentationRunnerArguments.class=io.agora.examples.lyricsscore.agora.tme.TMEParserInstrumentedTest
 ```
 
 独立脚本先单独编译库，再以 friend 模块方式编译库的 JUnit 测试，避免把生产与测试源码合并编译而漏掉模块边界问题；不依赖 Agora 凭证或服务。它优先使用系统 Kotlin 编译器，macOS 上可使用 Android Studio 的编译器；依赖从 Gradle 缓存和 Android SDK 发现，也可通过 `KOTLINC`、`GSON_JAR`、`JUNIT_JAR`、`HAMCREST_JAR`、`ANDROID_JAR` 指定。脚本注入回调队列以检验真实后台解码和确定的异步顺序；真实 Android 主线程行为由 Demo 仪器测试验证。
@@ -115,7 +115,7 @@ bash scripts/tests/run_tme_controller_tests.sh
 
 `ServiceManager` 持有单曲控制器，`MccManager` 保留现有 RTC engine 初始化的 MCC。列表与资料使用独立请求管理器；预加载以 requestId、内部 songCode 和 sessionId 关联。每首歌的 player/observer 单独创建和释放，旧播放器排队的回调不能开始新歌。
 
-预加载完成后并行打开播放器和 `TMEScoringPreparation.prepare`。准备成功时，演唱页先安装模型，再确认页面就绪。Demo 显式启用 `allowLyricsOnly`：音高缺失、无效或下载失败时保留可用 LRC；歌词也不可用时清空模型，仍允许无计分播放。预加载、打开和播放失败作为播放错误处理。详情见 [公共准备接口](../karaoke_view_ex/TME_TONE_DATA.md#自动准备计分资料)。
+预加载完成后并行打开播放器和 `TMEScoringPreparation.prepare`。准备成功时，演唱页先安装模型，再确认页面就绪。Demo 显式启用 `allowLyricsOnly`：音高缺失、无效或下载失败时保留可用 LRC；歌词也不可用时清空模型，仍允许无计分播放。预加载、打开和播放失败作为播放错误处理。详情见 [公共准备接口](../AgoraLyricsScore/TME_TONE_DATA.md#自动准备计分资料)。
 
 TME 每 20ms 读取实际播放器位置；本地麦克风 `uid == 0` 的 voicePitch 提交前再次更新位置，然后 `setPitch(pitch, 0F, 0)`。逐句和累计分来自内部 `KaraokeEvent.onLineFinished`，满分为可计分句数 ×100；不会用显示行数、外部 onLineScore 或补造末句音高计算。
 

@@ -34,21 +34,21 @@ task_library_sources=()
 while IFS= read -r task_source; do
   task_library_sources+=("$task_source")
 done < <(rg --files \
-  "$task_root/karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme" -g '*.kt')
+  "$task_root/AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme" -g '*.kt')
 task_test_sources=()
 while IFS= read -r task_source; do
   task_test_sources+=("$task_source")
 done < <(rg --files \
-  "$task_root/karaoke_view_ex/src/test/java/io/agora/karaoke_view_ex/tme" -g '*.kt')
-task_output="$(mktemp -d "${TMPDIR:-/tmp}/lyricsview-tme-tests.XXXXXX")"
+  "$task_root/AgoraLyricsScore/src/test/java/io/agora/lyricsscore/tme" -g '*.kt')
+task_output="$(mktemp -d "${TMPDIR:-/tmp}/agora-lyrics-score-tme-tests.XXXXXX")"
 trap 'rm -r "$task_output"' EXIT
 task_classpath="$task_gson:$task_junit:$task_hamcrest:$task_android"
 # Compile the real models/file parser so scoring preparation can be tested without a View.
 # The host KaraokeView facade delegates its static entry point to that production parser.
 bash "$task_kotlinc" -language-version 1.8 -api-version 1.8 -jvm-target 1.8 \
-  "$task_root/karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex/tme/TMEStrictJson.kt" \
+  "$task_root/AgoraLyricsScore/src/main/java/io/agora/lyricsscore/tme/TMEStrictJson.kt" \
   -include-runtime -d "$task_output/strict-json.jar"
-task_main="$task_root/karaoke_view_ex/src/main/java/io/agora/karaoke_view_ex"
+task_main="$task_root/AgoraLyricsScore/src/main/java/io/agora/lyricsscore"
 task_stub_sources=()
 while IFS= read -r task_source; do task_stub_sources+=("$task_source"); done < <(rg --files "$task_root/scripts/tests/jvm-stubs" -g '*.java')
 javac --release 8 -encoding UTF-8 -cp "$task_output/strict-json.jar:$task_classpath" -d "$task_output/classes" \
@@ -65,7 +65,7 @@ bash "$task_kotlinc" -language-version 1.8 -api-version 1.8 -jvm-target 1.8 \
 task_tests=()
 for task_source in "${task_test_sources[@]}"; do
   if [[ "$task_source" == *Test.kt ]]; then
-    task_tests+=("io.agora.karaoke_view_ex.tme.$(basename "$task_source" .kt)")
+    task_tests+=("io.agora.lyricsscore.tme.$(basename "$task_source" .kt)")
   fi
 done
 java -cp "$task_output/library.jar:$task_output/tests.jar:$task_classpath" org.junit.runner.JUnitCore "${task_tests[@]}"

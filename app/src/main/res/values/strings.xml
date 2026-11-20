@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">KaraokeViewEx Example</string>
+    <string name="app_name">AgoraLyricsScore Example</string>
     <string name="title_activity_settings">SettingsActivity</string>
     <string name="library_selection_title">选择曲库</string>
     <string name="library_selection_prompt">请选择要体验的曲库</string>

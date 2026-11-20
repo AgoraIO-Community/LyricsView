@@ -16,7 +16,7 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "io.agora.examples.karaoke_view_ex"
+        applicationId "io.agora.examples.lyricsscore"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 8
@@ -55,7 +55,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    namespace 'io.agora.examples.karaoke_view_ex'
+    namespace 'io.agora.examples.lyricsscore'
 
     buildFeatures {
         viewBinding true
@@ -85,9 +85,9 @@ android {
 dependencies {
     api fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     if (isSdkMode.toBoolean()) {
-        implementation "io.github.winskyan:Agora-LyricsViewEx:${sdkVersion.toString()}"
+        implementation "${mavenGroupId}:${mavenArtifactId}:${sdkVersion}"
     } else {
-        implementation project(':karaoke_view_ex')
+        implementation project(':AgoraLyricsScore')
     }
 
     implementation 'androidx.appcompat:appcompat:1.6.1'

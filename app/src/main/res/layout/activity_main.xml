@@ -21,7 +21,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <io.agora.karaoke_view_ex.ScoringView
+    <io.agora.lyricsscore.ScoringView
         android:id="@+id/scoring_view"
         style="@style/KaraokeScoringView"
         app:layout_constraintBottom_toTopOf="@id/lyrics_view"
@@ -36,7 +36,7 @@
         app:layout_constraintBottom_toBottomOf="@id/scoring_view"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <io.agora.karaoke_view_ex.LyricsView
+    <io.agora.lyricsscore.LyricsView
         android:id="@+id/lyrics_view"
         style="@style/KaraokeLyricsView"
         app:layout_constraintBottom_toBottomOf="parent"
